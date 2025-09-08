@@ -1,0 +1,58 @@
+{% extends 'layouts/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <h1>Adjustments Management</h1>
+    </div>
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Add Adjustment</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">All Adjustments</h3>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Remaining</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for adj in adjustments %}
+                        <tr>
+                            <td>{{ adj.employee }}</td>
+                            <td>{{ adj.adjustment_type }}</td>
+                            <td>{{ adj.amount }}</td>
+                            <td>{{ adj.date }}</td>
+                            <td>{{ adj.status }}</td>
+                            <td>{{ adj.remaining_amount }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6">No adjustments.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

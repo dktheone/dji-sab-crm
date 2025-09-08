@@ -1,0 +1,143 @@
+
+{% load static %}
+<style>
+    /* Custom styles for the app */
+    
+    .container {
+        background-color: #ffffff; /* White container background */
+        border-radius: 12px; /* Rounded corners */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        padding: 2rem;
+        max-width: 800px;
+        width: 100%;
+        text-align: center;
+    }
+    .content-to-export {
+        border: 2px dashed #d1d5db; /* Dashed border for visual separation */
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 8px;
+        background-color: #f9fafb; /* Slightly off-white background for content */
+        text-align: left;
+    }
+    .content-to-export h1,
+    .content-to-export h2,
+    .content-to-export p,
+    .content-to-export ul {
+        margin-bottom: 0.5rem;
+    }
+    .content-to-export ul {
+        list-style-type: disc;
+        margin-left: 20px;
+    }
+    .export-button {
+        background: linear-gradient(to right, #4f46e5, #8b5cf6); /* Gradient background */
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border: none;
+        cursor: pointer;
+    }
+    .export-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        background: linear-gradient(to right, #6366f1, #a78bfa); /* Lighter gradient on hover */
+    }
+    .title {
+        color: #1f2937; /* Darker gray for title */
+        margin-bottom: 1.5rem;
+    }
+
+    /* Letterhead specific styles */
+    .letterhead {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #e5e7eb; /* Subtle separator */
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    }
+    .letterhead-left,
+    .letterhead-mid,
+    .letterhead-right {
+        display: flex;
+        flex-direction: column;
+    }
+    .letterhead-left {
+        align-items: flex-start;
+    }
+    .letterhead-mid {
+        align-items: flex-center;
+        text-align: center;
+    }
+    .letterhead-right {
+        align-items: flex-end;
+        text-align: right;
+    }
+    .company-logo {
+        width: 80px; /* Adjust logo size */
+        height: 80px;
+        border-radius: 8px; /* Rounded corners for logo */
+        margin-bottom: 0.5rem;
+        object-fit: contain; /* Ensure image fits without distortion */
+    }
+    .company-name {
+        font-size: 1.5rem; /* Larger font for company name */
+        font-weight: 700;
+        color: #1f2937;
+    }
+    .company-contact,
+    .company-address,
+    .company-details {
+        font-size: 0.875rem; /* Smaller font for contact/address details */
+        color: #4b5563;
+        line-height: 1.4;
+    }
+    /* Responsive adjustments for letterhead */
+    @media (max-width: 640px) {
+        .letterhead {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .letterhead-left,
+        .letterhead-right {
+            align-items: center;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        .letterhead-right {
+            margin-bottom: 0; /* No extra margin on the last section */
+        }
+    }
+</style>
+ <!-- The div element that will be exported to PDF -->
+ 
+    <!-- Company Letterhead -->
+    <div class="letterhead">
+        <div class="letterhead-left">
+            <span class="company-name">SAB HOSPITALITY</span>
+            <span class="company-contact">Email: info@sabhospitality.com</span>
+            <span class="company-contact">Office: +91 522 430 3335</span>
+            <span class="company-contact">Phone: +91-9839374447</span>
+        </div>
+        <div class="letterhead-mid">
+            <!-- Placeholder logo image. Replace with your actual logo URL. -->
+            <img src="{% static 'img/sab-logo.webp' %}" height="80" width="120" alt="Company Logo" class="company-logo">    
+            
+        </div>
+        <div class="letterhead-right">
+            <h6><u><b>Address</b></u></h6>
+            <span class="company-address">Diwana House, Viram Khand, Gomti Nagar</span>
+            <span class="company-address">Lucknow-226012, Uttar Pradesh</span>
+            <span class="company-details">Website: www.sabhospitality.com</span>
+            
+        </div>
+    </div>
+
+    

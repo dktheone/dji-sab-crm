@@ -1,0 +1,34 @@
+<!-- New template: emp/employee_print.html -->
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block title %}Employee Profile Print{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <h1>Profile for {{ employee.first_name }} {{ employee.last_name }}</h1>
+    </div>
+    <!-- Wizard Step Indicator -->
+    <div class="wizard-steps">
+        <div class="step">1. Registration</div>
+        <div class="step">2. Education/Experience/Family</div>
+        <div class="step">3. Uploads</div>
+        <div class="step active">4. Print Profile</div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Display all employee details, education table, experience table, family table, uploads table -->
+            <div class="card">
+                <div class="card-body">
+                    <h3>Basic Information</h3>
+                    <p>Name: {{ employee.first_name }} {{ employee.middle_name }} {{ employee.last_name }}</p>
+                    <!-- Add all fields... -->
+                </div>
+            </div>
+            <!-- Similar cards for Education, Experience, Family, Uploads -->
+            <button onclick="window.print()" class="btn btn-primary">Print</button>
+        </div>
+    </section>
+</div>
+{% endblock %}

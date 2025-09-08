@@ -1,0 +1,82 @@
+<!-- emp/salary_master_list.html -->
+{% extends 'layouts/base.html' %}
+{% block title %}Salary Master List{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <h1>Salary Master</h1>
+    </div>
+    <section class="content">
+        <!-- Priority Group: No Salary -->
+        <div class="card card-danger">
+            <div class="card-header">
+                <h3 class="card-title">Employees Without Salary (Action Required)</h3>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in no_salary_employees %}
+                        <tr>
+                            <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+                            <td>{{ emp.department.department_name }}</td>
+                            <td><a href="{% url 'apps.emp:salary_master_detail' emp.id %}" class="btn btn-primary">Manage Salary</a></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3">No employees without salary.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Main Group: With Salary -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Employees with Active Salary</h3>
+            </div>
+            <div class="card-body">
+                <table id="salaryTable" class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Latest Salary</th>
+                            <th>Effective From</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in with_salary_employees %}
+                        <tr>
+                            <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+                            <td>{{ emp.salary_masters.first.salary_amount }}</td>
+                            <td>{{ emp.salary_masters.first.effective_from }}</td>
+                            <td><a href="{% url 'apps.emp:salary_master_detail' emp.id %}" class="btn btn-primary">Manage Salary</a></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">No employees with salary.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+    $(function () {
+        $("#salaryTable").DataTable({
+            "responsive": true, "lengthChange": false, "autoWidth": false,
+        });
+    });
+</script>
+{% endblock %}

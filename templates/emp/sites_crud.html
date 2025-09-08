@@ -1,0 +1,390 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+MANAGE SITES 
+{% endblock title %}
+{% block extrastyle %}
+<style>
+    .myinput input {
+        margin-bottom: 2px!important;
+    }
+</style>
+<link rel="stylesheet" href="{% static 'plugins/select2/select2.min.css' %}">
+<link rel="stylesheet" href="{% static 'plugins/select2/select2-bootstrap4.min.css' %}">
+{% endblock extrastyle %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Manage Sites</h1>
+                </div>
+                <div class="col-sm-6">
+                    <button class="btn btn-primary float-sm-right" data-toggle="modal" data-target="#addsiteModal">Add Sites</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Site List</h3>
+                </div>
+                <div class="card-body">
+                    <table id="siteTable" class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Remark</th>
+                                <th>Status</th>
+                                <th>Created At</th>
+                                <th>Created By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for site in sites %}
+                            <tr>
+                                <td>
+                                    <h4 class="fw-bolder">{{ site.site_name }}</h4>
+                                </td>
+                                <td>
+                                    {{ site.address|default:"-" }}<br>
+                                    {{ site.city|default:"-" }}, {{ site.state|default:"-" }}, {{ site.pincode|default:"-" }}
+                                </td>
+                                <td>
+                                    {{ site.remark|default:"-" }}
+                                </td>
+                                <td>
+                                    <span class="badge {% if site.status == 'Active' %}bg-success
+                                        {% elif site.status == 'Inactive' %}bg-danger
+                                        {% elif site.status == 'Under Maintenance' %}bg-warning
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ site.status }}
+                                    </span>
+                                </td>
+                                <td>{{ site.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>{{ site.created_by.username }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning edit-btn" 
+                                            data-id="{{ site.id }}"
+                                            data-name="{{ site.site_name }}"
+                                            data-address="{{ site.address|default:'' }}"
+                                            data-city="{{ site.city|default:'' }}"
+                                            data-state="{{ site.state|default:'' }}"
+                                            data-pincode="{{ site.pincode|default:'' }}"
+                                            data-status="{{ site.status }}"
+                                            data-remark="{{ site.remark|default:'' }}"
+                                            data-toggle="modal"
+                                            data-target="#editsiteModal">
+                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                    </button>
+                                    {% if request.user.groups.all.0.name == 'admin' %}
+                                    <button class="btn btn-sm btn-danger delete-btn" 
+                                            data-id="{{ site.id }}"
+                                            data-name="{{ site.site_name }}"
+                                            data-toggle="modal"
+                                            data-target="#deletesiteModal">
+                                        <i class="fa-solid fa-trash-can"></i> Delete
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7">No Sites found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add Site Modal -->
+    <div class="modal fade" id="addsiteModal" tabindex="-1" role="dialog" aria-labelledby="addsiteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addsiteModalLabel">Add Site</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="addsiteForm" method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="form-group">
+                            {% crispy site_add_form %}
+                            <div class="invalid-feedback" id="addsiteErrors"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Site Modal -->
+    <div class="modal fade" id="editsiteModal" tabindex="-1" role="dialog" aria-labelledby="editsiteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editsiteModalLabel">Edit Site</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="editsiteForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="edit_id" id="editSiteId">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            {% crispy site_edit_form %}
+                            <div class="invalid-feedback" id="editsiteErrors"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Site Modal -->
+    <div class="modal fade" id="deletesiteModal" tabindex="-1" role="dialog" aria-labelledby="deletesiteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deletesiteModalLabel">Delete Site</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the Site "<span id="deleteSiteName"></span>"?</p>
+                    <input type="hidden" id="deleteSiteId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+{% block extra_scripts %}
+<script src="{% static 'plugins/select2/select2.min.js' %}"></script>
+<script>
+    var action_url = "{% url 'emp:site_crud' %}";
+
+    function load_site(action_url) {
+        // Initialize Select2 for state, city, and status in both forms
+        $('#addsiteForm select[name="state"], #addsiteForm select[name="city"], #addsiteForm select[name="status"]').select2({
+            placeholder: "Select an option",
+            allowClear: true,
+            width: '100%'
+        });
+        $('#editsiteForm select[name="state"], #editsiteForm select[name="city"], #editsiteForm select[name="status"]').select2({
+            placeholder: "Select an option",
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Function to load cities based on state
+        function loadCities(stateCode, selectedCity, formPrefix) {
+            if (stateCode) {
+                $.ajax({
+                    url: "{% url 'emp:get_cities' %}",
+                    type: 'GET',
+                    data: { state_code: stateCode },
+                    success: function(response) {
+                        var citySelect = $(`#${formPrefix} select[name="city"]`);
+                        citySelect.empty().append('<option value="">Select City</option>');
+                        $.each(response.cities, function(index, city) {
+                            var option = $('<option></option>').attr('value', city[0]).text(city[1]);
+                            if (selectedCity && city[0] === selectedCity) {
+                                option.attr('selected', 'selected');
+                            }
+                            citySelect.append(option);
+                        });
+                        citySelect.trigger('change');
+                    },
+                    error:function(response) {
+                    for (var field in response.responseJSON.errors) {
+                        ErrorMSG(response.responseJSON.errors[field])
+                    }
+                }
+                });
+            } else {
+                $(`#${formPrefix} select[name="city"]`).empty().append('<option value="">Select City</option>').trigger('change');
+            }
+        }
+
+        // Load cities when state changes in add form
+        $('#addsiteForm select[name="state"]').change(function() {
+            var stateCode = $(this).val();
+            loadCities(stateCode, null, 'addsiteForm');
+        });
+
+        // Load cities when state changes in edit form
+        $('#editsiteForm select[name="state"]').change(function() {
+            var stateCode = $(this).val();
+            loadCities(stateCode, null, 'editsiteForm');
+        });
+
+        // Initialize DataTable
+        $('#siteTable').DataTable({
+            "paging": false,
+            "lengthChange": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "responsive": true,
+        });
+
+        // Populate edit modal
+        $('.edit-btn').click(function() {
+            var id = $(this).data('id');
+            var name = $(this).data('name');
+            var address = $(this).data('address');
+            var city = $(this).data('city');
+            var state = $(this).data('state');
+            var pincode = $(this).data('pincode');
+            var status = $(this).data('status');
+            var remark = $(this).data('remark');
+
+            $('#editSiteId').val(id);
+            $('#editsiteForm input[name="site_name"]').val(name);
+            $('#editsiteForm input[name="address"]').val(address);
+            $('#editsiteForm input[name="pincode"]').val(pincode);
+            $('#editsiteForm textarea[name="remark"]').val(remark);
+            $('#editsiteForm select[name="status"]').val(status).trigger('change');
+            $('#editsiteForm select[name="state"]').val(state).trigger('change');
+            $('#editsiteForm select[name="city"]').val(city).trigger('change');
+
+            // Load cities for the selected state
+            if (state && city) {
+                loadCities(state, city, 'editsiteForm');
+            } else if (state) {
+                loadCities(state, null, 'editsiteForm');
+            }
+
+            $('#editsiteErrors').empty();
+        });
+
+        // Populate delete modal
+        $('.delete-btn').click(function() {
+            var id = $(this).data('id');
+            var name = $(this).data('name');
+            $('#deleteSiteId').val(id);
+            $('#deleteSiteName').text(name);
+        });
+
+        // Handle add form submission
+        $('#addsiteForm').submit(function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: action_url,
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.status === 'success') {
+                        SuccessMSG(response.message);
+                        location.reload();
+                    } else {
+                        $('#addsiteErrors').text(JSON.stringify(response.errors) || 'An error occurred');
+                        $('#addsiteErrors').show();
+                    }
+                },
+                error:function(response) {
+                    for (var field in response.responseJSON.errors) {
+                        ErrorMSG(response.responseJSON.errors[field])
+                    }
+                }
+            });
+        });
+
+        // Handle edit form submission
+        $('#editsiteForm').submit(function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: action_url,
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.status === 'success') {
+                        SuccessMSG(response.message);
+                        location.reload();
+                    } else {
+                        $('#editsiteErrors').text(JSON.stringify(response.errors) || 'An error occurred');
+                        $('#editsiteErrors').show();
+                    }
+                },
+                error:function(response) {
+                    for (var field in response.responseJSON.errors) {
+                        ErrorMSG(response.responseJSON.errors[field])
+                    }
+                }
+            });
+        });
+
+        // Handle delete confirmation
+        $('#confirmDelete').click(function() {
+            var id = $('#deleteSiteId').val();
+            $.ajax({
+                url: "{% url 'emp:delete_site' 0 %}".replace('0', id),
+                type: 'POST',
+                data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        SuccessMSG(response.message);
+                        location.reload();
+                    } else {
+                        ErrorMSG(response.message || 'An error occurred');
+                    }
+                },
+            error:function(response) {
+                    for (var field in response.responseJSON.errors) {
+                        ErrorMSG(response.responseJSON.errors[field])
+                    }
+                }
+            });
+        });
+
+        // Initialize city dropdown for edit form if site_details exists
+        "{% if initial_state and initial_city %}"
+        "loadCities('{{ initial_state }}', '{{ initial_city }}', 'editsiteForm');"
+        "{% elif initial_state %}"
+        "loadCities('{{ initial_state }}', null, 'editsiteForm');"
+        "{% endif %}"
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        load_site(action_url);
+    });
+
+    // Fix Select2 styling
+    function correct_span() {
+        $('.select2-selection.select2-selection--single').css('height', '40px');
+        $('.select2.select2-container.select2-container--default').css('width', '100%');
+    }
+    setTimeout(correct_span, 1000);
+</script>
+
+{% endblock %}

@@ -1,0 +1,248 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block title %}
+EMPLOYEE VIEW
+{% endblock title %}
+{% block extrastyle %}
+
+{% endblock extrastyle %}
+{% block content %}
+<div class="content-wrapper">
+    <!-- Content Header -->
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Employee Dashboard</h1>
+                    <p>Overview and Quick Actions for HR Management</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Stat Cards -->
+            <div class="row">
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h3>{{ stats.total_employees }}</h3>
+                            <p>Total Employees</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-users"></i></div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-warning">
+                        <div class="inner">
+                            <h3>{{ stats.payroll_pending }}</h3>
+                            <p>Payroll Pending</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-money-check-alt"></i></div>
+                        <a href="?filter=payroll_pending" class="small-box-footer">View <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-danger">
+                        <div class="inner">
+                            <h3>{{ stats.login_not_created }}</h3>
+                            <p>Logins Not Created</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-user-times"></i></div>
+                        <a href="?filter=login_not_created" class="small-box-footer">View <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h3>{{ stats.salary_processed }}/{{ stats.total_employees }}</h3>
+                            <p>Salary Processed</p>
+                        </div>
+                        <div class="icon"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <a href="{% url 'emp:employee_form' %}" class="btn btn-primary float-sm-right">Add Employee</a>
+            </div>
+
+            <!-- Controls -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Filter Employees</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <form method="get">
+                                <div class="input-group">
+                                    <input type="text" name="search" class="form-control" placeholder="Search by Name, ID, Department..." value="{{ request.GET.search }}">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <div class="btn-group">
+                                <a href="?filter=all" class="btn btn-sm {% if current_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">All Employees</a>
+                                <a href="?filter=payroll_pending" class="btn btn-sm {% if current_filter == 'payroll_pending' %}btn-warning{% else %}btn-secondary{% endif %}">Payroll Pending ({{ stats.payroll_pending }})</a>
+                                <a href="?filter=login_not_created" class="btn btn-sm {% if current_filter == 'login_not_created' %}btn-danger{% else %}btn-secondary{% endif %}">Login Not Created ({{ stats.login_not_created }})</a>
+                                <a href="?filter=salary_pending" class="btn btn-sm {% if current_filter == 'salary_pending' %}btn-info{% else %}btn-secondary{% endif %}">Salary Pending</a>
+                                <a href="?filter=adjustments_pending" class="btn btn-sm {% if current_filter == 'adjustments_pending' %}btn-warning{% else %}btn-secondary{% endif %}">Adjustments Pending</a>
+                            </div>
+                            <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#advancedFilterModal">Advanced Filters</button>
+                        </div>
+                    </div>
+
+                    <!-- DataTable -->
+                    <table id="employeeTable" class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Employee Name</th>
+                                <th>Department/Designation</th>
+                                <th>Joining Date</th>
+                                <th>Payroll Status</th>
+                                <th>Login Status</th>
+                                <th>Salary Status</th>
+                                <th>Allowances & Dues</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in employees %}
+                            <tr {% if employee.payroll_status == 'Pending' or employee.login_status == 'Not Created' %}class="table-warning"{% endif %}>
+                                <td>{{ employee.first_name }} {{ employee.last_name }} <br><small>({{ employee.emp_code }})</small></td>
+                                <td>{{ employee.department.department_name }} / {{ employee.designation.designation_name }}</td>
+                                <td>{{ employee.joining_date|date:"m/d/Y" }}</td>
+                                <td>
+                                    {% if employee.payroll_status == 'Processed' %}
+                                        <span class="badge badge-success"><i class="fas fa-check"></i> Processed</span>
+                                    {% else %}
+                                        <span class="badge badge-warning"><i class="fas fa-hourglass-half"></i> Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if employee.login_status == 'Active' %}
+                                        <span class="badge badge-success"><i class="fas fa-user-check"></i> Active</span>
+                                    {% elif employee.login_status == 'Disabled' %}
+                                        <span class="badge badge-secondary"><i class="fas fa-user-slash"></i> Disabled</span>
+                                    {% else %}
+                                        <span class="badge badge-danger"><i class="fas fa-user-times"></i> Not Created</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if employee.salary_status == 'Assigned' %}
+                                        <span class="badge badge-success"><i class="fas fa-check"></i> Assigned</span>
+                                    {% else %}
+                                        <span class="badge badge-warning"><i class="fas fa-hourglass-half"></i> Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if employee.adjustments_status == 'Pending' %}
+                                        <span class="badge badge-warning"><i class="fas fa-exclamation"></i> Pending</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary библиатор <i class="fas fa-ban"></i> No Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if employee.payroll_status == 'Pending' %}
+                                        <a href="url 'apps.emp:make_salary' employee.id " class="btn btn-sm btn-primary" title="Generate Payroll"><i class="fas fa-dollar-sign"></i></a>
+                                    {% endif %}
+                                    {% if employee.login_status == 'Not Created' %}
+                                        <a href="{% url 'apps.emp:create_employee_user' %}" class="btn btn-sm btn-success" title="Create Login" onclick="selectEmployee({{ employee.id }})"><i class="fas fa-user-plus"></i></a>
+                                    {% endif %}
+                                    <div class="dropdown d-inline-block">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><i class="fas fa-ellipsis-v"></i></button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="{% url 'apps.emp:employee_view' employee.id %}">View/Edit Profile</a></li>
+                                            <li><a class="dropdown-item" href="url 'apps.emp:make_salary' employee.id">Generate Payroll</a></li>
+                                            <li><a class="dropdown-item" href="{% url 'apps.emp:create_employee_user' %}">Create Login</a></li>
+                                            <li><a class="dropdown-item" href="url 'apps.emp:salary_master_form' employee.id ">Process Salary</a></li>
+                                            <li><a class="dropdown-item" href="url 'apps.emp:adjustments_form' employee.id">Update Allowances/Dues</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="8">No employees found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Advanced Filter Modal -->
+            <div class="modal fade" id="advancedFilterModal">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Advanced Filters</h4>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="get">
+                                <div class="form-group">
+                                    <label>Department</label>
+                                    <select name="dept" class="form-control select2">
+                                        <option value="">All Departments</option>
+                                        {% for dept in departments %}
+                                            <option value="{{ dept }}" {% if request.GET.dept == dept %}selected{% endif %}>{{ dept }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select name="status" class="form-control select2">
+                                        <option value="">All Statuses</option>
+                                        {% for status in statuses %}
+                                            <option value="{{ status }}" {% if request.GET.status == status %}selected{% endif %}>{{ status }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<!-- DataTables -->
+<script src="{% static 'plugins/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'plugins/datatables-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+<!-- Select2 -->
+<script src="{% static 'plugins/select2/js/select2.full.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#employeeTable').DataTable({
+            "paging": true,
+            "lengthChange": false,
+            "searching": false,  // Use custom search
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "responsive": true
+        });
+        $('.select2').select2();
+        // Enable tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+    // JS to preselect employee in create user form (simplified)
+    function selectEmployee(employeeId) {
+        $('#employee-user-form select[name="employee"]').val(employeeId).trigger('change');
+    }
+</script>
+<link rel="stylesheet" href="{% static 'plugins/datatables-bs4/css/dataTables.bootstrap4.min.css' %}">
+<link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
+<style>
+    .badge-orange { background-color: #fd7e14; }
+    .table-warning { background-color: #fff3cd; }
+</style>
+{% endblock extra_scripts %}

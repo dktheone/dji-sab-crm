@@ -1,0 +1,87 @@
+{% load i18n static admin_adminlte %}
+
+<ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+    <!-- Add icons to the links using the .nav-icon class
+           with font-awesome or any other icon font library -->
+
+    
+    
+    
+
+      
+
+    {% if user.groups.all.0.name in 'admin,hr,employee' %}
+      
+        
+   
+          
+      <li class="nav-item">
+        <a href="{% url 'emp:department_crud' %}" class="nav-link {% if 'emp:department_crud' in segment %} active {% endif %}">
+          <i class="far fa-circle nav-icon"></i>
+          <p>Departments</p>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'emp:designation_crud' %}" class="nav-link {% if 'emp:designation_crud' in segment %} active {% endif %}">
+          <i class="far fa-circle nav-icon"></i>
+          <p>Designation</p>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'emp:site_crud' %}" class="nav-link {% if 'emp:site_crud' in segment %} active {% endif %}">
+          <i class="far fa-circle nav-icon"></i>
+          <p>Sites</p>
+        </a>
+      </li>
+      
+    <li class="nav-header">EMPLOYEES</li>
+      <li class="nav-item">
+        <a href="{% url 'emp:employee_form' %}"  class="nav-link {% if 'emp:employee_form' in segment %} active {% endif %}">
+          <i class="far fa-circle nav-icon"></i>
+          <p>Add Employee</p></a>
+    </li>
+    <li class="nav-item">
+        <a href="{% url 'emp:employee_list' %}"  class="nav-link {% if 'emp:employee_list' in segment %} active {% endif %}">
+          <i class="far fa-circle nav-icon"></i>
+          <p>Employee List</p></a>
+    </li>
+    <li class="nav-item">
+      <a href="{% url 'emp:create_employee_user' %}"  class="nav-link {% if 'emp:create_employee_user' in segment %} active {% endif %}">
+        <i class="far fa-circle nav-icon"></i>
+        <p>Create Employee User</p></a>
+    </li>
+    {% endif %}
+
+    
+   
+
+    {% if request.user.is_authenticated %}
+    <li class="nav-item">
+      <a href="{% url 'logout' %}" class="nav-link">
+        <i class="fa fa-sign-out-alt nav-icon"></i>
+        <p>Logout</p>
+      </a>
+    </li>
+    {% else %}
+    <li class="nav-item">
+      <a href="{% url 'login' %}" class="nav-link">
+        <i class="fa fa-sign-in-alt nav-icon"></i>
+        <p>Login</p>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="{% url 'register' %}" class="nav-link">
+        <i class="fa fa-user-plus nav-icon"></i>
+        <p>Register</p>
+      </a>
+    </li>        
+    {% endif %} 
+    
+    <li class="nav-item">
+      <a target="_blank" href="https://app-generator.dev/support/" class="nav-link">
+        <i class="fa fa-rocket text-danger nav-icon"></i>
+        <p>Support</p>
+      </a>
+    </li>         
+    
+  </ul>

@@ -1,0 +1,277 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block title %}
+DESIGNATIONS
+{% endblock title %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Manage Designations</h1>
+                </div>
+                <div class="col-sm-6">
+                    <button class="btn btn-primary float-sm-right" data-toggle="modal"
+                        data-target="#adddesignationModal">Add
+                        designation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">designation List</h3>
+                </div>
+                <div class="card-body">
+                    <table id="designationTable" class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Created At</th>
+                                <th>Created By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for designation in designations %}
+                            <tr>
+                                <td>
+                                    <h4 class="fw-bolder">{{ designation.designation_name }}</h4>
+                                </td>
+                                <td>
+                                    <span class="badge {% if designation.status == 'Active' %} bg-success
+                                        {% elif designation.status == 'InActive' %} bg-danger
+                                        {% elif designation.status == 'Deleted' %} bg-secondary
+                                        {% else %} bg-secondary {% endif %}"> {{ designation.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ designation.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>{{ designation.created_by.username }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning edit-btn" data-id="{{ designation.id }}"
+                                        data-name="{{ designation.designation_name }}" data-toggle="modal"
+                                        data-target="#editdesignationModal"><i class="fa-solid fa-pen-to-square"></i>
+                                        Edit</button>
+                                    {% if request.user.groups.all.0.name == 'admin' %}
+                                    <button class="btn btn-sm btn-danger delete-btn" data-id="{{ designation.id }}"
+                                        data-name="{{ designation.designation_name }}" data-toggle="modal"
+                                        data-target="#deletedesignationModal"><iclass="fa-solid fa-trash-can"></i>Delete</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4">No Designations found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add designation Modal -->
+    <div class="modal fade" id="adddesignationModal" tabindex="-1" role="dialog"
+        aria-labelledby="adddesignationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adddesignationModalLabel">Add
+                        Designation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="adddesignationForm" method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="form-group">
+                            {{ add_form.designation_name.label_tag }}
+                            {{ add_form.designation_name }}
+                            <div class="invalid-feedback" id="adddesignationErrors"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit designation Modal -->
+    <div class="modal fade" id="editdesignationModal" tabindex="-1" role="dialog"
+        aria-labelledby="editdesignationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editdesignationModalLabel">Edit
+                        designation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="editdesignationForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="edit_id" id="editDesignationId">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            {{ edit_form.designation_name.label_tag }}
+                            <input type="text" class="form-control" name="designation_name" id="editDesignationName">
+                            <div class="invalid-feedback" id="editdesignationErrors"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete designation Modal -->
+    <div class="modal fade" id="deletedesignationModal" tabindex="-1" role="dialog"
+        aria-labelledby="deletedesignationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deletedesignationModalLabel">Delete designation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the designation "<span id="deleteDesignationName"></span>"?</p>
+                    <input type="hidden" id="deleteDesignationId">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+
+<script>
+    action_url = "{% url 'emp:designation_crud' %}"
+    function load_designation(action_url) {
+        // console.log('action_url', action_url)
+        // Initialize DataTable
+        $('#designationTable').DataTable({
+            "paging": false,
+            "lengthChange": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "responsive": true,
+        });
+
+        // Populate edit modal
+        $('.edit-btn').click(function () {
+            var id = $(this).data('id');
+            var name = $(this).data('name');
+            // console.log('id', id, 'name', name)
+            $('#editDesignationId').val(id);
+            $('#editDesignationName').val(name);
+            $('#editDesignationErrors').empty();
+        });
+
+        // Populate delete modal
+        $('.delete-btn').click(function () {
+            var id = $(this).data('id');
+            var name = $(this).data('name');
+            $('#deleteDesignationId').val(id);
+            $('#deleteDesignationName').text(name);
+        });
+
+        // Handle add form submission
+        $('#adddesignationForm').submit(function (e) {
+            e.preventDefault();
+
+            // Serialize the form data
+            const formData = $(this).serialize();
+
+            // Log the serialized data to the console for debugging
+            // console.log("Serialized form data:", formData);
+            // alert("View Serialized form data")
+            $.ajax({
+                url: action_url,
+                type: 'POST',
+                data: formData, // Use the new variable
+
+                success: function (response) {
+                    // console.log("Success Response:", response, action_url);
+                    if (response.status === 'success') {
+                        SuccessMSG(response.message);
+                        // location.reload(); 
+                    } else {
+                        $('#addDesignationErrors').text(response.errors.designation_name || 'An error occurred');
+                        $('#addDesignationErrors').show();
+                    }
+                },
+
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log("AJAX Error:", jqXHR, textStatus, errorThrown);
+                    $('#addDesignationErrors').text('An error occurred');
+                    $('#addDesignationErrors').show();
+                }
+            });
+        });
+
+
+        // Handle edit form submission
+        $('#editdesignationForm').submit(function(e) {
+            e.preventDefault();
+            // Serialize the form data
+            const formData = $(this).serialize();
+            
+            // Log the serialized data to the console for debugging
+            console.log("Serialized form data:", formData, action_url);
+            // alert("View Serialized form data", formData, action_url)
+            $.ajax({
+                url: action_url,
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.status === 'success') {
+                        console.log(response)
+                        SuccessMSG(response.message);
+                        location.reload();
+                    } else {
+                        $('#editDesignationErrors').text(response.errors.designation_name || 'An error occurred');
+                        $('#editDesignationErrors').show();
+                    }
+                },
+                error: function() {
+                    $('#editDesignationErrors').text('An error occurred');
+                    $('#editDesignationErrors').show();
+                }
+            });
+        });
+
+    }
+
+
+
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Your function to be executed goes here
+        //   console.log('DOM is fully loaded and parsed!');
+        load_designation(action_url);
+    });
+</script>
+
+{% endblock extra_scripts %}

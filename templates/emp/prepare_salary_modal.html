@@ -1,0 +1,64 @@
+<div class="modal-header">
+    <h4>Prepare Salary for {{ employee.first_name }} {{ employee.last_name }}</h4>
+    <button type="button" class="close" data-dismiss="modal">&times;</button>
+</div>
+<div class="modal-body">
+    <!-- Profile Card -->
+    <div class="card shadow-lg mb-4" style="border-radius: 15px; overflow: hidden;">
+        <div class="card-body text-center">
+            <img src="{{ employee.photo.url|default:'/static/img/nopic.jpg' }}" class="rounded-circle" style="width: 100px; height: 100px;">
+            <h5>{{ employee.first_name }} {{ employee.last_name }}</h5>
+            <p>Department: {{ employee.department.department_name }} | Site: {{ employee.site.site_name }}</p>
+            <p>Joining: {{ employee.joining_date }}</p>
+            <hr>
+            <h6>Last 3 Adjustments</h6>
+            <ul>
+                {% for adj in last_3_adjustments %}
+                <li>{{ adj.date }}: {{ adj.adjustment_type }} - {{ adj.amount }}</li>
+                {% endfor %}
+            </ul>
+            <h6>Last 3 Salaries</h6>
+            <ul>
+                {% for sal in last_3_salaries %}
+                <li>{{ sal.month }}/{{ sal.year }}: {{ sal.net_salary }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Days Absent</label>
+            <input type="number" id="days_absent" name="days_absent" value="2" class="form-control">
+        </div>
+        <input type="hidden" id="salary_amount" value="{{ latest_salary.salary_amount }}">
+        <input type="hidden" id="days_in_month" value="{{ days_in_month }}">
+        <h6>Pending Adjustments</h6>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Remaining</th>
+                    <th>Partial This Month</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for adj in pending_adjustments %}
+                <tr>
+                    <td>{{ adj.adjustment_type }}</td>
+                    <td>{{ adj.amount }}</td>
+                    <td>{{ adj.remaining_amount }}</td>
+                    <td>
+                        <input type="number" name="partial_{{ adj.id }}" class="form-control partial-input" data-sign="{% if adj.adjustment_type in 'Bonus,Reward' %}1{% else %}-1{% endif %}" max="{{ adj.remaining_amount }}">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h5>Final Payable: <span id="net_salary">0.00</span></h5>
+        <button type="submit" class="btn btn-primary">Finalize & Save</button>
+    </form>
+</div>

@@ -1,0 +1,157 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block title %}
+EMPLOYEES
+{% endblock title %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Employee List</h1>
+                </div>
+                <div class="col-sm-6">
+                    <a href="{% url 'emp:employee_form' %}" class="btn btn-primary float-sm-right">Add Employee</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Employees</h3>
+                </div>
+                <div class="card-body">
+                    <table id="employeeTable" class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Employee Code</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in employees %}
+                            <tr>
+                                <td>{{ employee.emp_code }}</td>
+                                <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+                                <td>{{ employee.email|default:"-" }}</td>
+                                <td>
+                                    <span class="status-label" id="status-label-{{ employee.id }}">{{ employee.get_status_display }}</span>
+                                    {% if user.groups.all.0.name in 'admin,hr' %}
+                                    <form class="status-form form-inline" id="status-form-{{ employee.id }}" style="display: none;">
+                                        <select name="status" class="form-control">
+                                            <option value="">Select Status</option>
+                                            {% for value, label in status_choices %}
+                                            <option value="{{ value }}" {% if employee.status == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-primary btn-sm update-status-btn" data-employee-id="{{ employee.id }}">Update</button>
+                                        <button type="button" class="btn btn-secondary btn-sm cancel-status-btn" data-employee-id="{{ employee.id }}">Cancel</button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                        <a href="{% url 'emp:employee_details' employee.id %}" class="btn btn-primary btn-sm">Edu/Exp/Family</a>
+                                        <a href="{% url 'emp:employee_uploads' employee.id %}" class="btn btn-primary btn-sm">UPLOADS</a>
+                                        <a href="{% url 'emp:employee_view' employee.id %}" class="btn btn-info btn-sm">View</a>
+                                    {% if user.groups.all.0.name in 'admin,hr' or employee.created_by == user %}
+                                        <a href="{% url 'emp:employee_edit' employee.id %}" class="btn btn-warning btn-sm">Edit</a>
+                                    {% endif %}
+                                    {% if user.groups.all.0.name in 'admin,hr' %}
+                                        <button type="button" class="btn btn-secondary btn-sm edit-status-btn" data-employee-id="{{ employee.id }}">Edit Status</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5">No employees found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    $('#employeeTable').DataTable({
+        "paging": true,
+        "lengthChange": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+        "responsive": true,
+    });
+
+    // Handle Edit Status button click
+   // Debug: Log status choices
+   console.log("Status choices available: "," {{ status_choices|safe }}");
+
+    // Handle Edit Status button click
+    $('.edit-status-btn').click(function() {
+        var employeeId = $(this).data('employee-id');
+        console.log("Editing status for employee ID: ", employeeId);
+        $('#status-label-' + employeeId).hide();
+        $('#status-form-' + employeeId).show();
+    });
+
+    // Handle Update Status button click
+    $('.update-status-btn').click(function() {
+        var employeeId = $(this).data('employee-id');
+        var form = $('#status-form-' + employeeId);
+        var status = form.find('select[name="status"]').val();
+        console.log("Updating status to: ", status, "for employee ID: ", employeeId);
+
+        if (!status) {
+            WarningMSG('Please select a status.');
+            return;
+        }
+        update_url = "{% url 'emp:update_employee_status' 0 %}".replace('0', employeeId),
+        console.log("update_url", update_url)
+        $.ajax({
+            url: update_url,
+            type: 'POST',
+            data: {
+                status: status,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                console.log("AJAX response: ", response);
+                if (response.status === 'success') {
+                    var select = form.find('select[name="status"]');
+                    var selectedText = select.find('option:selected').text();
+                    $('#status-label-' + employeeId).text(selectedText).show();
+                    form.hide();
+                    SuccessMSG(response.message);
+                } else {
+                    ErrorMSG(response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log("AJAX error: ", error);
+                ErrorMSG('An error occurred while updating the status.');
+            }
+        });
+    });
+
+    // Handle Cancel button click
+    $('.cancel-status-btn').click(function() {
+        var employeeId = $(this).data('employee-id');
+        console.log("Cancelling edit for employee ID: ", employeeId);
+        $('#status-form-' + employeeId).hide();
+        $('#status-label-' + employeeId).show();
+    });
+});
+</script>
+{% endblock extra_scripts %}

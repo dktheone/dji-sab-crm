@@ -1,0 +1,70 @@
+{% extends 'layouts/base.html' %}
+{% load static crispy_forms_tags %}
+{% block title %}
+CREATE USER
+{% endblock title %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <h1>Create Employee User</h1>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">User Creation Form</h3>
+                </div>
+                <div class="card-body">
+                    <div class="col-md-6">
+                    <form id="employeeUserForm" method="post">
+                        {% csrf_token %}
+                        {% crispy form %}
+                        <button type="submit" class="btn btn-primary">Create User</button>
+                    </form></div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{% endblock %}
+{% block extra_scripts %}
+
+<script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('select[name="employee"]').select2({
+        placeholder: "Select Employee",
+        allowClear: true
+    });
+
+    $('#employeeUserForm').submit(function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(response) {
+                if (response.status === 'success') {
+                    alert(response.message);
+                    $('#employeeUserForm')[0].reset();
+                    $('select[name="employee"]').val('').trigger('change');
+                } else {
+                    if (response.errors) {
+                        for (var field in response.errors) {
+                            $('#id_' + field + '_errors').text(response.errors[field]).show();
+                        }
+                    } else {
+                        alert(response.message);
+                    }
+                }
+            },
+            error: function() {
+                alert('An error occurred');
+            }
+        });
+    });
+});
+</script>
+
+{% endblock extra_scripts %}

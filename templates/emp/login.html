@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS Login</title>
+    <style>
+        .login-logo img {
+            max-width: 150px;
+        }
+        .login-box {
+            width: 360px;
+            margin: 7% auto;
+        }
+    </style>
+    {% load static %}
+</head>
+<body class="hold-transition login-page">
+<div class="login-box">
+    <div class="login-logo">
+        <img src="{% static 'img/sab-logo-full.png' %}" alt="Company Logo">
+        <h2>CRM Portal</h2>
+    </div>
+    <div class="card">
+        <div class="card-body login-card-body">
+            <p class="login-box-msg">Sign in to start your session</p>
+            <form id="loginForm" method="post">
+                {% csrf_token %}
+                {% load crispy_forms_tags %}
+                {% crispy form %}
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                    </div>
+                </div>
+            </form>
+            <p class="mb-1">
+                <a href="{% url 'emp:password_reset' %}">I forgot my password</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'adminlte/plugins/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    $('#loginForm').submit(function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(response) {
+                if (response.status === 'success') {
+                    window.location.href = response.redirect;
+                } else {
+                    alert(response.message || 'An error occurred');
+                }
+            },
+            error: function() {
+                alert('An error occurred while logging in.');
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>

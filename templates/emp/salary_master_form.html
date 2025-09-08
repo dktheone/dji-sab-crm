@@ -1,0 +1,51 @@
+<!-- emp/salary_master_form.html -->
+{% extends 'layouts/base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Salary Master for {{ employee }}{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+    <h1>Salary Master for {{ employee }}</h1>
+    <form id="salaryMasterForm" method="post">
+        {% csrf_token %}
+        {% crispy form %}
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+    <table class="table mt-4">
+        <thead>
+            <tr>
+                <th>Salary Amount</th>
+                <th>Effective From</th>
+                <th>Status</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for master in masters %}
+            <tr>
+                <td>{{ master.salary_amount }}</td>
+                <td>{{ master.effective_from }}</td>
+                <td>{{ master.status }}</td>
+                <td>{{ master.remarks|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script>
+    $('#salaryMasterForm').submit(function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: '',
+            type: 'POST',
+            data: new FormData(this),
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.status === 'success') {
+                    location.reload();
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

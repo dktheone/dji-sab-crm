@@ -1,0 +1,616 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block title %}
+EMPLOYEE VIEW
+{% endblock title %}
+{% block extrastyle %}
+<style>
+    @media print {
+        .sidebar, .navbar, .content-header { display: none; }
+        .content-wrapper { margin-left: 0; }
+    }
+    </style>
+    <style>
+        /* Wizard step indicator styles */
+        .wizard-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #eee;
+            border: 1px solid #ddd;
+        }
+        .step.active {
+            background: #007bff;
+            color: white;
+        }
+    </style>
+    <style>
+        /* body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333;
+        } */
+        .cv-container {
+            max-width: 750px;
+            margin: 25px auto;
+            padding: 25px;
+            background: #fff;
+            border: 1px solid #ddd;
+        }
+        .section-title {
+            background: #f8f9fa;
+            padding: 8px;
+            margin-bottom: 10px;
+            font-size: 14pt;
+            font-weight: bold;
+            border-left: 4px solid #007bff;
+            page-break-after: avoid;
+        }
+        .cv-header {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .cv-header h1 {
+            font-family: 'Arial Black';
+            font-size: 22pt;
+            margin-bottom: 5px;
+        }
+        .cv-header p {
+            margin: 2px 0;
+            font-size: 10pt;
+        }
+        .row {
+            margin-bottom: 8px;
+        }
+        .label {
+            font-weight: bold;
+            font-size: 9pt;
+            color: #555;
+        }
+        .value {
+            font-size: 9pt;
+        }
+        table {
+            font-size: 9pt;
+            margin-bottom: 15px;
+        }
+        th {
+            background: #e9ecef;
+            padding: 6px;
+        }
+        td {
+            padding: 6px;
+            vertical-align: top;
+        }
+        hr {
+            margin: 10px 0;
+            border-top: 1px solid #ddd;
+        }
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        @media print {
+            .print-btn {
+                display: none;
+            }
+            .cv-container {
+                margin: 0;
+                border: none;
+                padding: 10mm;
+                width: 100%;
+            }
+            body {
+                margin: 0;
+                font-size: 9pt;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+        p {
+    page-break-inside: avoid;
+}
+        .page-break {
+            page-break-before: always;
+        }
+        
+        .new-section {
+    page-break-before: always;
+}
+
+
+/* Print-specific styles for better page breaking */
+@media print {
+            body * {
+                visibility: hidden; /* Hide everything by default for printing */
+            }
+            #contentToExport, #contentToExport * {
+                visibility: visible; /* Make only the contentToExport div and its children visible */
+            }
+            #contentToExport {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 10mm; /* Add some padding for print */
+                border: none;
+                box-shadow: none;
+                background-color: white;
+            }
+            .letterhead {
+                /* Ensure letterhead stays at top of each page if needed, or just first page */
+                /* For a letterhead that appears only on the first page, no special print styling is needed here,
+                   as it's part of the #contentToExport.
+                   If you need it on every page, more advanced CSS (e.g., repeating header) or JS manipulation is needed. */
+                margin-bottom: 1.5rem; /* Keep spacing consistent */
+                border-bottom: 1px solid #e5e7eb;
+            }
+            /* Avoid breaking content inside paragraphs and list items */
+            p, ul, li {
+                page-break-inside: avoid !important;
+            }
+            /* Avoid breaking a section title from its content */
+            h2 + p, h3 + ul, h3 + p {
+                page-break-before: auto !important;
+                page-break-after: avoid !important;
+            }
+        }
+    </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+{% endblock extrastyle %}
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="content-header">
+
+
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Employee Profile: {{ employee.first_name }} {{ employee.last_name }}</h1>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- Wizard Step Indicator -->
+    <div class="wizard-steps">
+        <div class="step"><a href="{% url 'emp:employee_edit' employee.id %}">1. Registration</a></div>
+        <div class="step"><a href="{% url 'emp:employee_details' employee.id %}">2. Education/Experience/Family</a></div>
+        <div class="step"><a href="{% url 'emp:employee_uploads' employee.id %}">3. Uploads</a></div>
+        <div class="step active">4. Print Profile</div>
+    </div>
+    
+    <div class="container-fluid bg-dark">
+        <div class="row">
+            <div class="col-sm-12">
+                <button onclick="exportDivToPdf()" class="btn btn-primary m-1"> <i class="fas fa-file-pdf"></i> PDF</button>
+                <button onclick="printDivContent()" class="btn btn-primary m-1"> <i class="fas fa-print"></i> Print</button>
+            </div>
+        </div>
+    </div>
+    <div id="contentToExport" class="cv-container">
+
+
+
+        {% include 'emp/company_header.html' %}
+        
+        <div class="row">
+            <div class="col-12 text-center">
+                <h5 >EMPLOYEE PROFILE</h1>
+                <hr/>
+            </div>
+        </div>
+        <div class="cv-header">
+        <div class="row">
+            <div class="col-3 center">
+                <div class="align-self-center mr-3">
+                    {% if employee.photo %}
+                        <img src="{{ employee.photo.url }}" alt="Profile Photo" class="img-fluid" style="max-width: 80px; margin-top: 10px;">
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-9 left-align mt-2 ">
+                
+                <h1 class="display-1">{{ employee.first_name }} {% if employee.middle_name %}{{ employee.middle_name }} {% endif %}{{ employee.last_name }}</h1>
+                <p>EMPLOYEE CODE - {{ employee.emp_code|default:"-" }}</p>
+                <p>{{ employee.email|default:"-" }}</p>
+                <p>{{ employee.contact_no|default:"-" }} | {{ employee.nationality|default:"-" }}</p>
+                
+
+            </div>
+        </div>
+            
+        </div>
+        <!-- Personal Information -->
+        <div class="section-title">Personal Information</div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Employee Code:</div>
+                    <div class="col-7 value">{{ employee.emp_code|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Date of Birth:</div>
+                    <div class="col-7 value">{{ employee.dob|date:"d/m/Y"|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Gender:</div>
+                    <div class="col-7 value">{{ employee.gender|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Marital Status:</div>
+                    <div class="col-7 value">{{ employee.marital_status|default:"-" }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Father's Name:</div>
+                    <div class="col-7 value">{{ employee.father_name|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Mother's Name:</div>
+                    <div class="col-7 value">{{ employee.mother_name|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Nationality:</div>
+                    <div class="col-7 value">{{ employee.nationality|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Blood Group:</div>
+                    <div class="col-7 value">{{ employee.blood_group|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="section-title">Contact Information</div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Correspondence Address:</div>
+                    <div class="col-7 value">{{ employee.cor_address|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">City/State:</div>
+                    <div class="col-7 value">{{ employee.cor_city|default:"-" }} / {{ employee.cor_state|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Pincode:</div>
+                    <div class="col-7 value">{{ employee.cor_pincode|default:"-" }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Permanent Address:</div>
+                    <div class="col-7 value">{{ employee.per_address|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">City/State:</div>
+                    <div class="col-7 value">{{ employee.per_city|default:"-" }} / {{ employee.per_state|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Pincode:</div>
+                    <div class="col-7 value">{{ employee.per_pincode|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Identity Proofs -->
+        <div class="section-title">Identity Proofs</div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Aadhaar Number:</div>
+                    <div class="col-7 value">{{ employee.aadhaar_no|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">PAN Card:</div>
+                    <div class="col-7 value">{{ employee.pan_card|default:"-" }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Passport Number:</div>
+                    <div class="col-7 value">{{ employee.passport_no|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Other ID Proof:</div>
+                    <div class="col-7 value">{{ employee.other_id_proof_type|default:"-" }}: {{ employee.other_id_proof_no|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Information -->
+        <div class="section-title">Job Information</div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Site:</div>
+                    <div class="col-7 value">{{ employee.site|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Designation:</div>
+                    <div class="col-7 value">{{ employee.designation|default:"-" }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Joining Date:</div>
+                    <div class="col-7 value">{{ employee.joining_date|date:"d/m/Y"|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Department:</div>
+                    <div class="col-7 value">{{ employee.department|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statutory Details -->
+        <div class="section-title">Statutory Details</div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="col-2 label">UAN Number:</div>
+                    <div class="col-4 value">{{ employee.uan_no|default:"-" }}</div>
+                
+                    <div class="col-2 label">PF/ESIC Number:</div>
+                    <div class="col-4 value">{{ employee.pf_esic_no|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+
+
+        
+        <!-- Bank Details -->
+        <div class="section-title">Bank Details</div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Bank Name:</div>
+                    <div class="col-7 value">{{ employee.bank_name|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Account Number:</div>
+                    <div class="col-7 value">{{ employee.account_no|default:"-" }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">IFSC Code:</div>
+                    <div class="col-7 value">{{ employee.ifsc_code|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">UPI ID:</div>
+                    <div class="col-7 value">{{ employee.upi_id|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div class="section-title">Emergency Contact</div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Name:</div>
+                    <div class="col-7 value">{{ employee.emergency_person_name|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Relationship:</div>
+                    <div class="col-7 value">{{ employee.emergency_relation|default:"-" }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-5 label">Contact Number:</div>
+                    <div class="col-7 value">{{ employee.emergency_contact|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 label">Alternative Number:</div>
+                    <div class="col-7 value">{{ employee.emergency_alternative_no|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Education Details -->
+        <div class="section-title">Education Details</div>
+        {% if educations %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Degree</th>
+                    <th>Institution</th>
+                    <th>Passing Year</th>
+                    <th>Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for edu in educations %}
+                <tr>
+                    <td>{{ edu.degree|default:"-" }}</td>
+                    <td>{{ edu.institution|default:"-" }}</td>
+                    <td>{{ edu.passing_year|default:"-" }}</td>
+                    <td>{{ edu.percentage|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No education details available.</p>
+        {% endif %}
+
+        <!-- Experience Details -->
+        <div class="section-title">Work Experience</div>
+        {% if experiences %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Job Title</th>
+                    <th>Duration</th>
+                    <th>Responsibilities</th>
+                    <th>Gross Salary</th>
+                    <th>Reason for Leaving</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for exp in experiences %}
+                <tr>
+                    <td>{{ exp.company_name|default:"-" }}</td>
+                    <td>{{ exp.job_title|default:"-" }}</td>
+                    <td>{{ exp.start_date|date:"d/m/Y"|default:"-" }} - {{ exp.end_date|date:"d/m/Y"|default:"Present" }}</td>
+                    <td>{{ exp.responsibilities|default:"-"|truncatewords:20 }}</td>
+                    <td>{{ exp.gross_salary|default:"-" }}</td>
+                    <td>{{ exp.reason_for_leaving|default:"-"|truncatewords:20 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No work experience details available.</p>
+        {% endif %}
+
+        <!-- Family Details -->
+        <div class="section-title">Family Details</div>
+        {% if families %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Relationship</th>
+                    <th>Date of Birth</th>
+                    <th>Occupation</th>
+                    <th>Contact Number</th>
+                    <th>Address</th>
+                    <th>Aadhaar Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fam in families %}
+                <tr>
+                    <td>{{ fam.name|default:"-" }}</td>
+                    <td>{{ fam.relationship|default:"-" }}</td>
+                    <td>{{ fam.dob|date:"d/m/Y"|default:"-" }}</td>
+                    <td>{{ fam.occupation|default:"-" }}</td>
+                    <td>{{ fam.contact_no|default:"-" }}</td>
+                    <td>{{ fam.address|default:"-"|truncatewords:20 }}</td>
+                    <td>{{ fam.aadhaar_no|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No family details available.</p>
+        {% endif %}
+    </div>
+    
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    /**
+     * @function exportDivToPdf
+     * @description Exports the content of a specific div element to a PDF file.
+     * It uses the html2pdf.js library for client-side PDF generation.
+     */
+    function exportDivToPdf() {
+        // Get the element to export by its ID
+        const element = document.getElementById('contentToExport');
+
+        if (!element) {
+            console.error("Error: Element with ID 'contentToExport' not found.");
+            // Instead of alert, you could display a message in a custom modal or div
+            // Example: displayMessage("Error: Content to export not found.");
+            return;
+        }
+
+        const options = {
+            margin: 6,
+            filename: 'profile_{{ employee.emp_code }}.pdf', // Name of the downloaded PDF file
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 3, allowTaint: true, useCORS: true, logging: true, scrollY: 0, scale: 1, letterRendering: true, backgroundColor: '#ffffff',avoid: ['ul', '.letterhead'] }, // <-- Use 'avoid' here with an array of selectors
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        // Generate and save the PDF
+        html2pdf().set(options).from(element).save();
+    }
+
+    // Example of a custom message display function if needed (replaces alert)
+    function displayMessage(message, type = 'info') {
+        // You would implement a custom modal or a dedicated message area in your HTML
+        // For now, it just logs to console as alerts are not allowed.
+        console.log(`Message (${type}): ${message}`);
+        // In a real app, you might create and show a temporary div like:
+        /*
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = message;
+        messageDiv.style.padding = '10px';
+        messageDiv.style.backgroundColor = type === 'error' ? 'red' : 'lightblue';
+        messageDiv.style.color = 'white';
+        messageDiv.style.position = 'fixed';
+        messageDiv.style.top = '10px';
+        messageDiv.style.right = '10px';
+        messageDiv.style.borderRadius = '5px';
+        document.body.appendChild(messageDiv);
+        setTimeout(() => messageDiv.remove(), 3000); // Remove after 3 seconds
+        */
+    }
+
+    function printDivContent() {
+            const printContent = document.getElementById('contentToExport');
+
+            if (!printContent) {
+                console.error("Error: Element with ID 'contentToExport' not found for printing.");
+                displayMessage("Error: Content to print not found.", 'error');
+                return;
+            }
+
+            // Open a new window for printing
+            const printWindow = window.open('', '', 'height=600,width=800');
+
+            // Write the basic HTML structure and the content of the div to the new window
+            printWindow.document.write('<html><head><title>Print Document</title>');
+
+            // Inject the CSS styles relevant for print, especially the @media print rules
+            // It's crucial to copy styles directly or link a stylesheet
+            printWindow.document.write('<style>');
+            // Copy all styles from the current document
+            const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
+            styles.forEach(style => {
+                if (style.tagName === 'STYLE') {
+                    printWindow.document.write(style.innerHTML);
+                } else if (style.tagName === 'LINK') {
+                    // For external stylesheets, create a new link element
+                    printWindow.document.write(`<link rel="stylesheet" href="${style.href}">`);
+                }
+            });
+            printWindow.document.write('</style>');
+
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(printContent.innerHTML); // Inject the inner HTML of the div
+            printWindow.document.write('</body></html>');
+            printWindow.document.close(); // Close the document to ensure all content is loaded
+
+            // Wait for all content (especially images) to load before printing
+            printWindow.onload = function() {
+                printWindow.focus(); // Focus the new window
+                printWindow.print(); // Trigger the print dialogue
+                // Optionally close the window after printing, but some browsers block this
+                // printWindow.close();
+            };
+        }
+
+</script>
+{% endblock extra_scripts %}

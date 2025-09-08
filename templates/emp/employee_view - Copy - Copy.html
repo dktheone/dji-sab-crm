@@ -1,0 +1,137 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block title %}
+EMPLOYEE VIEW
+{% endblock title %}
+{% block extrastyle %}
+<style>
+    @media print {
+        .sidebar, .navbar, .content-header { display: none; }
+        .content-wrapper { margin-left: 0; }
+    }
+    </style>
+{% endblock extrastyle %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Employee Profile: {{ employee.first_name }} {{ employee.last_name }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <button onclick="window.print()" class="btn btn-primary float-sm-right"> <i class="fas fa-print"></i> Print Profile</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Employee Details</h3>
+                    <div class="card-tools">
+                        <!-- <button class="btn btn-primary" onclick="window.print()">
+                            <i class="fas fa-print"></i> Print Profile
+                        </button> -->
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            {% if employee.photo %}
+                            <img src="/media/{{ employee.photo }}" class="img-fluid rounded-circle mb-3" alt="Employee Photo" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                            <div class="no-photo-placeholder rounded-circle mb-3">
+                                <i class="fas fa-user-circle fa-7x text-muted"></i>
+                                <p class="text-muted mt-2">No photo uploaded</p>
+                            </div>
+                            {% endif %}
+                            <h4 class="mb-0"><b>{{ employee.first_name }} {{ employee.last_name }}</b></h4>
+                            <p class="text-muted">{{ employee.designation }}</p>
+                        </div>
+    
+                        <div class="col-md-8">
+                            <div class="row mb-3">
+                                <div class="col-md-6 col-sm-12">
+                                    <p><strong>Employee Code:</strong> {{ employee.emp_code }}</p>
+                                    <p><strong>Department:</strong> {{ employee.department }}</p>
+                                    <p><strong>Site:</strong> {{ employee.site }}</p>
+                                    <p><strong>Status:</strong> <span class="badge badge-success">{{ employee.status }}</span></p>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <p><strong>Date of Birth:</strong> {{ employee.dob }}</p>
+                                    <p><strong>Joining Date:</strong> {{ employee.joining_date }}</p>
+                                    <p><strong>Aadhaar No:</strong> {{ employee.aadhaar_no }}</p>
+                                    <p><strong>PAN Card:</strong> {{ employee.pan_card }}</p>
+                                </div>
+                            </div>
+    
+                            <hr>
+                            
+                            <h5 class="mt-4">Contact & Address</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6 col-sm-12">
+                                    <p><strong>Contact No:</strong> {{ employee.contact_no }}</p>
+                                    <p><strong>Email:</strong> {{ employee.email }}</p>
+                                    <p><strong>Emergency Contact:</strong> {{ employee.emergency_contact }}</p>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <p><strong>Address:</strong> {{ employee.address }}, {{ employee.city }}, {{ employee.state }} - {{ employee.pincode }}</p>
+                                    <p><strong>Other ID:</strong> {{ employee.other_id_proof_type }} - {{ employee.other_id_proof_no }}</p>
+                                </div>
+                            </div>
+    
+                            <hr>
+                            
+                            <h5 class="mt-4">Financial Details</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6 col-sm-12">
+                                    <p><strong>Bank Name:</strong> {{ employee.bank_name }}</p>
+                                    <p><strong>Account No:</strong> {{ employee.account_no }}</p>
+                                </div>
+                                <div class="col-md-6 col-sm-12">
+                                    <p><strong>IFSC Code:</strong> {{ employee.ifsc_code }}</p>
+                                    <p><strong>UPI ID:</strong> {{ employee.upi_id }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <hr>
+    
+                    <h4 class="mt-4">Uploaded Documents</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for upload in uploads %}
+                                <tr>
+                                    <td>{{ upload.document_type }}</td>
+                                    <td>{{ upload.description }}</td>
+                                    <td><span class="badge {% if upload.status == 'Verified' %}badge-success{% else %}badge-warning{% endif %}">{{ upload.status }}</span></td>
+                                    <td class="text-center"><a href="/media/{{ upload.file_path }}" target="_blank" class="btn btn-sm btn-info">View</a></td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No documents uploaded.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+{% endblock extra_scripts %}

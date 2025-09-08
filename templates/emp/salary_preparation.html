@@ -1,0 +1,116 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Salary Preparation{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <h1>Salary Preparation - {{ current_month }}/{{ current_year }}</h1>
+    </div>
+    <section class="content">
+        <!-- Filters -->
+        <div class="card">
+            <div class="card-body">
+                <form method="get">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label>Site</label>
+                            <select name="site" class="form-control">
+                                <option value="">All</option>
+                                {% for s in sites %}
+                                <option value="{{ s.id }}" {% if request.GET.site == s.id|stringformat:"s" %}selected{% endif %}>{{ s.site_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>Department</label>
+                            <select name="department" class="form-control">
+                                <option value="">All</option>
+                                {% for d in departments %}
+                                <option value="{{ d.id }}" {% if request.GET.department == d.id|stringformat:"s" %}selected{% endif %}>{{ d.department_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label>Designation</label>
+                            <select name="designation" class="form-control">
+                                <option value="">All</option>
+                                {% for des in designations %}
+                                <option value="{{ des.id }}" {% if request.GET.designation == des.id|stringformat:"s" %}selected{% endif %}>{{ des.designation_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary mt-4">Filter</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <table id="prepTable" class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Site</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Pending Adjustments</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in employees %}
+                        <tr>
+                            <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+                            <td>{{ emp.site.site_name }}</td>
+                            <td>{{ emp.department.department_name }}</td>
+                            <td>{{ emp.designation.designation_name }}</td>
+                            <td>{{ emp.pending_adjustments }}</td>
+                            <td><button class="btn btn-primary" data-toggle="modal" data-target="#prepareModal" onclick="loadModal({{ emp.id }})">Prepare Salary</button></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6">No employees.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal Placeholder -->
+        <div class="modal fade" id="prepareModal">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content" id="modalContent">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    function loadModal(empId) {
+        $.get(`/emp/prepare-salary/${empId}/`, function(data) {
+            $('#modalContent').html(data);
+            // Real-time calculation
+            $('input').on('input', function() {
+                let salary = parseFloat($('#salary_amount').val()) || 0;
+                let daysInMonth = parseInt($('#days_in_month').val());
+                let absent = parseInt($('#days_absent').val()) || 0;
+                let leaveDed = (salary / daysInMonth) * absent;
+                let adjNet = 0;
+                $('.partial-input').each(function() {
+                    let partial = parseFloat($(this).val()) || 0;
+                    let sign = parseInt($(this).data('sign'));  // 1 or -1 based on type
+                    adjNet += sign * partial;
+                });
+                let net = salary + adjNet - leaveDed;
+                $('#net_salary').text(net.toFixed(2));
+            });
+        });
+    }
+</script>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

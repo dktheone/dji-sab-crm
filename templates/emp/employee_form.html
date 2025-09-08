@@ -1,0 +1,383 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+EMPLOYEE 
+{% endblock title %}
+{% block extrastyle %}
+
+<!-- <link rel="stylesheet" href="{% static 'form_main.css' %}"> -->
+<style>
+    .myinput input {
+        margin-bottom: 2px!important;
+    }
+</style>
+
+<!-- <link rel="stylesheet" href="{% static 'plugins/select2/select2.min.css' %}">
+<link rel="stylesheet" href="{% static 'plugins/select2/select2-bootstrap4.css' %}">
+<link rel="stylesheet" href="{% static 'plugins/select2/select2-bootstrap4.min.css' %}"> -->
+<!-- <link rel="stylesheet" href="{% static 'plugins/select2/_layout.scss' %}">
+<link rel="stylesheet" href="{% static 'plugins/select2/_multiple.scss' %}">
+<link rel="stylesheet" href="{% static 'plugins/select2/_single.scss' %}"> -->
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+    /* Wizard step indicator styles */
+    .wizard-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .step {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        background: #eee;
+        border: 1px solid #ddd;
+    }
+    .step.active {
+        background: #007bff;
+        color: white;
+    }
+</style>
+{% endblock extrastyle %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="content-header">
+        <h1>{% if employee %}Edit Employee{% else %}Add Employee{% endif %}</h1>
+    </div>
+    
+<div class="wizard-steps">
+    <div class="step active">1. Registration</div>
+    {% if employee %}
+    <div class="step"><a href="{% url 'emp:employee_details' employee.id %}">2. Education/Experience/Family</a></div>
+    <div class="step"><a href="{% url 'emp:employee_uploads' employee.id %}">3. Uploads</a></div>
+    <div class="step"><a href="{% url 'emp:employee_view' employee.id %}">4. Print Profile</a></div>
+    {% else %}
+    <div class="step">2. Education/Experience/Family</div>
+    <div class="step">3. Uploads</div>
+    <div class="step">4. Print Profile</div>
+    {% endif %}
+
+</div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Employee Details</h3>
+                </div>
+                <div class="card-body">
+                    <form id="employeeForm" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <!-- <div class="photo-preview-container  text-center right float-right" style="max-width: 200px;max-height: 300px;width: 200px;height: 300px;">
+                            <img id="photo-preview" src="{% static 'img/nopic.jpg' %}" alt="Photo Preview" class="img-thumbnail" style="max-width: 200px;">
+                        </div> -->
+                        <!-- <div class="photo-preview-container position-absolute" style="top:60; right:20px; width:300px;">
+                            <img id="photo-preview" src="{% static 'img/nopic.jpg' %}" class="img-thumbnail w-100">
+                        </div> -->
+                        
+                        {% crispy employee_form %}
+                        
+                        <button type="submit" class="btn btn-primary">{% if employee %}Update{% else %}Save and Proceed to Uploads{% endif %}</button>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+
+    
+    // Function to load cities based on state
+    function loadCities_per(stateCode, selectedCity) {
+        if (stateCode) {
+            $.ajax({
+                url: "{% url 'emp:get_cities' %}",
+                type: 'GET',
+                data: { state_code: stateCode },
+                success: function(response) {
+                    var citySelect = $('#id_per_city');
+                    // alert(response)
+                    citySelect.empty().append('<option value="">Select City</option>');
+                    $.each(response.cities, function(index, city) {
+                        var option = $('<option></option>').attr('value', city[0]).text(city[1]);
+                        if (selectedCity && city[0] === selectedCity) {
+                            option.attr('selected', 'selected');
+                        }
+                        citySelect.append(option);
+                    });
+                    citySelect.trigger('change'); // Trigger Select2 to update
+                },
+                error: function() {
+                    console.log('Error loading cities');
+                }
+            });
+        } else {
+            $('#id_cor_city').empty().append('<option value="">Select City</option>').trigger('change');
+        }
+    }
+    // Function to load cities based on state
+    function loadCities_cor(stateCode, selectedCity) {
+        if (stateCode) {
+            $.ajax({
+                url: "{% url 'emp:get_cities' %}",
+                type: 'GET',
+                data: { state_code: stateCode },
+                success: function(response) {
+                    var citySelect = $('#id_cor_city');
+                    // alert(response)
+                    citySelect.empty().append('<option value="">Select City</option>');
+                    $.each(response.cities, function(index, city) {
+                        var option = $('<option></option>').attr('value', city[0]).text(city[1]);
+                        if (selectedCity && city[0] === selectedCity) {
+                            option.attr('selected', 'selected');
+                        }
+                        citySelect.append(option);
+                    });
+                    citySelect.trigger('change'); // Trigger Select2 to update
+                },
+                error: function() {
+                    console.log('Error loading cities');
+                }
+            });
+        } else {
+            $('#id_cor_city').empty().append('<option value="">Select City</option>').trigger('change');
+        }
+    }
+    $(document).ready(function() {
+
+        
+        photo_preview = document.getElementById('photo-preview');
+        
+        {% if employee %}
+            // alert("Photo URL is: " + photo_preview.src +  "{{ employee.photo.url }}");
+            {% if employee.cor_state %}
+                $('select[name="state"]').val('{{ employee.cor_state }}').trigger('change');
+                photo_preview.src = "{{ employee.photo.url }}";
+                
+                {% if employee.cor_city %}
+                    setTimeout(function() {
+                        $('select[name="city"]').val('{{ employee.cor_city }}').trigger('change');
+                    }, 500); // Delay to ensure cities are loaded
+                {% endif %}
+            {% endif %}
+        {% endif %}
+        // Initialize Select2 for all select fields
+        $('#id_designation, #id_department, #id_site, #id_cor_state, #id_cor_city, #id_per_state, #id_per_city').select2({
+            placeholder: "Select an option",
+            allowClear: true
+        });
+
+        
+        // Load cities on state change
+        $('#id_cor_state').change(function() {
+            var stateCode = $(this).val();
+            loadCities_cor(stateCode, null);
+        });
+        
+        // Load cities on state change
+        $('#id_per_state').change(function() {
+            var stateCode = $(this).val();
+            loadCities_per(stateCode, null);
+        });
+
+
+
+            // Initialize city dropdown for edit mode
+            `{% if initial_state and initial_city %}
+            loadCities('{{ initial_state }}', '{{ initial_city }}');
+            {% elif initial_state %}
+            loadCities('{{ initial_state }}', null);
+            {% endif %}
+            // Set initial city if editing
+            `
+        
+            $('#employeeForm').submit(function(e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '',
+                    type: 'POST',
+                    data: new FormData(this),
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        // console.log(response.status)
+                        if (response.status === 'success') {
+                            SuccessMSG(response.message);
+                            SuccessMSG(response.redirect);
+                            window.location.hreftreroute = response.redirect;
+                        } else 
+                        {
+
+                            console.log(response.errors.responseJSON)
+                            $('#step1_Errors').val(response.errors.responseJSON);
+                            for (var field in response.errors) {
+                                console.log(response.errors[field])
+                                ErrorMSG(response.errors[field])
+                                // $('#id_' + field + '_errors').text(response.errors[field]).show();
+                            }
+                        }
+                    },
+                    // error: function(jqXHR, textStatus, errorThrown) {
+                    error: function(response) {
+                        // console.log(response, response.status)
+                        // console.log("AJAX Error:", jqXHR, textStatus, errorThrown);                    
+                        // console.log(response.responseJSON.errors)
+                        $('#step1_Errors').val(response.responseJSON.errors);
+                        for (var field in response.responseJSON.errors) {
+                            console.log(response.responseJSON.errors[field])
+                            ErrorMSG(response.responseJSON.errors[field])
+                        }
+                    }
+                });
+            });
+        
+
+        const span_status = false;
+        function correct_span(){
+            // Find the element with the specified classes
+            const selectElements = document.querySelectorAll('.select2-selection.select2-selection--single');
+
+            selectElements.forEach(element => {
+                // console.log(element)
+                element.style.height = '40px';
+            });
+            // Find the element with the specified classes
+            const selectElements2 = document.querySelectorAll('.select2.select2-container.select2-container--default');
+
+            selectElements2.forEach(element => {
+                // console.log(element)
+                element.style.width = '100%';
+            });
+        }
+        if (span_status == false) {
+            var stateCode =  $('#id_cor_state').val();
+            initial_city = "{{ initial_city }}"
+            // InfoMSG("SELECT STATE IS "+ stateCode + " - " + initial_city)
+            loadCities_cor(stateCode, initial_city);
+
+            
+            var stateCode =  $('#id_per_state').val();
+            initial_city = "{{ initial_city }}"
+            // InfoMSG("SELECT STATE IS "+ stateCode + " - " + initial_city)
+            loadCities_per(stateCode, initial_city);
+            // document.addEventListener('DOMContentLoaded', correct_span);
+            setTimeout(correct_span, 1000);
+            
+            if  (span_status) {
+            span_status = true }
+        }
+        // Get the file input element (Crispy Forms renders this from the 'photo' field)
+        const photoInput = document.getElementById('id_photo');
+        // Get the image element for the preview
+        const photoPreview = document.getElementById('photo-preview');
+
+        // Listen for changes on the file input
+        photoInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Create a FileReader object to read the file
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Set the image source to the file's data URL
+                    photoPreview.src = e.target.result;
+                    // Make the image visible
+                    photoPreview.style.display = 'block';
+                };
+                // Read the file as a data URL
+                reader.readAsDataURL(file);
+            } else {
+                // If no file is selected, hide the preview
+                photoPreview.src = '#';
+                photoPreview.style.display = 'none';
+            }
+        });
+    });
+    </script>
+
+<script>
+   document.addEventListener('DOMContentLoaded', function() {
+        // Get the IFSC input field by its ID (assuming Crispy Forms generates 'id_ifsc_code')
+        const ifscInput = document.getElementById('id_ifsc_code');
+        const bankNameSpan = document.getElementById('id_bank_name');
+        const branchNameinput = document.getElementById('id_branch_details');
+        const errorMessageDiv = document.getElementById('ifsc_error_message');
+
+        // Function to clear displayed details and error message
+        function clearDetails() {
+            bankNameSpan.textContent = '';
+            // branchNameSpan.textContent = '';
+            // branchAddressSpan.textContent = '';
+            errorMessageDiv.textContent = '';
+        }
+
+        // Add the 'blur' event listener to the IFSC input field
+        if (ifscInput) {
+            ifscInput.addEventListener('blur', function() {
+                const ifscCode = this.value.trim().toUpperCase(); // Get value, trim whitespace, convert to uppercase for consistency
+
+                clearDetails(); // Clear previous details and errors on blur
+
+                if (!ifscCode) {
+                    errorMessageDiv.textContent = 'IFSC code cannot be empty.';
+                    ErrorMSG('IFSC code cannot be empty.');
+                    return;
+                }
+
+                // Simple CSRF token for Django POST requests (essential for security)
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                // Make the AJAX request
+                fetch('/emp/get-ifsc-data/', { // Adjust URL based on your urls.py setup
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: new URLSearchParams({
+                        'ifsc_code': ifscCode
+                    })
+                })
+                .then(response => {
+                    // Check if the response is OK (status code 2xx) or an error (e.g., 400, 404)
+                    if (!response.ok) {
+                        return response.json().then(err => { 
+                            throw new Error(err.message || 'Server error'); // Throw a proper error
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Populate the spans with received data
+                        bankNameSpan.value = data.data.BANK || 'N/A';
+                        branchNameSpan = data.data.BRANCH || 'N/A';
+                        branchAddressSpan = data.data.ADDRESS || 'N/A';
+                        id_branch_details.value = branchNameSpan + ', ' + branchAddressSpan;
+                    } else {
+                        // Display error message from the backend
+                        errorMessageDiv.textContent = data.message || 'An unknown error occurred.';
+                        ErrorMSG(data.message || 'An unknown error occurred.');
+                    }
+                })
+                .catch(error => {
+                    // Log the error for debugging and display a user-friendly message
+                    console.error('Error fetching IFSC details:', error);
+                    errorMessageDiv.textContent = error.message || 'Failed to connect to the server or unexpected error.';
+                    ErrorMSG(error.message || 'Failed to connect to the server or unexpected error.');
+                });
+            });
+        } else {
+            console.error("IFSC input field with ID 'id_ifsc_code' not found.");
+        }
+    });
+</script>
+{% endblock extra_scripts %}
