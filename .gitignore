@@ -17,3 +17,6 @@ env_sab
 node_modules
 *.tar
 *.rar
+requirements copy.txt
+requirements copy.txt
+requirements_anaconda.txt
