@@ -7,10 +7,11 @@
 /node_modules/
 build/
 env
+env_sab
 /staticfiles/
 
 #src
 #*.sqlite*
-
+.env_sab
 .env
 node_modules
