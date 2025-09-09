@@ -6,6 +6,8 @@
 /docs/_build/
 /node_modules/
 build/
+/env
+/env_sab
 env
 env_sab
 /staticfiles/
@@ -18,6 +20,5 @@ node_modules
 *.tar
 *.rar
 requirements copy.txt
-requirements copy.txt
 requirements_anaconda.txt
-requirements copy.txt
+updates-2025-08-19.txt
