@@ -1,0 +1,11 @@
+env_sab/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+*.DS_Store
+*.git
+.dockerignore
+.env

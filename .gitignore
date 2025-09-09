@@ -15,3 +15,5 @@ env_sab
 .env_sab
 .env
 node_modules
+*.tar
+*.rar
