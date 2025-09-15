@@ -13,12 +13,13 @@ env_sab
 /staticfiles/
 
 #src
-#*.sqlite*
+*.sqlite*
 .env_sab
 .env
 node_modules
 *.tar
 *.rar
+*.sqlite3
 requirements copy.txt
 requirements_anaconda.txt
 updates-2025-08-19.txt
