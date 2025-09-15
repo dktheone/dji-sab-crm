@@ -13,6 +13,35 @@ MANAGE SITES
 </style>
 <link rel="stylesheet" href="{% static 'plugins/select2/select2.min.css' %}">
 <link rel="stylesheet" href="{% static 'plugins/select2/select2-bootstrap4.min.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+<style>
+    /* Compact table styling */
+    .table.dataTable {
+        font-size: 0.9rem;
+    }
+    .table.dataTable thead th {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .table.dataTable tbody td {
+        padding: 8px;
+    }
+    /* Compact modal styling */
+    .modal-content {
+        border-radius: 0.5rem;
+    }
+    .modal-dialog {
+        max-width: 500px;
+    }
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    .action-btn {
+        margin-right: 5px;
+    }
+</style>
 {% endblock extrastyle %}
 
 {% block content %}
@@ -23,9 +52,6 @@ MANAGE SITES
                 <div class="col-sm-6">
                     <h1 class="m-0">Manage Sites</h1>
                 </div>
-                <div class="col-sm-6">
-                    <button class="btn btn-primary float-sm-right" data-toggle="modal" data-target="#addsiteModal">Add Sites</button>
-                </div>
             </div>
         </div>
     </div>
@@ -34,40 +60,44 @@ MANAGE SITES
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Site List</h3>
+                    <div class="card-tools">
+                        <button class="btn btn-primary float-sm-right" data-toggle="modal" data-target="#addsiteModal">
+                            <i class="fas fa-plus"></i> Add Site
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <table id="siteTable" class="table table-bordered table-hover">
+                    <table id="siteTable" class="table table-hover">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Address</th>
-                                <th>Remark</th>
-                                <th>Status</th>
-                                <th>Created At</th>
-                                <th>Created By</th>
-                                <th>Actions</th>
+                                <th>#</th>
+                                <th style="width: 50%;">Name & Address</th>
+                                
+                                <th style="width: 10%;">Status</th>
+                                <th style="width: 20%;">Created At</th>
+                                <th style="width: 10%;">Created By</th>
+                                <th style="width: 10%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for site in sites %}
                             <tr>
+                                <td>{{ site.id }}</td>
                                 <td>
+
                                     <h4 class="fw-bolder">{{ site.site_name }}</h4>
-                                </td>
-                                <td>
                                     {{ site.address|default:"-" }}<br>
-                                    {{ site.city|default:"-" }}, {{ site.state|default:"-" }}, {{ site.pincode|default:"-" }}
+                                    {{ site.city|default:"-" }}, {{ site.state|default:"-" }}, {{ site.pincode|default:"-" }}<br>
+                                
+                                    <u>Remark</u> :{{ site.remark|default:"-" }}
                                 </td>
-                                <td>
-                                    {{ site.remark|default:"-" }}
-                                </td>
-                                <td>
-                                    <span class="badge {% if site.status == 'Active' %}bg-success
+                                <td><span class="badge {% if site.status == 'Active' %}bg-success
                                         {% elif site.status == 'Inactive' %}bg-danger
                                         {% elif site.status == 'Under Maintenance' %}bg-warning
-                                        {% else %}bg-secondary{% endif %}">
+                                        {% else %}bg-secondary{% endif %} fs-20">
                                         {{ site.status }}
                                     </span>
+                                    
                                 </td>
                                 <td>{{ site.created_at|date:"Y-m-d H:i" }}</td>
                                 <td>{{ site.created_by.username }}</td>
@@ -190,6 +220,17 @@ MANAGE SITES
 {% block extra_scripts %}
 <script src="{% static 'plugins/select2/select2.min.js' %}"></script>
 <script>
+    
+    $('#sitesTable').DataTable({
+        "pageLength": 10,
+        "lengthMenu": [5, 10, 25, 50],
+        "responsive": true,
+        "autoWidth": false,
+        "order": [[4, "desc"]], // Sort by Created At (descending)
+        "columnDefs": [
+            { "orderable": false, "targets": 6 } // Disable sorting on Actions column
+        ]
+    });
     var action_url = "{% url 'emp:site_crud' %}";
 
     function load_site(action_url) {
