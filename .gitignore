@@ -20,7 +20,7 @@ node_modules
 *.tar
 *.rar
 *.sqlite3
-requirements copy.txt
 requirements_anaconda.txt
-updates-2025-08-19.txt
-requirements copy.txt
+updates_2025_08_19.txt
+*.sqlite3
+requirements_copy.txt
