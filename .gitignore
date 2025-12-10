@@ -37,3 +37,4 @@ known_issues.md
 
 # Duplicate/backup files
 requirements copy.txt
+db.sqlite3
