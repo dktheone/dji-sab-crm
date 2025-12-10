@@ -72,7 +72,11 @@ urlpatterns = [
     path('sites/', emp_views.site_crud, name='site_crud'),
     path('sites/delete/<int:site_id>/', emp_views.delete_site, name='delete_site'),
     
-    
+    # Existing URLs (e.g., for sites)
+    path('contacts/', emp_views.contacts_view, name='contacts'),
+    path('contact_add/', emp_views.contact_add, name='contact_add'),
+    path('get_site_details/<int:site_id>/', emp_views.get_site_details, name='get_site_details'),
+    path('get-ifsc-data/', emp_views.get_ifsc_data, name='get_ifsc_data'),
     path('list/', emp_views.employee_list, name='employee_list'),
     path('dash/', emp_views.EmployeeDashboardView.as_view(), name='employee_dash'),
 
@@ -85,13 +89,24 @@ urlpatterns = [
     path('status/<int:employee_id>/', emp_views.update_employee_status, name='update_employee_status'),
     path('get-cities/', emp_views.get_cities, name='get_cities'),
     path('create-user/', emp_views.create_employee_user, name='create_employee_user'),
+    
+    # Employee profile popup
+    path('employee-profile/<int:employee_id>/', emp_views.employee_profile_popup, name='employee_profile_popup'),
+    
     # New URLs
     path('salary-master/', emp_views.salary_master_list, name='salary_master_list'),
-    path('salary-master/<int:emp_id>/', emp_views.salary_master_detail, name='salary_master_detail'),
-    path('adjustments/', emp_views.adjustments_page, name='adjustments_page'),
-    
-    path('adjustments2/', emp_views.adjustments_list, name='adjustments_list'),
-    path('adjustments_form/', emp_views.adjustments_form, name='adjustments_form'),
+    path('salary-master-detail/<int:emp_id>/', emp_views.salary_master_detail, name='salary_master_detail'),
+    path('adjustments/<int:employee_id>/', emp_views.adjustments_form, name='adjustments_form'),
     path('salary-preparation/', emp_views.salary_preparation, name='salary_preparation'),
-    path('prepare-salary/<int:emp_id>/', emp_views.prepare_salary, name='prepare_salary'),
+    path('process-salary-bulk/', emp_views.process_salary_bulk, name='process_salary_bulk'),
+    path('export-salary-xlsx/', emp_views.export_salary_xlsx, name='export_salary_xlsx'),
+    path('export-salary-pdf/', emp_views.export_salary_pdf, name='export_salary_pdf'),
+    path('prepare-salary/<int:employee_id>/', emp_views.prepare_salary, name='prepare_salary'),
+    path('salary-master/<int:employee_id>/', emp_views.salary_master_form, name='salary_master_form'),
+    
+    # API Endpoints for Create User page
+    path('api/employees-json/', emp_views.get_employees_json, name='get_employees_json'),
+    path('api/employees-list/', emp_views.get_employees_list, name='get_employees_list'),
+    path('api/check-duplicate/', emp_views.check_duplicate, name='check_duplicate'),
+    path('employee/<int:employee_id>/profile/', emp_views.get_employee_profile, name='get_employee_profile'),
 ]

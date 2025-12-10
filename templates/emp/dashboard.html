@@ -8,66 +8,67 @@
 
 {% block content %}
 
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <div class="content-header">
-      <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1 class="m-0">CRM Dashboard</h1>
-          </div><!-- /.col -->
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item active">CRM Dashboard</li>
-            </ol>
-          </div><!-- /.col -->
-        </div><!-- /.row -->
-      </div><!-- /.container-fluid -->
-    </div>
-    <!-- /.content-header -->
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">CRM Dashboard</h1>
+        </div><!-- /.col -->
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item active">CRM Dashboard</li>
+          </ol>
+        </div><!-- /.col -->
+      </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+  </div>
+  <!-- /.content-header -->
 
-    <!-- Main content -->
-    <div class="content">
-      <div class="container-fluid">
+  <!-- Main content -->
+  <div class="content">
+    <div class="container-fluid">
 
-        <!-- =========================================================== -->
-        <h5 class="mb-2">Custom Shadows Variations <small><i>Using Bootstrap's Shadow Utility</i></small></h5>
-        <div class="row">
-          <!-- /.col -->
-          <div class="col-md-3">
-            <!-- Widget: user widget style 1 -->
-            <div class="card card-widget widget-user shadow">
-              <!-- Add the bg color to the header using any of the bg-* classes -->
-              <div class="widget-user-header bg-info">
-                <h1 class="fw-bold"><strong>{{ employee.first_name }} {{ employee.last_name }}</strong></h1>
-              </div>
-              <div class="widget-user-image">
-                <img class=" elevation-2" src="{{ employee.photo.url }}" alt="{{ employee.first_name }}" width="100" height="100" style="width: 100px!important;height: 100px!important;">
-              </div>
-              <div class="card-footer">
-                <div class="row">
-                  <div class="col-sm-4 border-right">
-                    <div class="description-block">
-                      <span class="description-text text-muted">SITE</span>
-                      <h3 class="description-header">{{ employee.site }}</h3>
-                    </div>
-                    <!-- /.description-block -->
+      <!-- =========================================================== -->
+      <h5 class="mb-2">Custom Shadows Variations <small><i>Using Bootstrap's Shadow Utility</i></small></h5>
+      <div class="row">
+        <!-- /.col -->
+        <div class="col-md-3">
+          <!-- Widget: user widget style 1 -->
+          <div class="card card-widget widget-user shadow">
+            <!-- Add the bg color to the header using any of the bg-* classes -->
+            <div class="widget-user-header bg-info">
+              <h1 class="fw-bold"><strong>{{ employee.first_name }} {{ employee.last_name }}</strong></h1>
+            </div>
+            <div class="widget-user-image">
+              <img class=" elevation-2" src="{{ employee.photo.url }}" alt="{{ employee.first_name }}" width="100"
+                height="100" style="width: 100px!important;height: 100px!important;">
+            </div>
+            <div class="card-footer">
+              <div class="row">
+                <div class="col-sm-4 border-right">
+                  <div class="description-block">
+                    <span class="description-text text-muted">SITE</span>
+                    <h3 class="description-header">{{ employee.site }}</h3>
                   </div>
-                  <!-- /.col -->
-                  <div class="col-sm-8 border-right">
-                    <div class="description-block">
-                      <span class="description-text text-muted">Dept. ( Designation )</span>
-                      <h5 class="description-header">{{ employee.department }} ({{ employee.designation }})</h5>
-                    </div>
-                    <!-- /.description-block -->
-                  </div>
-                  <!-- /.col -->
+                  <!-- /.description-block -->
                 </div>
-                <!-- /.row -->
-                 <div class="">
-                  <hr/>
+                <!-- /.col -->
+                <div class="col-sm-8 border-right">
+                  <div class="description-block">
+                    <span class="description-text text-muted">Dept. ( Designation )</span>
+                    <h5 class="description-header">{{ employee.department }} ({{ employee.designation }})</h5>
+                  </div>
+                  <!-- /.description-block -->
+                </div>
+                <!-- /.col -->
+              </div>
+              <!-- /.row -->
+              <div class="">
+                <hr />
                 <ul class="nav flex-column">
                   <li class="nav-item">
                     <a href="#" class="nav-link">
@@ -80,206 +81,189 @@
                     </a>
                   </li>
                 </ul>
-                 </div>
               </div>
             </div>
-            <!-- /.widget-user -->
           </div>
-          
-          <div class="col-md-3">
-            <div class="info-box shadow">
-              <span class="info-box-icon bg-info elevation-1"><i class="fas fa-cog"></i></span>
+          <!-- /.widget-user -->
+        </div>
 
-              <div class="info-box-content">
-                <span class="info-box-text">CPU Traffic</span>
-                <span class="info-box-number">
-                  10
-                  <small>%</small>
-                </span>
-              </div>
-              <!-- /.info-box-content -->
-            </div>
-            <div class="info-box shadow">
-              <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-thumbs-up"></i></span>
+        <div class="col-md-3">
+          <div class="info-box shadow">
+            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-cog"></i></span>
 
-              <div class="info-box-content">
-                <span class="info-box-text">Likes</span>
-                <span class="info-box-number">41,410</span>
-              </div>
-              <!-- /.info-box-content -->
+            <div class="info-box-content">
+              <span class="info-box-text">CPU Traffic</span>
+              <span class="info-box-number">
+                10
+                <small>%</small>
+              </span>
             </div>
-            <!-- /.info-box -->
-            <div class="info-box shadow">
-              <span class="info-box-icon bg-success elevation-1"><i class="fas fa-shopping-cart"></i></span>
-
-              <div class="info-box-content">
-                <span class="info-box-text">Sales</span>
-                <span class="info-box-number">760</span>
-              </div>
-              <!-- /.info-box-content -->
-            </div>
-            <!-- /.info-box -->
-            <div class="info-box shadow">
-              <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-users"></i></span>
-
-              <div class="info-box-content">
-                <span class="info-box-text">New Members</span>
-                <span class="info-box-number">2,000</span>
-              </div>
-              <!-- /.info-box-content -->
-            </div>
-            <!-- /.info-box -->
+            <!-- /.info-box-content -->
           </div>
-          
-          <div class="col-md-6">
-            
-            <div class="card">
-              <div class="card-header border-0">
-                <h3 class="card-title">Products</h3>
-                <div class="card-tools">
-                  <a href="#" class="btn btn-tool btn-sm">
-                    <i class="fas fa-download"></i>
-                  </a>
-                  <a href="#" class="btn btn-tool btn-sm">
-                    <i class="fas fa-bars"></i>
-                  </a>
-                </div>
+          <div class="info-box shadow">
+            <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-thumbs-up"></i></span>
+
+            <div class="info-box-content">
+              <span class="info-box-text">Likes</span>
+              <span class="info-box-number">41,410</span>
+            </div>
+            <!-- /.info-box-content -->
+          </div>
+          <!-- /.info-box -->
+          <div class="info-box shadow">
+            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-shopping-cart"></i></span>
+
+            <div class="info-box-content">
+              <span class="info-box-text">Sales</span>
+              <span class="info-box-number">760</span>
+            </div>
+            <!-- /.info-box-content -->
+          </div>
+          <!-- /.info-box -->
+          <div class="info-box shadow">
+            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-users"></i></span>
+
+            <div class="info-box-content">
+              <span class="info-box-text">New Members</span>
+              <span class="info-box-number">2,000</span>
+            </div>
+            <!-- /.info-box-content -->
+          </div>
+          <!-- /.info-box -->
+        </div>
+
+        <div class="col-md-6">
+          <!-- Upcoming Follow-ups Widget -->
+          <div class="card shadow">
+            <div class="card-header bg-gradient-primary border-0">
+              <h3 class="card-title text-white">
+                <i class="fas fa-calendar-check mr-2"></i>Upcoming Follow-ups (Next 7 Days)
+              </h3>
+              <div class="card-tools">
+                <span class="badge badge-light">{{ total_followups }} Total</span>
+                <a href="{% url 'leads:upcoming_followups' %}" class="btn btn-tool btn-sm text-white">
+                  <i class="fas fa-external-link-alt"></i>
+                </a>
               </div>
-              <div class="card-body table-responsive p-0">
-                <table class="table table-striped table-valign-middle">
-                  <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Price</th>
-                    <th>Sales</th>
-                    <th>More</th>
-                  </tr>
+            </div>
+            <div class="card-body p-0">
+              {% if followups %}
+              <div class="table-responsive" style="max-height: 400px;">
+                <table class="table table-hover table-sm mb-0">
+                  <thead class="bg-light sticky-top">
+                    <tr>
+                      <th style="width: 10px">#</th>
+                      <th>Date</th>
+                      <th>Client</th>
+                      <th>Contact</th>
+                      <th>Status</th>
+                      <th style="width: 60px">Action</th>
+                    </tr>
                   </thead>
                   <tbody>
-                  <tr>
-                    <td>
-                      <img src="{% static 'dist/img/default-150x150.png' %}" alt="Product 1" class="img-circle img-size-32 mr-2">
-                      Some Product
-                    </td>
-                    <td>$13 USD</td>
-                    <td>
-                      <small class="text-success mr-1">
-                        <i class="fas fa-arrow-up"></i>
-                        12%
-                      </small>
-                      12,000 Sold
-                    </td>
-                    <td>
-                      <a href="#" class="text-muted">
-                        <i class="fas fa-search"></i>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <img src="{% static 'dist/img/default-150x150.png' %}" alt="Product 1" class="img-circle img-size-32 mr-2">
-                      Another Product
-                    </td>
-                    <td>$29 USD</td>
-                    <td>
-                      <small class="text-warning mr-1">
-                        <i class="fas fa-arrow-down"></i>
-                        0.5%
-                      </small>
-                      123,234 Sold
-                    </td>
-                    <td>
-                      <a href="#" class="text-muted">
-                        <i class="fas fa-search"></i>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <img src="{% static 'dist/img/default-150x150.png' %}" alt="Product 1" class="img-circle img-size-32 mr-2">
-                      Amazing Product
-                    </td>
-                    <td>$1,230 USD</td>
-                    <td>
-                      <small class="text-danger mr-1">
-                        <i class="fas fa-arrow-down"></i>
-                        3%
-                      </small>
-                      198 Sold
-                    </td>
-                    <td>
-                      <a href="#" class="text-muted">
-                        <i class="fas fa-search"></i>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <img src="{% static 'dist/img/default-150x150.png' %}" alt="Product 1" class="img-circle img-size-32 mr-2">
-                      Perfect Item
-                      <span class="badge bg-danger">NEW</span>
-                    </td>
-                    <td>$199 USD</td>
-                    <td>
-                      <small class="text-success mr-1">
-                        <i class="fas fa-arrow-up"></i>
-                        63%
-                      </small>
-                      87 Sold
-                    </td>
-                    <td>
-                      <a href="#" class="text-muted">
-                        <i class="fas fa-search"></i>
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <img src="{% static 'dist/img/default-150x150.png' %}" alt="Product 1" class="img-circle img-size-32 mr-2">
-                      Amazing Product
-                    </td>
-                    <td>$1,230 USD</td>
-                    <td>
-                      <small class="text-danger mr-1">
-                        <i class="fas fa-arrow-down"></i>
-                        3%
-                      </small>
-                      198 Sold
-                    </td>
-                    <td>
-                      <a href="#" class="text-muted">
-                        <i class="fas fa-search"></i>
-                      </a>
-                    </td>
-                  </tr>
+                    {% for lead in followups %}
+                    <tr class="{% if lead.is_overdue %}table-danger{% elif lead.is_today %}table-warning{% endif %}">
+                      <td>
+                        {% if lead.is_overdue %}
+                        <i class="fas fa-exclamation-circle text-danger" title="Overdue!"></i>
+                        {% elif lead.is_today %}
+                        <i class="fas fa-clock text-warning" title="Today"></i>
+                        {% else %}
+                        <i class="far fa-calendar text-info"></i>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <small
+                          class="{% if lead.is_overdue %}text-danger font-weight-bold{% elif lead.is_today %}text-warning font-weight-bold{% endif %}">
+                          {{ lead.next_follow_up|date:"d M" }}
+                          {% if lead.is_overdue %}<br><span class="badge badge-danger badge-sm">Overdue</span>
+                          {% endif%}
+                          {% if lead.is_today %}<br><span class="badge badge-warning badge-sm">Today</span>{% endif %}
+                        </small>
+                      </td>
+                      <td><small>{{ lead.client_name|truncatechars:25 }}</small></td>
+                      <td><small>{{ lead.contact_person|truncatechars:20 }}</small></td>
+                      <td>
+                        <span class="badge badge-sm badge-{% if lead.lead_status == 'NEW' %}primary
+                                                               {% elif lead.lead_status == 'CONTACTED' %}info
+                                                               {% elif lead.lead_status == 'INTERESTED' %}warning
+                                                               {% else %}secondary{% endif %}">
+                          {{ lead.get_lead_status_display|truncatechars:10 }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm">
+                          <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}" class="btn btn-xs btn-info"
+                            title="Follow-up">
+                            <i class="fas fa-plus"></i>
+                          </a>
+                          <a href="{% url 'leads:lead_form' lead.lead_id %}" class="btn btn-xs btn-primary"
+                            title="View">
+                            <i class="fas fa-eye"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
                   </tbody>
                 </table>
               </div>
+              {% else %}
+              <div class="p-4 text-center text-muted">
+                <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                <p class="mb-0">No upcoming follow-ups</p>
+                <small>All follow-ups completed!</small>
+              </div>
+              {% endif %}
             </div>
-            <!-- /.card -->
+            {% if followups %}
+            <div class="card-footer bg-light">
+              <div class="row text-center">
+                <div class="col-4">
+                  <div class="description-block">
+                    <h5 class="description-header text-danger">{{ overdue_count }}</h5>
+                    <span class="description-text">Overdue</span>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="description-block">
+                    <h5 class="description-header text-warning">{{ today_count }}</h5>
+                    <span class="description-text">Today</span>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="description-block">
+                    <h5 class="description-header text-info">{{ total_followups }}</h5>
+                    <span class="description-text">Total</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
           </div>
+          <!-- /.card -->
         </div>
-        <!-- /.row -->
-
-
-
-
-        
       </div>
-      <!-- /.container-fluid -->
+      <!-- /.row -->
+
+
+
+
+
     </div>
-    <!-- /.content -->
+    <!-- /.container-fluid -->
   </div>
-  <!-- /.content-wrapper -->
+  <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
 
-  {% endblock content %}
+{% endblock content %}
 
-  {% block extra_scripts %}
-  
-    <!-- OPTIONAL SCRIPTS -->
-    <script src="{% static 'plugins/chart.js/Chart.min.js' %}"></script>
-    <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-    <script src="{% static 'dist/js/pages/dashboard3.js' %}"></script>
-  
-  {% endblock extra_scripts %}
+{% block extra_scripts %}
 
+<!-- OPTIONAL SCRIPTS -->
+<script src="{% static 'plugins/chart.js/Chart.min.js' %}"></script>
+<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+<script src="{% static 'dist/js/pages/dashboard3.js' %}"></script>
+
+{% endblock extra_scripts %}

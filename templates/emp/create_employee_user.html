@@ -1,70 +1,560 @@
 {% extends 'layouts/base.html' %}
-{% load static crispy_forms_tags %}
-{% block title %}
-CREATE USER
-{% endblock title %}
+{% load crispy_forms_tags %}
+
 {% block content %}
+<style>
+    .split-container {
+        display: flex;
+        gap: 1.5rem;
+        height: calc(100vh - 200px);
+    }
+
+    /* LEFT PANEL - Employee List */
+    .employee-list-panel {
+        flex: 0 0 400px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .list-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+
+    .list-header h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 3rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+    }
+
+    .employee-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0;
+    }
+
+    .employee-item {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .employee-item:hover {
+        background: #f3f4f6;
+    }
+
+    .employee-item.active {
+        background: #ede9fe;
+        border-left: 4px solid #667eea;
+    }
+
+    .employee-item.no-login {
+        background: #fef2f2;
+    }
+
+    .employee-item.no-login:hover {
+        background: #fee2e2;
+    }
+
+    .employee-avatar-small {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #e5e7eb;
+    }
+
+    .employee-info {
+        flex: 1;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .employee-meta {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin: 0.2rem 0 0 0;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badge-no-login {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-has-login {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    /* RIGHT PANEL - Profile Card */
+    .profile-panel {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .empty-state {
+        text-align: center;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .employee-profile-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 4px solid white;
+        object-fit: cover;
+        margin-right: 1.5rem;
+        background: white;
+    }
+
+    .profile-info h2 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+
+    .profile-info p {
+        margin: 0.3rem 0;
+        opacity: 0.9;
+    }
+
+    .profile-details {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        opacity: 0.8;
+    }
+
+    .user-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-top: 1rem;
+    }
+
+    .status-active {
+        background: #10b981;
+        color: white;
+    }
+
+    .status-inactive {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-create-user {
+        background: white;
+        color: #667eea;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+
+    .btn-create-user:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-create-user:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .loading-spinner {
+        display: none;
+        color: white;
+        margin-top: 1rem;
+    }
+
+    .employee-count {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+    }
+
+    @media (max-width: 992px) {
+        .split-container {
+            flex-direction: column;
+            height: auto;
+        }
+
+        .employee-list-panel {
+            flex: none;
+            max-height: 400px;
+        }
+
+        .profile-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .profile-avatar {
+            margin-right: 0;
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+
 <div class="content-wrapper">
-    <div class="content-header">
-        <h1>Create Employee User</h1>
-    </div>
+    <!-- Header -->
+    <section class="content-header py-2">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-sm-6">
+                    <h1 class="m-0"><i class="fas fa-user-plus text-primary"></i> Create Employee Login</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'emp:employee_list' %}">Employees</a></li>
+                        <li class="breadcrumb-item active">Create User</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
     <section class="content">
         <div class="container-fluid">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">User Creation Form</h3>
+            <div class="split-container">
+
+                <!-- LEFT PANEL: Employee List -->
+                <div class="employee-list-panel">
+                    <div class="list-header">
+                        <h3><i class="fas fa-users mr-2"></i>Employee Directory</h3>
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="employeeSearch" placeholder="Search by name or code...">
+                        </div>
+                        <div class="employee-count" id="employeeCount">
+                            Loading employees...
+                        </div>
+                    </div>
+                    <div class="employee-list" id="employeeList">
+                        <!-- Employee items will be loaded here -->
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="col-md-6">
-                    <form id="employeeUserForm" method="post">
-                        {% csrf_token %}
-                        {% crispy form %}
-                        <button type="submit" class="btn btn-primary">Create User</button>
-                    </form></div>
+
+                <!-- RIGHT PANEL: Profile Card -->
+                <div class="profile-panel">
+                    <div id="emptyState" class="empty-state">
+                        <i class="fas fa-hand-pointer"></i>
+                        <h4>Select an employee</h4>
+                        <p>Click on an employee from the list to view their profile</p>
+                    </div>
+
+                    <div id="employeeProfileCard" class="employee-profile-card" style="display:none;">
+                        <div class="profile-header">
+                            <img id="employeeAvatar" src="/static/dist/img/default-150x150.png" alt="Employee Photo"
+                                class="profile-avatar">
+                            <div class="profile-info">
+                                <h2 id="employeeName">--</h2>
+                                <p><i class="fas fa-id-badge mr-2"></i><span id="employeeCode">--</span></p>
+                                <p><i class="fas fa-briefcase mr-2"></i><span id="employeeDesignation">--</span></p>
+                            </div>
+                        </div>
+
+                        <div class="profile-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Department:</span>
+                                <span id="employeeDepartment">--</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Email:</span>
+                                <span id="employeeEmail">--</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Contact:</span>
+                                <span id="employeeContact">--</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Joining Date:</span>
+                                <span id="employeeJoining">--</span>
+                            </div>
+                        </div>
+
+                        <!-- User Status & Action -->
+                        <div class="mt-3">
+                            <div id="userStatus"></div>
+                            <button id="createUserBtn" class="btn-create-user" style="display:none;">
+                                <i class="fas fa-user-plus mr-2"></i>Create User Login
+                            </button>
+                            <div id="loadingSpinner" class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>Creating user...
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </div>
     </section>
 </div>
 
-{% endblock %}
-{% block extra_scripts %}
-
 <script>
-$(document).ready(function() {
-    // Initialize Select2
-    $('select[name="employee"]').select2({
-        placeholder: "Select Employee",
-        allowClear: true
-    });
+    $(document).ready(function () {
+        let currentEmployeeId = null;
+        let allEmployees = [];
 
-    $('#employeeUserForm').submit(function(e) {
-        e.preventDefault();
-        $.ajax({
-            url: '',
-            type: 'POST',
-            data: $(this).serialize(),
-            success: function(response) {
-                if (response.status === 'success') {
-                    alert(response.message);
-                    $('#employeeUserForm')[0].reset();
-                    $('select[name="employee"]').val('').trigger('change');
-                } else {
-                    if (response.errors) {
-                        for (var field in response.errors) {
-                            $('#id_' + field + '_errors').text(response.errors[field]).show();
-                        }
-                    } else {
-                        alert(response.message);
-                    }
+        // Load all employees
+        function loadEmployees() {
+            $.ajax({
+                url: '/emp/api/employees-list/',
+                method: 'GET',
+                success: function (data) {
+                    allEmployees = data.employees;
+                    renderEmployeeList(allEmployees);
+                    updateCount(allEmployees);
+                },
+                error: function () {
+                    $('#employeeList').html('<div class="p-3 text-center text-danger">Error loading employees</div>');
                 }
-            },
-            error: function() {
-                alert('An error occurred');
-            }
+            });
+        }
+
+        // Render employee list
+        function renderEmployeeList(employees) {
+            const html = employees.map(emp => `
+            <div class="employee-item ${!emp.has_login ? 'no-login' : ''}" data-id="${emp.id}">
+                <img src="${emp.photo || '/static/dist/img/default-150x150.png'}" 
+                     alt="${emp.name}" 
+                     class="employee-avatar-small">
+                <div class="employee-info">
+                    <p class="employee-name">${emp.name}</p>
+                    <p class="employee-meta">${emp.emp_code} • ${emp.designation}</p>
+                </div>
+                <span class="status-badge ${emp.has_login ? 'badge-has-login' : 'badge-no-login'}">
+                    ${emp.has_login ? '✓ Login' : '✗ No Login'}
+                </span>
+            </div>
+        `).join('');
+
+            $('#employeeList').html(html);
+
+            // Add click handlers
+            $('.employee-item').click(function () {
+                const empId = $(this).data('id');
+                selectEmployee(empId);
+            });
+        }
+
+        // Update employee count
+        function updateCount(employees) {
+            const noLogin = employees.filter(e => !e.has_login).length;
+            $('#employeeCount').html(`
+            <i class="fas fa-users mr-1"></i> ${employees.length} employees 
+            <span style="opacity:0.8">• ${noLogin} without login</span>
+        `);
+        }
+
+        // Search functionality
+        $('#employeeSearch').on('keyup', function () {
+            const query = $(this).val().toLowerCase();
+            const filtered = allEmployees.filter(emp =>
+                emp.name.toLowerCase().includes(query) ||
+                emp.emp_code.toLowerCase().includes(query)
+            );
+            renderEmployeeList(filtered);
         });
+
+        // Select employee
+        function selectEmployee(empId) {
+            currentEmployeeId = empId;
+            $('.employee-item').removeClass('active');
+            $(`.employee-item[data-id="${empId}"]`).addClass('active');
+            loadEmployeeProfile(empId);
+        }
+
+        // Load employee profile
+        function loadEmployeeProfile(employeeId) {
+            $.ajax({
+                url: `/emp/employee/${employeeId}/profile/`,
+                method: 'GET',
+                success: function (data) {
+                    // Populate profile card
+                    $('#employeeName').text(data.name);
+                    $('#employeeCode').text(data.emp_code);
+                    $('#employeeDesignation').text(data.designation);
+                    $('#employeeDepartment').text(data.department);
+                    $('#employeeEmail').text(data.email || 'N/A');
+                    $('#employeeContact').text(data.contact_no);
+                    $('#employeeJoining').text(data.joining_date);
+
+                    if (data.photo && data.photo !== '/static/dist/img/default-150x150.png') {
+                        $('#employeeAvatar').attr('src', data.photo);
+                    } else {
+                        $('#employeeAvatar').attr('src', '/static/dist/img/default-150x150.png');
+                    }
+
+                    // Show user status
+                    if (data.has_user) {
+                        $('#userStatus').html(`
+                        <div class="user-status status-active">
+                            <i class="fas fa-check-circle mr-2"></i>User Login Already Created
+                        </div>
+                        <p class="mt-2 mb-0" style="opacity: 0.9;">
+                            <i class="fas fa-info-circle mr-2"></i>Username: <strong>${data.username}</strong> | 
+                            Role: <strong>${data.user_role || 'Employee'}</strong>
+                        </p>
+                    `);
+                        $('#createUserBtn').hide();
+                    } else {
+                        $('#userStatus').html(`
+                        <div class="user-status status-inactive">
+                            <i class="fas fa-times-circle mr-2"></i>No User Login Created
+                        </div>
+                    `);
+                        $('#createUserBtn').show();
+                    }
+
+                    // Show profile card, hide empty state
+                    $('#emptyState').hide();
+                    $('#employeeProfileCard').fadeIn(300);
+                },
+                error: function () {
+                    alert('Error loading employee profile');
+                }
+            });
+        }
+
+        // Create user button click
+        $('#createUserBtn').click(function () {
+            if (!currentEmployeeId) return;
+
+            $(this).prop('disabled', true);
+            $('#loadingSpinner').show();
+
+            $.ajax({
+                url: '/emp/create-user/',
+                method: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                    employee: currentEmployeeId
+                },
+                success: function (response) {
+                    if (response.status === 'success') {
+                        // Refresh profile
+                        loadEmployeeProfile(currentEmployeeId);
+
+                        // Reload employee list to update badges
+                        loadEmployees();
+
+                        // Show success message
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: response.message,
+                                timer: 2000
+                            });
+                        } else {
+                            alert('Success: ' + response.message);
+                        }
+                    }
+                    $('#loadingSpinner').hide();
+                    $('#createUserBtn').prop('disabled', false);
+                },
+                error: function (xhr) {
+                    const response = xhr.responseJSON;
+                    alert('Error: ' + (response?.message || 'Failed to create user'));
+                    $('#loadingSpinner').hide();
+                    $('#createUserBtn').prop('disabled', false);
+                }
+            });
+        });
+
+        // Initial load
+        loadEmployees();
     });
-});
 </script>
 
-{% endblock extra_scripts %}
+{% endblock %}

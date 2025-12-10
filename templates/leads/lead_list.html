@@ -1,0 +1,137 @@
+<!-- templates/leads/lead_list.html (full updated template) -->
+{% extends 'layouts/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Potential Site Leads <small>Follow-up Tracking</small></h1>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Leads Overview ({{ leads.count }})</h3>
+                            <div class="card-tools">
+
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if upcoming_count > 0 %}
+                            <div class="alert alert-info alert-dismissible">
+                                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                                <strong>Upcoming Follow-ups:</strong> {{ upcoming_count }} leads need attention in the
+                                next 7 days.
+                            </div>
+                            {% endif %}
+                            <!-- Search/Filter Form (Bootstrap v4) -->
+                            <form method="get" class="mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <input type="text" name="q" value="{{ query }}" class="form-control"
+                                            placeholder="Search by client/contact name...">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select name="status" class="form-control custom-select">
+                                            <option value="">All Statuses</option>
+                                            {% for value, label in LeadStatus.choices %}
+                                            <option value="{{ value }}">{{
+                                                label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select name="employee" class="form-control custom-select">
+                                            <option value="">All Employees</option>
+                                            <option value="">Unassigned</option>
+                                            {% for emp in employees %}
+                                            <option value="{{ emp.id }}">{{ emp.first_name }} {{ emp.last_name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="submit" class="btn btn-primary btn-block">Filter</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <!-- Leads Table -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>S.No.</th>
+                                            <th>Client Name</th>
+                                            <th>Status</th>
+                                            <th>Next Follow-up</th>
+                                            <th>Created By</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for lead in leads %}
+                                        <tr>
+                                            <td>{{ lead.lead_id }}</td>
+                                            <td>{{ lead.client_name|truncatechars:30 }}</td>
+                                            <td>
+                                                <span
+                                                    class="badge badge-{% if lead.lead_status == 'New' %}info elif lead.lead_status == 'Converted' %}success else warning {% endif %}">
+                                                    {{ lead.get_lead_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ lead.next_follow_up|date:"Y-m-d"|default:"N/A" }}</td>
+                                            <td>{{ lead.created_by.first_name|default:"Unassigned" }} {{lead.created_by.last_name|default:""}}</td>
+                                            <td>
+                                                {% if lead.pk %}
+                                                <a href="{% url 'leads:lead_form' lead.lead_id %}"
+                                                    class="btn btn-sm btn-info">Edit</a>
+                                                <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}"
+                                                    class="btn btn-sm btn-secondary">Follow-ups</a>
+                                                {% if lead.lead_status != 'Converted' %}
+                                                <a href="{% url 'leads:convert_to_site' lead.lead_id %}"
+                                                    class="btn btn-sm btn-success">Convert to Site</a>
+                                                {% endif %}
+                                                <a href="{% url 'leads:employee_activity' lead.created_by_id %}"
+                                                    class="btn btn-sm btn-default">View Activity</a>
+                                                {% else %}
+                                                <span class="text-muted">Invalid Lead</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted py-4">
+                                                No leads found. <a href="">Add your first
+                                                    lead</a>!
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% if leads.has_other_pages %}
+                            <!-- Pagination (add if using Django paginator in view) -->
+                            <nav aria-label="Lead pagination">
+                                <ul class="pagination justify-content-center">
+                                    <!-- Paginator logic here if added -->
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+
+{% endblock %}

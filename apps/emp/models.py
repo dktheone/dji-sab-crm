@@ -1,15 +1,21 @@
 from django.db import models
 from django.contrib.auth.models import User
+from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
-from country_state_city import State, City
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from apps.emp.utils import generate_random_key
+from country_state_city import State, City
 import os
+# from apps import cdata 
+# from apps.ops.models import Site
+
 
 # Fetch states for India
 STATES = State.get_states_of_country('IN')
 STATE_CHOICES = [(state.iso_code, state.name) for state in STATES]    
+
+
 
 GENRAL_STATUS_CHOICES = [
     ('Active', 'Active'),
@@ -29,6 +35,9 @@ NATIONALITY_CHOICES = [
 ]
 
 ID_CHOICES = [('Voter ID','Voter ID'), ('Driving Licence No.','Driving Licence No.'), ('International ID','International ID'), ('Other','Other')]
+
+
+
 
 def get_photo_upload_path(instance, filename):
     """Generate upload path for Employee photo: media/{emp_code}/{emp_code}_{random_key}{ext}"""
@@ -84,6 +93,8 @@ class LeaveType(models.Model):
     def __str__(self):
         return self.leave_type_name
 
+
+
 class Site(models.Model):
     STATUS_CHOICES = [
         ('Active', 'Active'),
@@ -95,6 +106,10 @@ class Site(models.Model):
     city = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, choices=STATE_CHOICES, blank=True, null=True)
     pincode = models.CharField(max_length=10, blank=True, null=True)
+    contact1 = models.CharField(max_length=15, blank=True, null=True)
+    contact2 = models.CharField(max_length=15, blank=True, null=True)
+    email =  models.CharField(max_length=50, blank=True, null=True)
+    website =  models.CharField(max_length=50, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     remark = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -106,7 +121,7 @@ class Site(models.Model):
     def __str__(self):
         return self.site_name
 
-class Contact(models.Model):
+class Contacts(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     gender = models.CharField(max_length=100, choices=GENDER_CHOICES, blank=True, null=True)
@@ -115,6 +130,8 @@ class Contact(models.Model):
     city = models.CharField(max_length=100, blank=True, null=True)
     pincode = models.CharField(max_length=10, blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
+    event_date = models.DateField(blank=True, null=True)
+    event_date_remark = models.CharField(max_length=150, blank=True, null=True)
     contact1 = models.CharField(max_length=15)
     contact2 = models.CharField(max_length=15, blank=True, null=True)
     contact3 = models.CharField(max_length=15, blank=True, null=True)
@@ -131,6 +148,7 @@ class Contact(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+
 
 #region Employee Details
 class EmployeeStatus(models.TextChoices):
@@ -192,7 +210,7 @@ class Employee(models.Model):
     per_city = models.CharField(max_length=100, blank=True, null=True)
     per_pincode = models.CharField(max_length=10, blank=True, null=True)
     
-    photo = models.ImageField(upload_to=get_photo_upload_path, blank=True, null=True)
+    photo = models.ImageField(upload_to=get_photo_upload_path, blank=True, null=True, default='nopic.jpg')
     joining_date = models.DateField()
     
     uan_no = models.CharField(max_length=20, blank=True, null=True)
@@ -537,6 +555,94 @@ class EmployeeAdjustment(models.Model):
         else:
             self.status = 'Pending'
         super().save(*args, **kwargs)
+
+# New Master-Transaction Architecture for Adjustments
+class EmployeeAdjustmentMaster(models.Model):
+    """
+    Master record for employee adjustments (Advance/Fine/Bonus/Reward).
+    This record contains the original adjustment details and never changes.
+    """
+    ADJUSTMENT_TYPES = [
+        ('Advance', 'Advance'),
+        ('Fine', 'Fine'),
+        ('Bonus', 'Bonus'),
+        ('Reward', 'Reward'),
+    ]
+    STATUS_CHOICES = [
+        ('Active', 'Active'),      # Has outstanding balance
+        ('Closed', 'Closed'),      # Fully settled
+    ]
+    
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='adjustment_masters')
+    adjustment_type = models.CharField(max_length=20, choices=ADJUSTMENT_TYPES)
+    total_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, validators=[MinValueValidator(0)]
+    )
+    cleared_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, validators=[MinValueValidator(0)], default=0
+    )  # Track settled amount directly
+    date_issued = models.DateField()
+    description = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        db_table = 'employee_adjustment_masters'
+        ordering = ['-date_issued']
+    
+    def __str__(self):
+        return f"{self.employee} - {self.adjustment_type} ₹{self.total_amount}"
+    
+    @property
+    def settled_amount(self):
+        """Alias for cleared_amount for backward compatibility"""
+        return self.cleared_amount
+    
+    @property
+    def outstanding_amount(self):
+        """Calculate remaining outstanding amount"""
+        return self.total_amount - self.cleared_amount
+    
+    def is_fully_settled(self):
+        """Check if adjustment is fully settled"""
+        return self.outstanding_amount <= Decimal('0')
+
+
+class EmployeeAdjustmentTransaction(models.Model):
+    """
+    Transaction record for each adjustment settlement.
+    Records when and how much was settled from salary.
+    """
+    TRANSACTION_TYPES = [
+        ('Full', 'Full Settlement'),
+        ('Partial', 'Partial Settlement'),
+    ]
+    
+    adjustment_master = models.ForeignKey(
+        EmployeeAdjustmentMaster, 
+        on_delete=models.CASCADE, 
+        related_name='adjustment_transactions'
+    )
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Denormalized for easy queries
+    settlement_amount = models.DecimalField(
+        max_digits=12, decimal_places=2, validators=[MinValueValidator(0)]
+    )
+    settlement_date = models.DateField(auto_now_add=True)
+    salary_month = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])
+    salary_year = models.IntegerField(validators=[MinValueValidator(1900)])
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        db_table = 'employee_adjustment_transactions'
+        ordering = ['-salary_year', '-salary_month', '-settlement_date']
+    
+    def __str__(self):
+        return f"{self.adjustment_master.adjustment_type} - ₹{self.settlement_amount} ({self.salary_month}/{self.salary_year})"
+
 
 class EmployeeSalaryTransaction(models.Model):
     STATUS_CHOICES = [

@@ -1,0 +1,71 @@
+# Add these new API views at the end of emp/views.py
+
+@role_required('admin', 'hr')
+def get_employees_json(request):
+    """API endpoint for Select2 employee search"""
+    q = request.GET.get('q', '')
+    page = int(request.GET.get('page', 1))
+    page_size = 20
+    
+    employees = Employee.objects.filter(status='Active')
+    
+    if q:
+        employees = employees.filter(
+            Q(first_name__icontains=q) | 
+            Q(last_name__icontains=q) | 
+            Q(emp_code__icontains=q)
+        )
+    
+    total = employees.count()
+    start = (page - 1) * page_size
+    end = start + page_size
+    
+    employees_page = employees[start:end]
+    
+    results = [{
+        'id': emp.id,
+        'text': f"{emp.first_name} {emp.last_name}",
+        'emp_code': emp.emp_code
+    } for emp in employees_page]
+    
+    return JsonResponse({
+        'results': results,
+        'pagination': {
+            'more': end < total
+        }
+    })
+
+@role_required('admin', 'hr')
+def get_employee_profile(request, employee_id):
+    """API endpoint to get employee profile details"""
+    try:
+        employee = Employee.objects.get(id=employee_id, status='Active')
+        
+        # Check if user exists
+        try:
+            user = User.objects.get(username=employee.emp_code)
+            has_user = True
+            username = user.username
+            user_role = user.groups.first().name if user.groups.exists() else 'Employee'
+        except User.DoesNotExist:
+            has_user = False
+            username = None
+            user_role = None
+        
+        data = {
+            'name': f"{employee.first_name} {employee.last_name}",
+            'emp_code': employee.emp_code,
+            'designation': employee.designation.designation_name,
+            'department': employee.department.department_name,
+            'email': employee.email,
+            'contact_no': employee.contact_no,
+            'joining_date': employee.joining_date.strftime('%Y-%m-%d'),
+            'photo': employee.photo.url if employee.photo else None,
+            'has_user': has_user,
+            'username': username,
+            'user_role': user_role
+        }
+        
+        return JsonResponse(data)
+    except Employee.DoesNotExist:
+        return JsonResponse({'error': 'Employee not found'}, status=404)

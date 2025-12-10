@@ -17,6 +17,7 @@
         justify-content: space-between;
         margin-bottom: 20px;
     }
+
     .step {
         flex: 1;
         text-align: center;
@@ -24,6 +25,7 @@
         background: #eee;
         border: 1px solid #ddd;
     }
+
     .step.active {
         background: #007bff;
         color: white;
@@ -48,7 +50,8 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Education Details</h3>
-                    <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#educationModal" data-action="add">Add Education</button>
+                    <button type="button" class="btn btn-primary float-right" data-toggle="modal"
+                        data-target="#educationModal" data-action="add">Add Education</button>
                 </div>
                 <div class="card-body">
                     <table class="table table-bordered" id="educationTable">
@@ -69,7 +72,8 @@
                                 <td>{{ edu.passing_year }}</td>
                                 <td>{{ edu.percentage }}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning edit-btn" data-toggle="modal" data-target="#educationModal" data-action="edit">Edit</button>
+                                    <button class="btn btn-sm btn-warning edit-btn" data-toggle="modal"
+                                        data-target="#educationModal" data-action="edit">Edit</button>
                                     <button class="btn btn-sm btn-danger delete-btn">Delete</button>
                                 </td>
                             </tr>
@@ -82,7 +86,8 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Experience Details</h3>
-                    <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#experienceModal" data-action="add">Add Experience</button>
+                    <button type="button" class="btn btn-primary float-right" data-toggle="modal"
+                        data-target="#experienceModal" data-action="add">Add Experience</button>
                 </div>
                 <div class="card-body">
                     <table class="table table-bordered" id="experienceTable">
@@ -103,13 +108,15 @@
                             <tr data-id="{{ exp.id }}">
                                 <td>{{ exp.company_name }}</td>
                                 <td>{{ exp.job_title }}</td>
-                                <td>{{ exp.start_date }}</td>
-                                <td>{{ exp.end_date|default:"-" }}</td>
+                                <td data-start-date="{{ exp.start_date|date:'Y-m-d' }}">{{ exp.start_date }}</td>
+                                <td data-end-date="{% if exp.end_date %}{{ exp.end_date|date:'Y-m-d' }}{% endif %}">
+                                    {{exp.end_date|default:"-" }}</td>
                                 <td>{{ exp.gross_salary|default:"-" }}</td>
                                 <td>{{ exp.responsibilities|default:"-" }}</td>
                                 <td>{{ exp.reason_for_leaving|default:"-" }}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning edit-btn" data-toggle="modal" data-target="#experienceModal" data-action="edit">Edit</button>
+                                    <button class="btn btn-sm btn-warning edit-btn" data-toggle="modal"
+                                        data-target="#experienceModal" data-action="edit">Edit</button>
                                     <button class="btn btn-sm btn-danger delete-btn">Delete</button>
                                 </td>
                             </tr>
@@ -122,7 +129,8 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Family Details</h3>
-                    <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#familyModal" data-action="add">Add Family Member</button>
+                    <button type="button" class="btn btn-primary float-right" data-toggle="modal"
+                        data-target="#familyModal" data-action="add">Add Family Member</button>
                 </div>
                 <div class="card-body">
                     <table class="table table-bordered" id="familyTable">
@@ -149,7 +157,8 @@
                                 <td>{{ fam.aadhaar_no|default:"-" }}</td>
                                 <td>{{ fam.address|default:"-" }}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-warning edit-btn" data-toggle="modal" data-target="#familyModal" data-action="edit">Edit</button>
+                                    <button class="btn btn-sm btn-warning edit-btn" data-toggle="modal"
+                                        data-target="#familyModal" data-action="edit">Edit</button>
                                     <button class="btn btn-sm btn-danger delete-btn">Delete</button>
                                 </td>
                             </tr>

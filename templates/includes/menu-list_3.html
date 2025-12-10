@@ -1,0 +1,201 @@
+{% load static %}
+<ul class="nav nav-pills nav-sidebar flex-column"
+    data-widget="treeview"
+    role="menu"
+    data-accordion="false">
+    <!-- Add icons to the links using the .nav-icon class
+    with font-awesome or any other icon font library -->
+    {% if user.groups.all.0.name in 'employee' %}
+        <li class="nav-header">
+            <strong>CREATE</strong> 
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'emp:site_crud' %}"
+               class="nav-link {% if 'emp:site_crud' in segment %}active{% endif %}">
+                <i class="far fa-hospital nav-icon"></i>
+                <p>Sites</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'emp:employee_list' %}"
+               class="nav-link {% if 'emp:employee_list' in segment %}active{% endif %}">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Employee List</p>
+            </a>
+        </li>
+    {% endif %}
+    {% if user.groups.all.0.name in 'admin,hr' %}
+        <li class="nav-header">
+            <strong>CREATE</strong>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'emp:department_crud' %}"
+               class="nav-link {% if 'emp:department_crud' in segment %}active{% endif %}">
+                <i class="nav-icon fas fa-th-large"></i>
+                <p>Departments</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'emp:designation_crud' %}"
+               class="nav-link {% if 'emp:designation_crud' in segment %}active{% endif %}">
+                <i class="nav-icon fas fa-th"></i>
+                <p>Designation</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'emp:site_crud' %}"
+               class="nav-link {% if 'emp:site_crud' in segment %}active{% endif %}">
+                <i class="far fa-hospital nav-icon"></i>
+                <p>Sites</p>
+            </a>
+        </li>
+    <li class="nav-header">CRM MODULES</li>
+    <li class="nav-item">
+      <a href="#" class="nav-link">
+        <!-- <i class="nav-icon fas fa-circle"></i> -->
+        <i class="nav-icon fa-solid fa-people-group"></i>
+        <p>
+          HRMS
+          <i class="right fas fa-angle-left {% if active_menu == 'emp' %}fa-angle-down{% endif %}"></i>  <!-- Icon rotation -->
+        </p>
+      </a>
+      <li class="nav-item has-treeview {% if active_menu == 'emp' %}menu-open{% endif %}">  <!-- Conditional menu-open -->
+          <ul class="nav nav-treeview {% if active_menu != 'emp' %}d-none{% endif %}">  <!-- d-none for collapse; optional over style hack -->
+            <li class="nav-item">
+                <a href="{% url 'emp:employee_dash' %}"
+                   class="nav-link {% if 'emp:employee_dash' in segment %}active{% endif %}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Employee Dash</p>
+                </a>
+            </li>
+            <li class="nav-item">
+              
+                <a href="{% url 'emp:employee_list' %}"
+                   class="nav-link {% if 'emp:employee_list' in segment %}active{% endif %}">
+                    
+                    <i class="nav-icon fa-solid fa-list-check"></i>
+                    <p>Employee List</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'emp:create_employee_user' %}"
+                   class="nav-link {% if 'emp:create_employee_user' in segment %}active{% endif %}">
+                    
+                    <i class="nav-icon fa-solid fa-user-shield"></i>
+                    <p>Create Employee Login</p>
+                </a>
+            </li>
+            <li class="nav-item">
+              <a href="#" class="nav-link">
+                <i class="nav-icon fa-solid fa-money-bills"></i>
+                <p>
+                  SALARY
+                  <i class="right fas fa-angle-left"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview">
+                <li class="nav-item">
+                    <a href="{% url 'emp:salary_master_list' %}" class="nav-link {% if 'emp:salary_master_list' in segment %}active{% endif %}">
+                        
+                        <i class="nav-icon fa-solid fa-list-ul"></i>
+                        <p>Salary Master List</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'emp:adjustments_list' %}" class="nav-link {% if 'emp:adjustments_list' in segment %}active{% endif %}">                     
+                        <i class="nav-icon fa-solid fa-money-bill-transfer"></i>
+                        <p>Salary Adjustments old</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'emp:adjustments_page' %}" class="nav-link {% if 'emp:adjustments_page' in segment %}active{% endif %}">                     
+                        <i class="nav-icon fa-solid fa-money-bill-transfer"></i>
+                        <p>Salary Adjustments new</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'emp:salary_preparation' %}" class="nav-link {% if 'emp:salary_preparation' in segment %}active{% endif %}">
+                        
+                        <i class="nav-icon fa-solid fa-money-bill-1-wave"></i>
+                        <p>Salary Preparation</p>
+                    </a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+      </li>
+    </li>     
+
+    {% endif %}
+    <li class="nav-item">
+      <a href="#" class="nav-link">
+        <!-- <i class="nav-icon fas fa-circle"></i> -->
+        
+        <i class="nav-icon fas fa-bullseye"></i>
+        <p>
+          LEADS
+          <i class="right fas fa-angle-left {% if active_menu == 'leads' %}fa-angle-down{% endif %}"></i>  <!-- Icon rotation for LEADS -->
+        </p>
+      </a>
+      <li class="nav-item has-treeview {% if active_menu == 'leads' %}menu-open{% endif %}">  <!-- Conditional menu-open for LEADS -->
+          <ul class="nav nav-treeview {% if active_menu != 'leads' %}d-none{% endif %}">  <!-- d-none Bootstrap class for collapse (better than style hack) -->
+            <li class="nav-item">
+                <a href="{% url 'leads:lead_list' %}" class="nav-link {% if view_name == 'leads:lead_list' %}active{% endif %}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Leads List</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'leads:lead_form_add' %}" class="nav-link {% if view_name == 'leads:lead_form_add' %}active{% endif %}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Add New Lead</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'leads:conversion_logs' %}" class="nav-link {% if view_name == 'leads:conversion_logs' %}active{% endif %}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Conversion Logs</p>
+                    {% comment %} Optional badge: <span class="badge badge-danger right">3</span> {% endcomment %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'leads:employee_activity' employee_id=2 %}" class="nav-link {% if view_name == 'leads:employee_activity' %}active{% endif %}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Sales Activity</p>
+                </a>
+            </li>
+          </ul>
+      </li>
+    {% if request.user.is_authenticated %}
+        <li class="nav-header">
+            <strong>USER</strong>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'custom_logout' %}" class="nav-link">
+                <i class="fa fa-sign-out-alt nav-icon"></i>
+                <p>Logout</p>
+            </a>
+        </li>
+    {% else %}
+        <li class="nav-item">
+            <a href="{% url 'custom_login' %}" class="nav-link">
+                <i class="fa fa-sign-in-alt nav-icon"></i>
+                <p>Login</p>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fa fa-user-plus nav-icon"></i>
+                <p>Register</p>
+            </a>
+        </li>
+    {% endif %}
+    <li class="nav-item">
+        <a target="_blank"
+           href="https://app-generator.dev/support/"
+           class="nav-link">
+            <i class="fa fa-rocket text-danger nav-icon"></i>
+            <p>Support</p>
+        </a>
+    </li>
+</ul>

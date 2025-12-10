@@ -1,0 +1,125 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block title %}Upcoming Follow-ups{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Header -->
+    <section class="content-header py-2">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-sm-6">
+                    <h1 class="m-0"><i class="fas fa-calendar-check text-primary"></i> Upcoming Follow-ups</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'leads:lead_list' %}">Leads</a></li>
+                        <li class="breadcrumb-item active">Upcoming Follow-ups</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header bg-gradient-primary">
+                    <h3 class="card-title text-white">
+                        <i class="fas fa-bell mr-2"></i>Follow-ups in Next 7 Days
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    {% if followups %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Follow-up Date</th>
+                                    <th>Client Name</th>
+                                    <th>Contact Person</th>
+                                    <th>Mobile</th>
+                                    <th>Status</th>
+                                    <th>Sales Person</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lead in followups %}
+                                <tr
+                                    class="{% if lead.is_overdue %}table-danger{% elif lead.is_today %}table-warning{% endif %}">
+                                    <td>
+                                        {% if lead.is_overdue %}
+                                        <i class="fas fa-exclamation-triangle text-danger" title="Overdue"></i>
+                                        {% elif lead.is_today %}
+                                        <i class="fas fa-clock text-warning" title="Today"></i>
+                                        {% else %}
+                                        <i class="far fa-calendar text-info"></i>
+                                        {% endif %}
+                                        {{ lead.lead_id }}
+                                    </td>
+                                    <td>
+                                        <strong>{{ lead.next_follow_up|date:"d M Y" }}</strong>
+                                        {% if lead.is_overdue %}
+                                        <span class="badge badge-danger ml-2">Overdue</span>
+                                        {% elif lead.is_today %}
+                                        <span class="badge badge-warning ml-2">Today</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ lead.client_name }}</td>
+                                    <td>{{ lead.contact_person }}</td>
+                                    <td>{{ lead.mobile_no }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if lead.lead_status == 'NEW' %}primary
+                                                                   {% elif lead.lead_status == 'CONTACTED' %}info
+                                                                   {% elif lead.lead_status == 'INTERESTED' %}warning
+                                                                   {% elif lead.lead_status == 'QUOTED' %}secondary
+                                                                   {% endif %}">
+                                            {{ lead.get_lead_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small>{{ lead.created_by.first_name }} {{ lead.created_by.last_name }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}"
+                                                class="btn btn-info" title="Add Follow-up">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                            <a href="{% url 'leads:lead_form' lead.lead_id %}" class="btn btn-primary"
+                                                title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="p-5 text-center text-muted">
+                        <i class="fas fa-check-circle fa-3x mb-3"></i>
+                        <h4>No Upcoming Follow-ups</h4>
+                        <p>All follow-ups are completed or scheduled beyond 7 days.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if followups %}
+                <div class="card-footer">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Showing follow-ups for the next 7 days only.
+                        Total: <strong>{{ followups.count }}</strong>
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

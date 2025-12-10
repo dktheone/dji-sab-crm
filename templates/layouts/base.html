@@ -28,6 +28,7 @@
   <script src="{% static 'adminlte/js/adminlte.min.js' %}"></script>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+  <!-- <script src="{% static 'plugins/select2/select2.min.js' %}"></script> -->
   <script src="{% static 'plugins/toast-messages.js' %}"></script>
   {% block extrastyle %}{% endblock extrastyle %}
 </head>
@@ -79,6 +80,37 @@
   
   <script src="{% static 'plugins/datatables/datatables.min.js' %}"></script>
   <script src="{% static 'plugins/datatables-bs4/dataTables.bootstrap4.min.js' %}"></script>
+
+  <!-- Custom JS for Menu Persistence -->
+<script>
+$(document).ready(function() {
+    // Auto-expand treeview menus based on current URL/active links
+    function expandActiveMenus() {
+        // Find all active sub-links
+        $('.nav-link.active').each(function() {
+            var $activeLink = $(this);
+            // Traverse up to parent treeview
+            var $parentTreeview = $activeLink.closest('.nav-treeview');
+            if ($parentTreeview.length) {
+                var $parentItem = $parentTreeview.closest('.has-treeview');
+                // Add menu-open class to parent
+                $parentItem.addClass('menu-open');
+                // Rotate angle icon (left to down)
+                $parentItem.find('.right').removeClass('fa-angle-left').addClass('fa-angle-down');
+                // Optional: Trigger AdminLTE treeview event for animations
+                $parentItem.find('> a').trigger('click');
+            }
+        });
+    }
+
+    // Run on load
+    expandActiveMenus();
+
+    // Optional: Listen for URL changes (for SPA-like navigation if using JS routing)
+    $(window).on('hashchange', expandActiveMenus);
+    $('.has-treeview.menu-open > a').trigger('click');
+});
+</script>
   {% block extra_scripts %}{% endblock extra_scripts %}
 
 </body>

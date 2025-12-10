@@ -3,7 +3,7 @@
 {% block content %}
 <div class="content-wrapper">
     <div class="content-header">
-        <h1>Salary Preparation - {{ current_month }}/{{ current_year }}</h1>
+        <h1>Salary Preparation - {{ selected_month_name }} {{ selected_year }}</h1>
     </div>
     <section class="content">
         <!-- Filters -->
@@ -16,7 +16,7 @@
                             <select name="site" class="form-control">
                                 <option value="">All</option>
                                 {% for s in sites %}
-                                <option value="{{ s.id }}" {% if request.GET.site == s.id|stringformat:"s" %}selected{% endif %}>{{ s.site_name }}</option>
+                                <option value="{{ s.id }}">{{ s.site_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -25,7 +25,7 @@
                             <select name="department" class="form-control">
                                 <option value="">All</option>
                                 {% for d in departments %}
-                                <option value="{{ d.id }}" {% if request.GET.department == d.id|stringformat:"s" %}selected{% endif %}>{{ d.department_name }}</option>
+                                <option value="{{ d.id }}">{{ d.department_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -34,7 +34,7 @@
                             <select name="designation" class="form-control">
                                 <option value="">All</option>
                                 {% for des in designations %}
-                                <option value="{{ des.id }}" {% if request.GET.designation == des.id|stringformat:"s" %}selected{% endif %}>{{ des.designation_name }}</option>
+                                <option value="{{ des.id }}">{{ des.designation_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -46,34 +46,248 @@
             </div>
         </div>
 
+        <!-- Month Selector -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-calendar-alt"></i> Select Month-Year</h3>
+            </div>
+            <div class="card-body">
+                <div class="btn-group btn-group-toggle d-flex" role="group">
+                    {% for month in months_list %}
+                    <a href="?month={{ month.month }}&year={{ month.year }}{% if request.GET.site %}&site={{ request.GET.site }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}"
+                        class="btn flex-fill {% if month.is_selected %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        <div>
+                            <strong>{{ month.display }}</strong><br>
+                            {% if month.prepared %}
+                            <i class="fas fa-check-circle text-success"></i> <small>Prepared</small>
+                            {% else %}
+                            <i class="fas fa-times-circle text-danger"></i> <small>Not Prepared</small>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Summary Header -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><i class="fas fa-file-invoice"></i> Salary Preparation Report</h3>
+                    <div class="btn-group">
+                        <a href="{% url 'emp:export_salary_xlsx' %}?month={{ selected_month }}&year={{ selected_year }}&site={{ request.GET.site|default:'' }}&department={{ request.GET.department|default:'' }}&designation={{ request.GET.designation|default:'' }}"
+                            class="btn btn-success btn-sm">
+                            <i class="fas fa-file-excel"></i> Export XLSX
+                        </a>
+                        <a href="{% url 'emp:export_salary_pdf' %}?month={{ selected_month }}&year={{ selected_year }}&site={{ request.GET.site|default:'' }}&department={{ request.GET.department|default:'' }}&designation={{ request.GET.designation|default:'' }}"
+                            class="btn btn-danger btn-sm">
+                            <i class="fas fa-file-pdf"></i> Export PDF
+                        </a>
+                        <button onclick="window.print()" class="btn btn-info btn-sm">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Filters Row -->
+                    <div class="col-md-12 mb-3">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <strong><i class="fas fa-building"></i> Site:</strong>
+                                <span class="badge badge-info ml-2">{{ selected_site_name }}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong><i class="fas fa-users"></i> Department:</strong>
+                                <span class="badge badge-info ml-2">{{ selected_dept_name }}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong><i class="fas fa-user-tie"></i> Designation:</strong>
+                                <span class="badge badge-info ml-2">{{ selected_desig_name }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Row -->
+                    <div class="col-md-12">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="small-box bg-info">
+                                    <div class="inner">
+                                        <h3>{{ selected_month_name }} {{ selected_year }}</h3>
+                                        <p>Salary Period</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-calendar"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="small-box bg-secondary">
+                                    <div class="inner">
+                                        <h3>{{ total_employees }}</h3>
+                                        <p>Total Employees</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h3>{{ prepared_count }}</h3>
+                                        <p>Prepared</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="small-box bg-warning">
+                                    <div class="inner">
+                                        <h3>{{ not_prepared_count }}</h3>
+                                        <p>Not Prepared</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-hourglass-half"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="small-box bg-primary">
+                                    <div class="inner">
+                                        <h3>{{ processed_count }}</h3>
+                                        <p>Processed</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-body">
-                <table id="prepTable" class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Site</th>
-                            <th>Department</th>
-                            <th>Designation</th>
-                            <th>Pending Adjustments</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for emp in employees %}
-                        <tr>
-                            <td>{{ emp.first_name }} {{ emp.last_name }}</td>
-                            <td>{{ emp.site.site_name }}</td>
-                            <td>{{ emp.department.department_name }}</td>
-                            <td>{{ emp.designation.designation_name }}</td>
-                            <td>{{ emp.pending_adjustments }}</td>
-                            <td><button class="btn btn-primary" data-toggle="modal" data-target="#prepareModal" onclick="loadModal({{ emp.id }})">Prepare Salary</button></td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="6">No employees.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <form id="processSalaryForm" method="post" action="{% url 'emp:process_salary_bulk' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="month" value="{{ selected_month }}">
+                    <input type="hidden" name="year" value="{{ selected_year }}">
+                    <table id="prepTable" class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="selectAll" title="Select All">
+                                </th>
+                                <th>Employee Name</th>
+                                <th>Current Month<br><small class="text-muted">{{ selected_month_name }}</small></th>
+                                <th>Adjustments<br><small class="text-muted">Cleared</small></th>
+                                <th>Adjustments<br><small class="text-muted">Pending</small></th>
+                                <th>Last Salary</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in employees %}
+                            <tr>
+                                <td class="text-center">
+                                    {% if emp.is_prepared and emp.can_edit %}
+                                    <input type="checkbox" name="employee_ids" value="{{ emp.id }}"
+                                        class="emp-checkbox">
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ emp.first_name }} {{ emp.last_name }}<br>
+                                    <small class="text-muted">{{ emp.department.department_name }} -
+                                        {{emp.designation.designation_name}}</small>
+                                </td>
+                                <!-- Current Month Salary -->
+                                <td class="text-center">
+                                    {% if emp.is_prepared %}
+                                    <strong class="text-success">₹{{ emp.current_month_net|floatformat:0 }}</strong><br>
+                                    <small class="badge badge-success">Prepared</small>
+                                    {% else %}
+                                    <span class="text-muted">Not Prepared</span>
+                                    {% endif %}
+                                </td>
+                                <!-- Adjustments Cleared (in this month) -->
+                                <td class="text-center">
+                                    {% if emp.cleared_adjustments > 0 %}
+                                    <span class="badge badge-info">₹{{ emp.cleared_adjustments|floatformat:0 }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <!-- Adjustments Pending (total outstanding) -->
+                                <td class="text-center">
+                                    {% if emp.pending_adjustments > 0 %}
+                                    <span class="badge badge-warning">₹
+                                        {{ emp.pending_adjustments|floatformat:0 }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <!-- Last Salary -->
+                                <td class="text-center">
+                                    {% if emp.last_salary_obj %}
+                                    <strong>₹{{ emp.last_salary_obj.net_salary|floatformat:0 }}</strong><br>
+                                    <small
+                                        class="text-muted">{{emp.last_salary_obj.month}}/{{emp.last_salary_obj.year}}</small>
+                                    {% else %}
+                                    <span class="text-muted">No records</span>
+                                    {% endif %}
+                                </td>
+                                <!-- Action Buttons -->
+                                <td class="text-center">
+                                    {% if emp.is_prepared %}
+                                    {% if emp.can_edit %}
+                                    <!-- Edit button for Prepared status -->
+                                    <button type="button" class="btn btn-sm btn-warning" data-toggle="modal"
+                                        data-target="#prepareModal" onclick="loadModal({{ emp.id }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    {% else %}
+                                    <!-- View only for Processed -->
+                                    <button type="button" class="btn btn-sm btn-info" data-toggle="modal"
+                                        data-target="#prepareModal" onclick="loadModal({{ emp.id }})">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                    {% endif %}
+                                    {% else %}
+                                    <!-- Prepare button -->
+                                    <button type="button" class="btn btn-sm btn-success" data-toggle="modal"
+                                        data-target="#prepareModal" onclick="loadModal({{ emp.id }})">
+                                        <i class="fas fa-calculator"></i> Prepare
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No employees with active salary found.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="mt-3 mb-3">
+                        <button type="submit" id="processSalaryBtn" class="btn btn-primary btn-lg" disabled>
+                            <i class="fas fa-check-double"></i> Process Selected Salaries (<span
+                                id="selectedCount">0</span>)
+                        </button>
+                        <small class="text-muted ml-2">Select prepared salaries to process</small>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -89,17 +303,38 @@
 </div>
 
 <script>
+    // Get selected month and year from page
+    const selectedMonth = {{ selected_month }};
+    const selectedYear = {{ selected_year }};
+    const selectedMonthName = "{{ selected_month_name }}";
+
     function loadModal(empId) {
-        $.get(`/emp/prepare-salary/${empId}/`, function(data) {
+        // Pass month and year to the modal endpoint
+        $.get(`/emp/prepare-salary/${empId}/?month=${selectedMonth}&year=${selectedYear}`, function (data) {
+            console.log(data);
             $('#modalContent').html(data);
+
+
+            let salary = parseFloat($('#salary_amount').val()) || 0;
+            let daysInMonth = parseInt($('#days_in_month').val());
+            let absent = parseInt($('#days_absent').val()) || 0;
+            let leaveDed = (salary / daysInMonth) * absent;
+            let adjNet = 0;
+            $('.partial-input').each(function () {
+                let partial = parseFloat($(this).val()) || 0;
+                let sign = parseInt($(this).data('sign'));  // 1 or -1 based on type
+                adjNet += sign * partial;
+            });
+            let net = salary + adjNet - leaveDed;
+            $('#net_salary').text(net.toFixed(2));
             // Real-time calculation
-            $('input').on('input', function() {
+            $('input').on('input', function () {
                 let salary = parseFloat($('#salary_amount').val()) || 0;
                 let daysInMonth = parseInt($('#days_in_month').val());
                 let absent = parseInt($('#days_absent').val()) || 0;
                 let leaveDed = (salary / daysInMonth) * absent;
                 let adjNet = 0;
-                $('.partial-input').each(function() {
+                $('.partial-input').each(function () {
                     let partial = parseFloat($(this).val()) || 0;
                     let sign = parseInt($(this).data('sign'));  // 1 or -1 based on type
                     adjNet += sign * partial;
@@ -109,6 +344,46 @@
             });
         });
     }
+
+    // Multi-select checkbox handling
+    $(document).ready(function () {
+        // Select All checkbox
+        $('#selectAll').change(function () {
+            $('.emp-checkbox').prop('checked', this.checked);
+            updateSelectedCount();
+        });
+
+        // Individual checkboxes
+        $('.emp-checkbox').change(function () {
+            updateSelectedCount();
+            // Update Select All if all are checked
+            const total = $('.emp-checkbox').length;
+            const checked = $('.emp-checkbox:checked').length;
+            $('#selectAll').prop('checked', total === checked && total > 0);
+        });
+
+        // Update selected count and button state
+        function updateSelectedCount() {
+            const count = $('.emp-checkbox:checked').length;
+            $('#selectedCount').text(count);
+            $('#processSalaryBtn').prop('disabled', count === 0);
+        }
+
+        // Form submission confirmation
+        $('#processSalaryForm').submit(function (e) {
+            const count = $('.emp-checkbox:checked').length;
+            if (count === 0) {
+                e.preventDefault();
+                alert('Please select at least one employee to process.');
+                return false;
+            }
+
+            if (!confirm(`Are you sure you want to process ${count} salary record(s)? This will mark them as Processed and they cannot be edited.`)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
 </script>
 {% endblock %}
 

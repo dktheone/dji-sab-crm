@@ -2,7 +2,7 @@ import os
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.views import PasswordResetView
@@ -12,21 +12,18 @@ from django.db.models import OuterRef, Subquery, Value, CharField
 from django.db.models.functions import Coalesce
 from django.db import models
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 import calendar
 
-from apps.emp.forms import DepartmentForm, DesignationForm, SitesForm, CustomLoginForm, CustomPasswordResetForm
+from apps.emp.forms import DepartmentForm, DesignationForm, SitesForm, CustomLoginForm, CustomPasswordResetForm, Contacts, ContactForm
 from apps.emp.models import Department, Designation, Site
-from apps.emp.models import Employee, EmployeeUpload, EmployeeStatus, EmployeeEducation, EmployeeExperience, EmployeeFamily, EmployeeSalaryMaster, EmployeeAdjustment, EmployeeSalaryTransaction
+from apps.emp.models import Employee, EmployeeUpload, EmployeeStatus, EmployeeEducation, EmployeeExperience, EmployeeFamily, EmployeeSalaryMaster, EmployeeAdjustment, EmployeeSalaryTransaction, EmployeeAdjustmentMaster
 from apps.emp.forms import EmployeeForm, EmployeeUploadForm, EmployeeUserForm, EmployeeEducationForm, EmployeeExperienceForm, EmployeeFamilyForm, EmployeeSalaryMasterForm, EmployeeAdjustmentForm, SalaryPreparationForm
 from apps.emp.utils import role_required, fetch_ifsc_details
 from country_state_city import City
 
 def custom_login(request):
     print('login request POST', request.POST, request.method)
-    print('login request user', request.user)
-    # if request.user.is_authenticated:
-    #     return dashboard
     if request.method == 'POST':
         form = CustomLoginForm(data=request.POST)
         if form.is_valid():
@@ -36,10 +33,30 @@ def custom_login(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
-                # return(dashboard)
-                return JsonResponse({'status': 'success', 'redirect': '/dashboard/'})
+                
+                # ROLE-BASED LANDING PAGES
+                user_role = user.groups.first().name if user.groups.exists() else None
+                redirect_url = '/dashboard/'  # Default
+                
+                if user_role == 'hr':
+                    # HR → Employee Dashboard
+                    redirect_url = '/emp/dash/'
+                
+                elif user_role in ['employee', 'manager']:
+                    # Employee/Manager → Their own activity page
+                    try:
+                        employee = Employee.objects.get(emp_code=user.username, status='Active')
+                        redirect_url = f'/leads/activity/{employee.id}/'
+                    except Employee.DoesNotExist:
+                        # Fallback to leads list if no employee record
+                        redirect_url = '/leads/'
+                
+                elif user_role == 'admin':
+                    # Admin → Dashboard
+                    redirect_url = '/dashboard/'
+                
+                return JsonResponse({'status': 'success', 'redirect': redirect_url})
             else:
-                # form.add_error(None, "Invalid employee code or password")
                 return JsonResponse({'status': 'error', 'message': 'Invalid employee code or password'}, status=400)
         else:
             return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
@@ -60,25 +77,53 @@ def custom_logout(request):
 #     return render(request, "emp/dashboard.html")
 
 def dashboard(request):
-    # print('request', request.user)
-    # print('$'* 20, 'request', request.user, request.user.is_authenticated)
+    """Employee dashboard view - includes upcoming follow-ups"""
+    from datetime import date, timedelta
+    from apps.leads.models import Lead, LeadStatus
+    
     employee_id = request.user
     print(employee_id, request.user)
     print(request.user.is_authenticated, request.user.username)
+    
     if request.user.is_authenticated:
         employee = get_object_or_404(Employee, emp_code=request.user.username) if employee_id else None
         print('$'* 20, 'employee', employee)
+        
+        # Get user role
+        user_role = request.user.groups.first().name if request.user.groups.exists() else None
+        
+        # Get upcoming follow-ups (next 7 days)
+        today = date.today()
+        next_week = today + timedelta(days=7)
+        
+        followups = Lead.objects.filter(
+            next_follow_up__isnull=False,
+            next_follow_up__lte=next_week,
+            lead_status__in=[LeadStatus.NEW, LeadStatus.IN_PROGRESS, LeadStatus.QUOTED]
+        ).select_related('created_by').order_by('next_follow_up')
+        
+        # Role-based filtering for follow-ups
+        if user_role not in ['admin', 'hr']:
+            if employee:
+                followups = followups.filter(created_by=employee)
+            else:
+                followups = Lead.objects.none()
+        
+        # Mark overdue and today's follow-ups
+        for followup in followups:
+            followup.is_overdue = followup.next_follow_up < today
+            followup.is_today = followup.next_follow_up == today
+        
         return render(request, 'emp/dashboard.html', {
-            'employee': employee
+            'employee': employee,
+            'view_name': request.resolver_match.view_name,
+            'followups': followups[:10],  # Limit to 10 for dashboard widget
+            'total_followups': followups.count(),
+            'overdue_count': sum(1 for f in followups if f.is_overdue),
+            'today_count': sum(1 for f in followups if f.is_today),
         })
     else:
-        # print('#'* 20, 'request', request.user)
-        return custom_logout(request)  # Name of your login URL    
-        
-    # # print('request.user.is_authenticated', request.user.is_authenticated)
-    # if request.user.is_authenticated:
-    #     return render(request, 'dashboard.html')
-    # # return redirect('/login')
+        return custom_logout(request)
     
 
 
@@ -120,7 +165,8 @@ def department_crud(request):
         return render(request, 'emp/department_crud.html', {
             'add_form': add_form,
             'edit_form': edit_form,
-            'departments': departments
+            'departments': departments,
+            'view_name': request.resolver_match.view_name
         })
 
 @role_required('admin')
@@ -176,7 +222,8 @@ def designation_crud(request):
         return render(request, 'emp/designation_crud.html', {
             'add_form': add_form,
             'edit_form': edit_form,
-            'designations': designations
+            'designations': designations,
+            'view_name': request.resolver_match.view_name
         })
 
 @role_required('admin')
@@ -232,7 +279,70 @@ def site_crud(request, site_id=None):
             'initial_city': initial_city,
             'initial_state': initial_state,
             'site_details': site_details,
+            'view_name': request.resolver_match.view_name,
         })
+
+@role_required('admin', 'hr', 'employee')
+def contacts_view(request):
+    contacts = Contacts.objects.order_by('-created_at')
+    total_count = contacts.count()
+
+    # Calculate upcoming birthdays (next 7 days, dob or event_dob)
+    today = datetime.today()
+    upcoming_birthdays = []
+    for i in range(1, 8):
+        check_date = today + timedelta(days=i)
+        contacts_with_bd = Contacts.objects.filter(
+            Q(dob__month=check_date.month, dob__day=check_date.day) |
+            Q(event_date__month=check_date.month, event_date__day=check_date.day)
+        )
+        for c in contacts_with_bd:
+            bd_field = 'Birthday' if (c.dob and c.dob.month == check_date.month and c.dob.day == check_date.day) else c.event_date_remark or 'Event'
+            upcoming_birthdays.append({
+                'name': f"{c.first_name} {c.last_name}",
+                'birthday': check_date.strftime('%m/%d'),
+                'type': bd_field
+            })
+
+    context = {
+        'contacts': contacts,
+        'total_count': total_count,
+        'upcoming_birthdays': upcoming_birthdays,
+        'contact_form': ContactForm(),
+        'view_name': request.resolver_match.view_name,
+    }
+    return render(request, 'emp/contacts.html', context)
+
+@role_required('admin', 'hr', 'employee')
+def contact_add(request):
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            contact = form.save(commit=False)
+            contact.created_by = request.user
+            contact.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+    return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+@role_required('admin', 'hr', 'employee')
+def get_site_details(request, site_id):
+    site = get_object_or_404(Site, id=site_id)
+    data = {
+        'site_name': site.site_name,
+        'full_address': f"{site.address or ''}, {site.city or ''}, {site.state or ''}, {site.pincode or ''}".strip(', '),
+        'contact1': site.contact1 or 'N/A',
+        'contact2': site.contact2 or 'N/A',
+        'email': site.email or 'N/A',
+        'website': site.website or 'N/A',
+        'status': site.status,
+        'remark': site.remark or 'No remarks',
+    }
+    return JsonResponse(data)
+
+
+
 
 @role_required('admin')
 def delete_site(request, site_id):
@@ -270,6 +380,7 @@ def employee_form(request, employee_id=None):
             'employee': employee,
             'initial_city': initial_city,
             'initial_state': initial_state,
+            'view_name': request.resolver_match.view_name,
             'step': 1  # For wizard indicator
         })
 # New view for additional details (Education, Experience, Family)
@@ -344,6 +455,7 @@ def employee_additional(request, employee_id):
         'educations': educations,
         'experiences': experiences,
         'families': families,
+        'view_name': request.resolver_match.view_name,
         'step': 2  # For wizard indicator
     })
     
@@ -372,6 +484,7 @@ def employee_uploads(request, employee_id):
             'upload_form': upload_form,
             'employee': employee,
             'uploads': uploads,
+            'view_name': request.resolver_match.view_name,
             'step': 3  # For wizard indicator
         })
 
@@ -393,6 +506,7 @@ def employee_list(request):
     employees = Employee.objects.all()
     return render(request, 'emp/employee_list.html', {
         'employees': employees,
+        'view_name': request.resolver_match.view_name,
         'status_choices': EmployeeStatus.choices
     })
     
@@ -420,6 +534,7 @@ def employee_view(request, employee_id):
         'experiences': experiences,
         'families': families,
         'uploads': uploads,
+        'view_name': request.resolver_match.view_name,
         'step': 4  # For wizard indicator
     })
 
@@ -457,7 +572,8 @@ def update_employee_status(request, employee_id):
 
 def get_cities(request):
     if request.method == 'GET':
-        state_code = request.GET.get('state_code')
+        state_code = request.GET.get('state')  # Fixed: changed from 'state_code' to 'state'
+        
         if state_code:
             cities = City.get_cities_of_state('IN', state_code)
             city_choices = [(city.name, city.name) for city in cities]
@@ -494,7 +610,7 @@ def create_employee_user(request):
             return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
     else:
         form = EmployeeUserForm()
-        return render(request, 'emp/create_employee_user.html', {'form': form})
+        return render(request, 'emp/create_employee_user.html', {'form': form, 'view_name': request.resolver_match.view_name})
     
     
 
@@ -510,15 +626,22 @@ class EmployeeDashboardView(ListView):
     paginate_by = 25
 
     def get_queryset(self):
+        from dateutil.relativedelta import relativedelta
+        
         queryset = super().get_queryset().filter(status__in=['Active', 'Onboarding', 'Probation'])
-        current_month = timezone.now().month
-        current_year = timezone.now().year
+        
+        # Check for PREVIOUS month payroll (since current month salary is prepared in next month)
+        today = timezone.now()
+        prev_month = today - relativedelta(months=1)
+        check_month = prev_month.month
+        check_year = prev_month.year
 
         # Annotate statuses
         queryset = queryset.annotate(
             payroll_status=Case(
-                When(salary_transactions__month=current_month, salary_transactions__year=current_year,
-                     salary_transactions__status__in=['Prepared', 'Paid'], then=Value('Processed')),
+                When(salary_transactions__month=check_month, 
+                     salary_transactions__year=check_year,
+                     then=Value('Processed')),
                 default=Value('Pending'),
                 output_field=CharField()
             ),
@@ -592,6 +715,7 @@ class EmployeeDashboardView(ListView):
                 salary_masters__effective_from__lte=timezone.now()
             ).count(),
             'adjustments_pending': qs.filter(adjustments__status='PENDING').count(),
+            'view_name': '',
         }
         context['departments'] = Department.objects.filter(status='Active').values_list('department_name', flat=True)
         context['statuses'] = [choice[0] for choice in EmployeeStatus.choices]
@@ -621,29 +745,54 @@ def salary_master_form(request, employee_id):
             return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
     form = EmployeeSalaryMasterForm()
     masters = EmployeeSalaryMaster.objects.filter(employee=employee)
-    return render(request, 'emp/salary_master_form.html', {'form': form, 'employee': employee, 'masters': masters})
+    return render(request, 'emp/salary_master_form.html', {'form': form, 'employee': employee, 'masters': masters,'view_name': request.resolver_match.view_name})
 
 @role_required('admin', 'hr')
 def adjustments_list(request):
     employees = Employee.objects.filter(status='Active')
-    return render(request, 'emp/adjustments_list.html', {'employees': employees})
+    return render(request, 'emp/adjustments_list.html', {'employees': employees, 'view_name': request.resolver_match.view_name})
 
 @role_required('admin', 'hr')
 def adjustments_form(request, employee_id):
+    from apps.emp.models import EmployeeAdjustmentMaster
+    
     employee = get_object_or_404(Employee, id=employee_id)
     if request.method == 'POST':
-        form = EmployeeAdjustmentForm(request.POST)
-        if form.is_valid():
-            adjustment = form.save(commit=False)
-            adjustment.employee = employee
-            adjustment.created_by = request.user
-            adjustment.save()
+        # Manually create EmployeeAdjustmentMaster (no form needed for now)
+        try:
+            adjustment_type = request.POST.get('adjustment_type')
+            total_amount = Decimal(request.POST.get('amount', 0))
+            date_issued = request.POST.get('date')
+            description = request.POST.get('remarks', '')
+            
+            # Create master record
+            EmployeeAdjustmentMaster.objects.create(
+                employee=employee,
+                adjustment_type=adjustment_type,
+                total_amount=total_amount,
+                date_issued=date_issued,
+                description=description,
+                status='Active',
+                created_by=request.user
+            )
             return JsonResponse({'status': 'success', 'message': 'Adjustment saved'})
-        else:
-            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
-    form = EmployeeAdjustmentForm()
-    adjustments = EmployeeAdjustment.objects.filter(employee=employee)
-    return render(request, 'emp/adjustments_form.html', {'form': form, 'employee': employee, 'adjustments': adjustments})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    
+    # Show both old and new adjustments for transition period
+    old_adjustments = EmployeeAdjustment.objects.filter(employee=employee)
+    new_adjustments = EmployeeAdjustmentMaster.objects.filter(employee=employee)
+    
+    # Combine for display (you can update template to show both)
+    form = EmployeeAdjustmentForm()  # Keep form for now for template compatibility
+    return render(request, 'emp/adjustments_form.html', {
+        'form': form, 
+        'employee': employee, 
+        'adjustments': old_adjustments,  # Old for backward compatibility
+        'new_adjustments': new_adjustments,  # New masters
+        'view_name': request.resolver_match.view_name
+    })
+
 
 # @role_required('admin', 'hr')
 # def salary_preparation(request):
@@ -776,7 +925,8 @@ def salary_master_list(request):
     ).filter(salary_masters__effective_from=F('latest_salary'), salary_masters__status='Active').prefetch_related('salary_masters')
     return render(request, 'emp/salary_master_list.html', {
         'no_salary_employees': no_salary_employees,
-        'with_salary_employees': with_salary_employees
+        'with_salary_employees': with_salary_employees,
+        'view_name': request.resolver_match.view_name
     })
 
 @role_required('admin', 'hr')
@@ -801,7 +951,8 @@ def salary_master_detail(request, emp_id):
         'employee': employee,
         'salaries': salaries,
         'form': form,
-        'latest_salary': latest_salary
+        'latest_salary': latest_salary,
+        'view_name': request.resolver_match.view_name
     })
 
 @role_required('admin', 'hr')
@@ -816,85 +967,717 @@ def adjustments_page(request):
     else:
         form = EmployeeAdjustmentForm()
     adjustments = EmployeeAdjustment.objects.all()
-    return render(request, 'emp/adjustments.html', {'form': form, 'adjustments': adjustments})
+    return render(request, 'emp/adjustments.html', {'form': form, 'adjustments': adjustments, 'view_name': request.resolver_match.view_name})
 
 @role_required('admin', 'hr')
 def salary_preparation(request):
-    current_month = datetime.now().month
-    current_year = datetime.now().year
+    from dateutil.relativedelta import relativedelta
+    
+    # Get selected month or default to previous month
+    today = datetime.now()
+    prev_month_date = today - relativedelta(months=1)
+    
+    selected_month = int(request.GET.get('month', prev_month_date.month))
+    selected_year = int(request.GET.get('year', prev_month_date.year))
+    
+    # Generate 4 months (current + past 3)
+    months_list = []
+    for i in range(4):
+        m_date = today - relativedelta(months=i)
+        
+        # Check if any salaries prepared for this month
+        has_transactions = EmployeeSalaryTransaction.objects.filter(
+            month=m_date.month,
+            year=m_date.year
+        ).exists()
+        
+        months_list.append({
+            'month': m_date.month,
+            'year': m_date.year,
+            'display': m_date.strftime('%b %Y'),
+            'prepared': has_transactions,
+            'is_selected': (m_date.month == selected_month and m_date.year == selected_year)
+        })
+    
+    # Days in selected month
+    days_in_month = calendar.monthrange(selected_year, selected_month)[1]
+    
+    # Filter employees
     site = request.GET.get('site')
     department = request.GET.get('department')
     designation = request.GET.get('designation')
-    queryset = Employee.objects.filter(status='Active')
+    
+    # Base query: Active employees with Active salary master
+    queryset = Employee.objects.filter(
+        status='Active',
+        salary_masters__status='Active'
+    ).distinct()
+    
+    # Apply filters
     if site:
         queryset = queryset.filter(site__id=site)
     if department:
         queryset = queryset.filter(department__id=department)
     if designation:
         queryset = queryset.filter(designation__id=designation)
-    # Pending adjustments summary
+    
+    # Annotate with adjustment data using NEW models
     queryset = queryset.annotate(
-        pending_adjustments=Coalesce(Sum('adjustments__amount', filter=Q(adjustments__status__in=['Pending', 'Partial'], adjustments__date__month=current_month, adjustments__date__year=current_year)), Decimal('0'))
+        # Cleared adjustments IN the selected month
+        cleared_adjustments=Coalesce(
+            Sum('employeeadjustmenttransaction__settlement_amount',
+                filter=Q(
+                    employeeadjustmenttransaction__salary_month=selected_month,
+                    employeeadjustmenttransaction__salary_year=selected_year
+                )),
+            Decimal('0')
+        )
+        # Note: pending_adjustments removed from annotation to prevent duplication
+        # Will be calculated in Python loop below
     )
+    
+    # Add salary transaction info for each employee
+    for emp in queryset:
+        # Last salary transaction (any month)
+        emp.last_salary_obj = EmployeeSalaryTransaction.objects.filter(
+            employee=emp
+        ).order_by('-year', '-month').first()
+        
+        # Selected month salary transaction
+        emp.selected_month_trans = EmployeeSalaryTransaction.objects.filter(
+            employee=emp,
+            month=selected_month,
+            year=selected_year
+        ).first()
+        
+        # Current month info
+        emp.is_prepared = bool(emp.selected_month_trans)
+        if emp.selected_month_trans:
+            emp.current_month_net = emp.selected_month_trans.net_salary
+            emp.selected_month_absent = emp.selected_month_trans.leave_days
+            # Can edit only if status is 'Prepared' (not yet processed)
+            emp.can_edit = emp.selected_month_trans.status == 'Prepared'
+        else:
+            emp.current_month_net = None
+            emp.selected_month_absent = 0
+            emp.can_edit = False
+        
+        # Calculate pending adjustments correctly (avoid double-counting from joins)
+        active_masters = EmployeeAdjustmentMaster.objects.filter(
+            employee=emp,
+            status='Active'
+        )
+        emp.pending_adjustments = sum(
+            master.outstanding_amount for master in active_masters
+        )
+    
     sites = Site.objects.all()
     departments = Department.objects.all()
     designations = Designation.objects.all()
+    
+    # Calculate statistics for report header
+    total_employees = queryset.count()
+    prepared_count = sum(1 for emp in queryset if emp.is_prepared)
+    not_prepared_count = total_employees - prepared_count
+    processed_count = sum(1 for emp in queryset if emp.is_prepared and not emp.can_edit)
+    
+    # Get selected filter labels
+    selected_site_name = Site.objects.get(id=site).site_name if site else 'All Sites'
+    selected_dept_name = Department.objects.get(id=department).department_name if department else 'All Departments'
+    selected_desig_name = Designation.objects.get(id=designation).designation_name if designation else 'All Designations'
+    
     return render(request, 'emp/salary_preparation.html', {
+        'months_list': months_list,
+        'selected_month': selected_month,
+        'selected_year': selected_year,
+        'selected_month_name': calendar.month_name[selected_month],
+        'days_in_month': days_in_month,
         'employees': queryset,
         'sites': sites,
         'departments': departments,
         'designations': designations,
-        'current_month': current_month,
-        'current_year': current_year,
+        'view_name': request.resolver_match.view_name,
+        # Statistics for report header
+        'total_employees': total_employees,
+        'prepared_count': prepared_count,
+        'not_prepared_count': not_prepared_count,
+        'processed_count': processed_count,
+        'selected_site_name': selected_site_name,
+        'selected_dept_name': selected_dept_name,
+        'selected_desig_name': selected_desig_name,
     })
 
+
+
+
+
 @role_required('admin', 'hr')
-def prepare_salary(request, emp_id):
-    employee = get_object_or_404(Employee, id=emp_id)
-    current_month = datetime.now().month
-    current_year = datetime.now().year
-    days_in_month = calendar.monthrange(current_year, current_month)[1]
+def process_salary_bulk(request):
+    """
+    Bulk process selected employee salaries.
+    Updates status from 'Prepared' to 'Processed' for selected employees.
+    """
+    
+    
+    if request.method == 'POST':
+        employee_ids = request.POST.getlist('employee_ids')
+        month = int(request.POST.get('month'))
+        year = int(request.POST.get('year'))
+        
+        if not employee_ids:
+            messages.error(request, 'No employees selected.')
+            return redirect('emp:salary_preparation')
+        
+        # Update salary transactions to Processed
+        updated_count = EmployeeSalaryTransaction.objects.filter(
+            employee_id__in=employee_ids,
+            month=month,
+            year=year,
+            status='Prepared'  # Only update Prepared ones
+        ).update(status='Processed')
+        
+        if updated_count > 0:
+            messages.success(request, f'Successfully processed {updated_count} salary record(s).')
+        else:
+            messages.warning(request, 'No salaries were processed. They may already be processed.')
+        return redirect(f'/emp/salary-preparation/?month={month}&year={year}')
+    
+    return redirect('emp:salary_preparation')
+
+
+@role_required('admin', 'hr')
+def export_salary_xlsx(request):
+    """Export salary preparation report to Excel"""
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    except ImportError:
+        messages.error(request, 'openpyxl library not installed.')
+        return redirect('emp:salary_preparation')
+    
+    month = int(request.GET.get('month', datetime.now().month))
+    year = int(request.GET.get('year', datetime.now().year))
+    site = request.GET.get('site', '')
+    department = request.GET.get('department', '')
+    designation = request.GET.get('designation', '')
+    
+    queryset = Employee.objects.filter(status='Active', salary_masters__status='Active').distinct()
+    if site:
+        queryset = queryset.filter(site__id=site)
+    if department:
+        queryset = queryset.filter(department__id=department)
+    if designation:
+        queryset = queryset.filter(designation__id=designation)
+    
+    queryset = queryset.annotate(
+        cleared_adjustments=Coalesce(
+            Sum('employeeadjustmenttransaction__settlement_amount',
+                filter=Q(employeeadjustmenttransaction__salary_month=month, employeeadjustmenttransaction__salary_year=year)),
+            Decimal('0'))
+    )
+    
+    for emp in queryset:
+        emp.last_salary_obj = EmployeeSalaryTransaction.objects.filter(employee=emp).order_by('-year', '-month').first()
+        emp.selected_month_trans = EmployeeSalaryTransaction.objects.filter(employee=emp, month=month, year=year).first()
+        emp.is_prepared = bool(emp.selected_month_trans)
+        if emp.selected_month_trans:
+            emp.current_month_net = emp.selected_month_trans.net_salary
+            emp.can_edit = emp.selected_month_trans.status == 'Prepared'
+        else:
+            emp.current_month_net = None
+            emp.can_edit = False
+        active_masters = EmployeeAdjustmentMaster.objects.filter(employee=emp, status='Active')
+        emp.pending_adjustments = sum(master.outstanding_amount for master in active_masters)
+    
+    total_employees = queryset.count()
+    prepared_count = sum(1 for emp in queryset if emp.is_prepared)
+    selected_site_name = Site.objects.get(id=site).site_name if site else 'All Sites'
+    selected_dept_name = Department.objects.get(id=department).department_name if department else 'All Departments'
+    selected_desig_name = Designation.objects.get(id=designation).designation_name if designation else 'All Designations'
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Salary Report"
+    
+    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    header_font = Font(bold=True, color="FFFFFF", size=12)
+    title_font = Font(bold=True, size=14)
+    border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+    
+    ws.merge_cells('A1:I1')
+    ws['A1'] = 'Salary Preparation Report'
+    ws['A1'].font = title_font
+    ws['A1'].alignment = Alignment(horizontal='center')
+    
+    row = 3
+    ws[f'A{row}'] = f'Period: {calendar.month_name[month]} {year}'
+    ws[f'A{row}'].font = Font(bold=True)
+    row += 1
+    ws[f'A{row}'] = f'Site: {selected_site_name}'
+    ws[f'D{row}'] = f'Department: {selected_dept_name}'
+    ws[f'G{row}'] = f'Designation: {selected_desig_name}'
+    row += 2
+    
+    headers = ['S.No', 'Employee', 'Department', 'Designation', 'Current Salary', 'Cleared', 'Pending', 'Last Salary', 'Status']
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=row, column=col_num, value=header)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.border = border
+        cell.alignment = Alignment(horizontal='center')
+    
+    row += 1
+    for idx, emp in enumerate(queryset, 1):
+        ws.cell(row=row, column=1, value=idx).border = border
+        ws.cell(row=row, column=2, value=f"{emp.first_name} {emp.last_name}").border = border
+        ws.cell(row=row, column=3, value=emp.department.department_name if emp.department else '').border = border
+        ws.cell(row=row, column=4, value=emp.designation.designation_name if emp.designation else '').border = border
+        ws.cell(row=row, column=5, value=float(emp.current_month_net) if emp.current_month_net else 0).border = border
+        ws.cell(row=row, column=6, value=float(emp.cleared_adjustments)).border = border
+        ws.cell(row=row, column=7, value=float(emp.pending_adjustments)).border = border
+        ws.cell(row=row, column=8, value=float(emp.last_salary_obj.net_salary) if emp.last_salary_obj else 0).border = border
+        status = 'Processed' if (emp.is_prepared and not emp.can_edit) else ('Prepared' if emp.is_prepared else 'Not Prepared')
+        ws.cell(row=row, column=9, value=status).border = border
+        row += 1
+    
+    for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']:
+        ws.column_dimensions[col].width = 20 if col == 'B' else 15
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=Salary_Report_{month}_{year}.xlsx'
+    wb.save(response)
+    return response
+
+
+@role_required('admin', 'hr')
+def export_salary_pdf(request):
+    """Export salary preparation report to PDF"""
+    try:
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib import colors
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+    except ImportError:
+        messages.error(request, 'reportlab library not installed.')
+        return redirect('emp:salary_preparation')
+    
+    month = int(request.GET.get('month', datetime.now().month))
+    year = int(request.GET.get('year', datetime.now().year))
+    site = request.GET.get('site', '')
+    department = request.GET.get('department', '')
+    designation = request.GET.get('designation', '')
+    
+    queryset = Employee.objects.filter(status='Active', salary_masters__status='Active').distinct()
+    if site:
+        queryset = queryset.filter(site__id=site)
+    if department:
+        queryset = queryset.filter(department__id=department)
+    if designation:
+        queryset = queryset.filter(designation__id=designation)
+    
+    queryset = queryset.annotate(
+        cleared_adjustments=Coalesce(
+            Sum('employeeadjustmenttransaction__settlement_amount',
+                filter=Q(employeeadjustmenttransaction__salary_month=month, employeeadjustmenttransaction__salary_year=year)),
+            Decimal('0'))
+    )
+    
+    for emp in queryset:
+        emp.last_salary_obj = EmployeeSalaryTransaction.objects.filter(employee=emp).order_by('-year', '-month').first()
+        emp.selected_month_trans = EmployeeSalaryTransaction.objects.filter(employee=emp, month=month, year=year).first()
+        emp.is_prepared = bool(emp.selected_month_trans)
+        if emp.selected_month_trans:
+            emp.current_month_net = emp.selected_month_trans.net_salary
+            emp.can_edit = emp.selected_month_trans.status == 'Prepared'
+        else:
+            emp.current_month_net = None
+            emp.can_edit = False
+        active_masters = EmployeeAdjustmentMaster.objects.filter(employee=emp, status='Active')
+        emp.pending_adjustments = sum(master.outstanding_amount for master in active_masters)
+    
+    selected_site_name = Site.objects.get(id=site).site_name if site else 'All Sites'
+    selected_dept_name = Department.objects.get(id=department).department_name if department else 'All Departments'
+    selected_desig_name = Designation.objects.get(id=designation).designation_name if designation else 'All Designations'
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename=Salary_Report_{month}_{year}.pdf'
+    
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4))
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], alignment=1)
+    elements.append(Paragraph('Salary Preparation Report', title_style))
+    elements.append(Spacer(1, 0.3 * inch))
+    
+    header_data = [[f"Period: {calendar.month_name[month]} {year}", '', ''], [f"Site: {selected_site_name}", f"Dept: {selected_dept_name}", f"Desig: {selected_desig_name}"]]
+    header_table = Table(header_data, colWidths=[3*inch, 3*inch, 3*inch])
+    header_table.setStyle(TableStyle([('FONT', (0, 0), (-1, -1), 'Helvetica-Bold', 10), ('GRID', (0, 0), (-1, -1), 0.5, colors.grey)]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 0.3 * inch))
+    
+    data = [['S.No', 'Employee', 'Dept', 'Desig', 'Current', 'Cleared', 'Pending', 'Last', 'Status']]
+    for idx, emp in enumerate(queryset, 1):
+        status = 'Proc' if (emp.is_prepared and not emp.can_edit) else ('Prep' if emp.is_prepared else 'Not')
+        data.append([idx, f"{emp.first_name} {emp.last_name}"[:20], emp.department.department_name[:12] if emp.department else '', 
+                     emp.designation.designation_name[:12] if emp.designation else '', f"₹{emp.current_month_net:,.0f}" if emp.current_month_net else '₹0',
+                     f"₹{emp.cleared_adjustments:,.0f}", f"₹{emp.pending_adjustments:,.0f}",
+                     f"₹{emp.last_salary_obj.net_salary:,.0f}" if emp.last_salary_obj else '₹0', status])
+    
+    table = Table(data, colWidths=[0.5*inch, 1.5*inch, 1*inch, 1*inch, 1*inch, 1*inch, 1*inch, 1*inch, 0.7*inch])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+    ]))
+    
+    elements.append(table)
+    doc.build(elements)
+    return response
+
+
+@role_required('admin', 'hr')
+def prepare_salary(request, employee_id):
+    from apps.emp.models import EmployeeAdjustmentMaster, EmployeeAdjustmentTransaction
+    
+    employee = get_object_or_404(Employee, id=employee_id)
+    
+    # Get month/year from query params or default to current
+    selected_month = int(request.GET.get('month', datetime.now().month))
+    selected_year = int(request.GET.get('year', datetime.now().year))
+    
+    days_in_month = calendar.monthrange(selected_year, selected_month)[1]
     latest_salary = EmployeeSalaryMaster.objects.filter(employee=employee, status='Active').order_by('-effective_from').first()
     if not latest_salary:
         return JsonResponse({'status': 'error', 'message': 'No active salary'}, status=400)
-    pending_adjustments = EmployeeAdjustment.objects.filter(employee=employee, status__in=['Pending', 'Partial'], date__month=current_month, date__year=current_year)
-    last_3_adjustments = EmployeeAdjustment.objects.filter(employee=employee).order_by('-date')[:3]
+    
+    # Load ACTIVE adjustment masters (with outstanding balance)
+    pending_adjustments = EmployeeAdjustmentMaster.objects.filter(
+        employee=employee, 
+        status='Active'
+    )
+    
+    # Get last 3 salaries for context
     last_3_salaries = EmployeeSalaryTransaction.objects.filter(employee=employee).order_by('-year', '-month')[:3]
+    
     if request.method == 'POST':
-        days_absent = int(request.POST.get('days_absent', 2))
-        leave_deduction = (latest_salary.salary_amount / days_in_month) * days_absent
+        # Get month/year from form submission
+        month = int(request.POST.get('month', selected_month))
+        year = int(request.POST.get('year', selected_year))
+        days_in_month_calc = calendar.monthrange(year, month)[1]
+        
+        days_absent = int(request.POST.get('days_absent', 0))
+        leave_deduction = (latest_salary.salary_amount / days_in_month_calc) * days_absent
         adjustments_net = Decimal('0')
-        for adj in pending_adjustments:
-            partial = Decimal(request.POST.get(f'partial_{adj.id}', '0'))
-            if partial > adj.remaining_amount:
-                return JsonResponse({'status': 'error', 'message': 'Partial exceeds remaining'}, status=400)
-            if partial > 0:
-                adj.remaining_amount -= partial
-                adj.save()
-            # Net: + for Bonus/Reward, - for Advance/Fine
-            sign = 1 if adj.adjustment_type in ['Bonus', 'Reward'] else -1
-            adjustments_net += sign * partial
+        
+        # Check if salary already prepared for this month
+        existing = EmployeeSalaryTransaction.objects.filter(
+            employee=employee,
+            month=month,
+            year=year
+        ).first()
+        
+        if existing:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Salary already prepared for {month}/{year}'
+            }, status=400)
+        
+        # Process each pending adjustment master
+        adjustment_details = []
+        
+        for master in pending_adjustments:
+            settlement_amount = Decimal('0')
+            outstanding = master.outstanding_amount
+            
+            # Check if full settlement selected
+            if request.POST.get(f'settle_full_{master.id}'):
+                settlement_amount = outstanding
+                transaction_type = 'Full'
+                adjustment_details.append(f"{master.adjustment_type} #{master.id}: Full ₹{settlement_amount}")
+            
+            # Check if partial settlement selected
+            elif request.POST.get(f'partial_{master.id}'):
+                partial_value = request.POST.get(f'partial_{master.id}', '0')
+                try:
+                    partial = Decimal(partial_value)
+                except:
+                    partial = Decimal('0')
+                
+                # Validation
+                if partial > outstanding:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': f'Partial amount (₹{partial}) exceeds outstanding (₹{outstanding}) for {master.adjustment_type}'
+                    }, status=400)
+                
+                if partial > 0:
+                    settlement_amount = partial
+                    transaction_type = 'Partial'
+                    adjustment_details.append(f"{master.adjustment_type} #{master.id}: Partial ₹{settlement_amount}")
+            
+            # Create settlement transaction if amount > 0
+            if settlement_amount > 0:
+                EmployeeAdjustmentTransaction.objects.create(
+                    adjustment_master=master,
+                    employee=employee,
+                    settlement_amount=settlement_amount,
+                    salary_month=month,
+                    salary_year=year,
+                    transaction_type=transaction_type,
+                    remarks=f"Settled via {calendar.month_name[month]} {year} salary",
+                    created_by=request.user
+                )
+                
+                # Update cleared_amount in master
+                master.cleared_amount += settlement_amount
+                master.save()
+                
+                # Update master status if fully settled
+                if master.is_fully_settled():
+                    master.status = 'Closed'
+                    master.save()
+                
+                # Calculate net adjustment (+ for Bonus/Reward, - for Advance/Fine)
+                sign = 1 if master.adjustment_type in ['Bonus', 'Reward'] else -1
+                adjustments_net += sign * settlement_amount
+        
+        # Calculate final salary
         net_salary = latest_salary.salary_amount + adjustments_net - leave_deduction
+        
+        # Build comprehensive transaction remarks
+        transaction_remarks = f"Salary for {calendar.month_name[month]} {year}\n"
+        transaction_remarks += f"Base Salary: ₹{latest_salary.salary_amount}\n"
+        transaction_remarks += f"Leave Days: {days_absent}, Deduction: ₹{leave_deduction}\n"
+        
+        if adjustment_details:
+            transaction_remarks += f"\nAdjustments Processed:\n"
+            for detail in adjustment_details:
+                transaction_remarks += f"- {detail}\n"
+            transaction_remarks += f"Total Adjustments: ₹{adjustments_net}\n"
+        else:
+            transaction_remarks += "No adjustments for this month\n"
+        
+        transaction_remarks += f"\nNet Salary: ₹{net_salary}"
+        
+        # Create salary transaction
         transaction = EmployeeSalaryTransaction(
             employee=employee,
-            month=current_month,
-            year=current_year,
+            month=month,
+            year=year,
             salary_amount=latest_salary.salary_amount,
             adjustments_net=adjustments_net,
             leave_days=days_absent,
             leave_deduction=leave_deduction,
             net_salary=net_salary,
-            prepared_by=request.user
+            prepared_by=request.user,
+            remarks=transaction_remarks
         )
         transaction.save()
-        return JsonResponse({'status': 'success', 'message': 'Salary prepared'})
+        return JsonResponse({'status': 'success', 'message': 'Salary prepared successfully'})
+    
     return render(request, 'emp/prepare_salary_modal.html', {
         'employee': employee,
         'latest_salary': latest_salary,
-        'pending_adjustments': pending_adjustments,
-        'last_3_adjustments': last_3_adjustments,
+        'pending_adjustments': pending_adjustments,  # Now contains Masters
         'last_3_salaries': last_3_salaries,
         'days_in_month': days_in_month,
-        'default_absent': 2
+        'selected_month': selected_month,
+        'selected_year': selected_year,
+        'selected_month_name': calendar.month_name[selected_month],
+        'view_name': request.resolver_match.view_name,
+        'default_absent': 0
     })
+
+
+
+@role_required('admin', 'hr')
+def employee_profile_popup(request, employee_id):
+    """Employee profile popup for HRMS dashboard"""
+    from dateutil.relativedelta import relativedelta
+    
+    employee = get_object_or_404(Employee, id=employee_id)
+    
+    # Calculate duration since joining
+    today = datetime.now().date()
+    delta = relativedelta(today, employee.joining_date)
+    if delta.years > 0:
+        duration_str = f"{delta.years} yr {delta.months} mos"
+    else:
+        duration_str = f"{delta.months} mos"
+    
+    # Status checks
+    has_login = User.objects.filter(username=employee.emp_code).exists()
+    has_salary = EmployeeSalaryMaster.objects.filter(
+        employee=employee, 
+        status='Active'
+    ).exists()
+    
+    # Payroll status for current month
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    payroll_processed = EmployeeSalaryTransaction.objects.filter(
+        employee=employee,
+        month=current_month,
+        year=current_year
+    ).exists()
+    
+    # Last salary transaction
+    last_salary = EmployeeSalaryTransaction.objects.filter(
+        employee=employee
+    ).order_by('-year', '-month').first()
+    
+    # Get all adjustment masters for this employee (both active and closed)
+    from apps.emp.models import EmployeeAdjustmentMaster, EmployeeAdjustmentTransaction
+    
+    adjustment_masters = EmployeeAdjustmentMaster.objects.filter(
+        employee=employee
+    ).order_by('-date_issued')[:5]  # Last 5 adjustments
+    
+    # Get ALL transactions for display (last 10)
+    all_transactions = EmployeeAdjustmentTransaction.objects.filter(
+        employee=employee
+    ).select_related('adjustment_master').order_by('-salary_year', '-salary_month', '-settlement_date')[:10]
+    
+    context = {
+        'employee': employee,
+        'duration_str': duration_str,
+        'has_login': has_login,
+        'has_salary': has_salary,
+        'payroll_processed': payroll_processed,
+        'last_salary': last_salary,
+        'adjustment_masters': adjustment_masters,  # NEW: Masters with outstanding info
+        'all_transactions': all_transactions,  # NEW: Transaction history
+        'view_name': request.resolver_match.view_name
+    }
+    
+    return render(request, 'emp/employee_profile_popup.html', context)
+
 # endregion SALARY
+
+@role_required('admin', 'hr')
+def get_employees_json(request):
+    """API endpoint for Select2 employee search"""
+    q = request.GET.get('q', '')
+    page = int(request.GET.get('page', 1))
+    page_size = 20
+    
+    employees = Employee.objects.filter(status='Active')
+    
+    if q:
+        employees = employees.filter(
+            Q(first_name__icontains=q) | 
+            Q(last_name__icontains=q) | 
+            Q(emp_code__icontains=q)
+        )
+    
+    total = employees.count()
+    start = (page - 1) * page_size
+    end = start + page_size
+    
+    employees_page = employees[start:end]
+    
+    results = [{
+        'id': emp.id,
+        'text': f"{emp.first_name} {emp.last_name}",
+        'emp_code': emp.emp_code
+    } for emp in employees_page]
+    
+    return JsonResponse({
+        'results': results,
+        'pagination': {
+            'more': end < total
+        }
+    })
+
+@role_required('admin', 'hr')
+def get_employee_profile(request, employee_id):
+    """API endpoint to get employee profile details"""
+    try:
+        employee = Employee.objects.get(id=employee_id, status='Active')
+        
+        # Check if user exists
+        try:
+            user = User.objects.get(username=employee.emp_code)
+            has_user = True
+            username = user.username
+            user_role = user.groups.first().name if user.groups.exists() else 'Employee'
+        except User.DoesNotExist:
+            has_user = False
+            username = None
+            user_role = None
+        
+        data = {
+            'name': f"{employee.first_name} {employee.last_name}",
+            'emp_code': employee.emp_code,
+            'designation': employee.designation.designation_name,
+            'department': employee.department.department_name,
+            'email': employee.email or 'N/A',
+            'contact_no': employee.contact_no,
+            'joining_date': employee.joining_date.strftime('%Y-%m-%d'),
+            'photo': employee.photo.url if employee.photo else '/static/dist/img/default-150x150.png',
+            'has_user': has_user,
+            'username': username,
+            'user_role': user_role
+        }
+        
+        return JsonResponse(data)
+    except Employee.DoesNotExist:
+        return JsonResponse({'error': 'Employee not found'}, status=404)
+
+@role_required('admin', 'hr')
+def get_employees_list(request):
+    """API endpoint to get all employees with login status for create user page"""
+    employees = Employee.objects.filter(status='Active').order_by('first_name', 'last_name')
+    
+    employee_data = []
+    for emp in employees:
+        # Check if user exists
+        try:
+            user = User.objects.get(username=emp.emp_code)
+            has_login = True
+        except User.DoesNotExist:
+            has_login = False
+        
+        employee_data.append({
+            'id': emp.id,
+            'name': f"{emp.first_name} {emp.last_name}",
+            'emp_code': emp.emp_code,
+            'designation': emp.designation.designation_name,
+            'department': emp.department.department_name,
+            'photo': emp.photo.url if emp.photo else None,
+            'has_login': has_login
+        })
+    
+    # Sort: employees without login first
+    employee_data.sort(key=lambda x: (x['has_login'], x['name']))
+    
+    return JsonResponse({'employees': employee_data})
+
+@role_required('admin', 'hr')
+def check_duplicate(request):
+    """API endpoint to check for duplicate Aadhaar/PAN/Mobile"""
+    field = request.GET.get('field')  # 'aadhaar_no', 'pan_card', 'contact_no'
+    value = request.GET.get('value')
+    employee_id = request.GET.get('employee_id')  # For edit mode
+    
+    if not field or not value:
+        return JsonResponse({'exists': False})
+    
+    # Build query
+    query_filter = {field: value}
+    
+    # Check if exists (excluding current employee if editing)
+    queryset = Employee.objects.filter(**query_filter)
+    if employee_id:
+        queryset = queryset.exclude(id=employee_id)
+    
+    exists = queryset.exists()
+    
+    return JsonResponse({'exists': exists})

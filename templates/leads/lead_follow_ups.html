@@ -1,0 +1,169 @@
+<!-- templates/leads/lead_follow_ups.html -->
+{% extends 'layouts/base.html' %}
+{% load crispy_forms_tags static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Content Header (Breadcrumbs) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Follow-Ups for Lead #{{ lead.lead_id }}: {{ lead.client_name|title }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'leads:lead_list' %}">Leads</a></li>
+                        
+                        <li class="breadcrumb-item active">Follow-Ups</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Messages -->
+            {% if messages %}
+                <div class="row">
+                    <div class="col-12">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="row">
+                <!-- Lead Summary Card -->
+                <div class="col-md-12">
+                    <div class="card card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Lead Details</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Client Name:</dt>
+                                        <dd class="col-sm-8">{{ lead.client_name }}</dd>
+                                        <dt class="col-sm-4">Contact:</dt>
+                                        <dd class="col-sm-8">{{ lead.contact_person }} ({{ lead.designation }})</dd>
+                                        <dt class="col-sm-4">Mobile:</dt>
+                                        <dd class="col-sm-8">{{ lead.mobile_no }}</dd>
+                                        <dt class="col-sm-4">Status:</dt>
+                                        <dd class="col-sm-8">
+                                            <span class="badge badge-{% if lead.lead_status == 'New' %}info elif lead.lead_status == 'Converted' %}success else warning {% endif %}">
+                                                {{ lead.get_lead_status_display }}
+                                            </span>
+                                        </dd>
+                                    </dl>
+                                </div>
+                                <div class="col-md-6">
+                                    <dl class="row">
+                                        <dt class="col-sm-4">Service Req:</dt>
+                                        <dd class="col-sm-8">{{ lead.get_service_requirement_display }}</dd>
+                                        <dt class="col-sm-4">Next Follow-Up:</dt>
+                                        <dd class="col-sm-8">{{ lead.next_follow_up|date:"Y-m-d"|default:"N/A" }}</dd>
+                                        <dt class="col-sm-4">Created By:</dt>
+                                        <dd class="col-sm-8">{{ lead.created_by.first_name|default:"Unassigned" }} {{ lead.created_by.last_name|default:"" }}</dd>
+                                        <dt class="col-sm-4">Entry Date:</dt>
+                                        <dd class="col-sm-8">{{ lead.entry_date|date:"Y-m-d" }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            {% if lead.remarks %}
+                                <hr>
+                                <h6 class="text-muted">Remarks:</h6>
+                                <p class="mb-0">{{ lead.remarks }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Existing Follow-Ups Table -->
+                <div class="col-md-6">
+                    <div class="card card-secondary">
+                        <div class="card-header">
+                            <h3 class="card-title">Existing Follow-Ups ({{ follow_ups.count }})</h3>
+                        </div>
+                        <div class="card-body table-responsive p-0">
+                            {% if follow_ups %}
+                                <table class="table table-hover text-nowrap">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Feedback</th>
+                                            <th>Quotation Sent</th>
+                                            <th>Closing Date</th>
+                                            <th>Remarks</th>
+                                            <th>By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for fu in follow_ups %}
+                                            <tr>
+                                                <td>{{ fu.follow_up_date|date:"Y-m-d" }}</td>
+                                                <td>
+                                                    <span class="badge badge-{% if fu.feedback == 'Positive' %}success elif fu.feedback == 'Negative' %}danger else info {% endif %}">
+                                                        {{ fu.get_feedback_display }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if fu.quotation_sent %}
+                                                        <i class="fas fa-check text-success"></i> {{ fu.quotation_date|date:"Y-m-d"|default:"Today" }}
+                                                    {% else %}
+                                                        <i class="fas fa-times text-danger"></i> No
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ fu.closing_date|date:"Y-m-d"|default:"N/A" }}</td>
+                                                <td>{{ fu.remarks|truncatechars:50|default:"N/A" }}</td>
+                                                <td>{{ fu.created_by.first_name|default:"Unassigned" }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-comments fa-3x mb-3"></i>
+                                    <p>No follow-ups yet. Add your first one below!</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add New Follow-Up Form -->
+                <div class="col-md-6">
+                    <div class="card card-success">
+                        <div class="card-header">
+                            <h3 class="card-title">Add New Follow-Up</h3>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                {% crispy form %}
+                                <div class="form-group">
+                                    <label for="id_next_follow_up">Next Follow-Up Date (Optional)</label>
+                                    <input type="date" name="next_follow_up" id="id_next_follow_up" class="form-control" value="{{ lead.next_follow_up|date:'Y-m-d' }}">
+                                    <small class="form-text text-muted">Schedule the next contact.</small>
+                                </div>
+                                <button type="submit" class="btn btn-success btn-block">Add Follow-Up</button>
+                            </form>
+                            <hr>
+                            <a href="{% url 'leads:lead_list' %}" class="btn btn-secondary btn-block">Back to Leads</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

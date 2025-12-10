@@ -1,383 +1,1059 @@
 {% extends 'layouts/base.html' %}
-{% load static %}
-{% load crispy_forms_tags %}
+{% load static crispy_forms_tags %}
 
-{% block title %}
-EMPLOYEE 
-{% endblock title %}
+{% block title %}{% if employee %}Edit Employee{% else %}Add Employee{% endif %}{% endblock %}
+
 {% block extrastyle %}
-
-<!-- <link rel="stylesheet" href="{% static 'form_main.css' %}"> -->
-<style>
-    .myinput input {
-        margin-bottom: 2px!important;
-    }
-</style>
-
-<!-- <link rel="stylesheet" href="{% static 'plugins/select2/select2.min.css' %}">
-<link rel="stylesheet" href="{% static 'plugins/select2/select2-bootstrap4.css' %}">
-<link rel="stylesheet" href="{% static 'plugins/select2/select2-bootstrap4.min.css' %}"> -->
-<!-- <link rel="stylesheet" href="{% static 'plugins/select2/_layout.scss' %}">
-<link rel="stylesheet" href="{% static 'plugins/select2/_multiple.scss' %}">
-<link rel="stylesheet" href="{% static 'plugins/select2/_single.scss' %}"> -->
-
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
 <style>
-    /* Wizard step indicator styles */
-    .wizard-steps {
+    /* Modern Wizard Styles */
+    .wizard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .wizard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 10px 10px 0 0;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .wizard-header h1 {
+        margin: 0 0 1rem 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+    }
+
+    /* Progress Stepper */
+    .progress-stepper {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 20px;
+        position: relative;
+        max-width: 800px;
+        margin: 0 auto;
     }
-    .step {
+
+    .step-item {
         flex: 1;
         text-align: center;
-        padding: 10px;
-        background: #eee;
-        border: 1px solid #ddd;
+        position: relative;
     }
-    .step.active {
-        background: #007bff;
+
+    .step-number {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.5rem;
+        font-weight: 700;
+        font-size: 1.2rem;
+        position: relative;
+        z-index: 2;
+        transition: all 0.3s ease;
+    }
+
+    .step-item.active .step-number {
+        background: white;
+        color: #667eea;
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.3);
+    }
+
+    .step-item.completed .step-number {
+        background: #10b981;
         color: white;
     }
+
+    .step-title {
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+
+    .step-item.active .step-title {
+        font-weight: 600;
+        opacity: 1;
+    }
+
+    .step-line {
+        position: absolute;
+        top: 25px;
+        left: 50%;
+        right: -50%;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.3);
+        z-index: 1;
+    }
+
+    .step-item:last-child .step-line {
+        display: none;
+    }
+
+    .step-item.completed .step-line {
+        background: #10b981;
+    }
+
+    /* Form Cards */
+    .form-section {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-icon {
+        color: #667eea;
+        font-size: 1.3rem;
+    }
+
+    /* Photo Upload */
+    .photo-upload-zone {
+        background: #f9fafb;
+        border: 2px dashed #d1d5db;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .photo-upload-zone:hover {
+        border-color: #667eea;
+        background: #f3f4f6;
+    }
+
+    .photo-upload-zone.has-photo {
+        border-style: solid;
+        border-color: #10b981;
+        background: #ecfdf5;
+    }
+
+    .photo-preview {
+        width: 250px;
+        height: 250px;
+        aspect-ratio: 1 / 1;
+        border-radius: 10px;
+        object-fit: cover;
+        margin: 0 auto 1rem;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .photo-preview.show {
+        display: block;
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: #9ca3af;
+        margin-bottom: 1rem;
+    }
+
+    .photo-upload-zone.has-photo .upload-icon {
+        display: none;
+    }
+
+    .change-photo-btn {
+        display: none;
+    }
+
+    .photo-upload-zone.has-photo .change-photo-btn {
+        display: inline-block;
+    }
+
+    /* Validation Indicators */
+    .field-valid {
+        position: relative;
+    }
+
+    .field-valid::after {
+        content: '✓';
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #10b981;
+        font-weight: bold;
+    }
+
+    .field-error {
+        border-color: #ef4444 !important;
+    }
+
+    .field-warning {
+        border-color: #f59e0b !important;
+    }
+
+    .validation-message {
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+
+    .validation-success {
+        color: #10b981;
+    }
+
+    .validation-error {
+        color: #ef4444;
+    }
+
+    .validation-warning {
+        color: #f59e0b;
+    }
+
+    /* Copy Address Checkbox */
+    .copy-address-box {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .copy-address-box label {
+        margin: 0;
+        font-weight: 600;
+        color: #1e40af;
+        cursor: pointer;
+    }
+
+    /* Action Buttons */
+    .wizard-actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 2rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 2rem;
+    }
+
+    .btn-wizard {
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-wizard-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+
+    .btn-wizard-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-wizard-secondary {
+        background: white;
+        color: #6b7280;
+        border: 2px solid #e5e7eb;
+    }
+
+    .btn-wizard-secondary:hover {
+        border-color: #d1d5db;
+        background: #f9fafb;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #f3f4f6;
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .wizard-header {
+            padding: 1.5rem;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+
+        .step-title {
+            font-size: 0.75rem;
+        }
+
+        .form-section {
+            padding: 1rem;
+        }
+    }
 </style>
-{% endblock extrastyle %}
+{% endblock %}
 
 {% block content %}
 <div class="content-wrapper">
-    <div class="content-header">
-        <h1>{% if employee %}Edit Employee{% else %}Add Employee{% endif %}</h1>
-    </div>
-    
-<div class="wizard-steps">
-    <div class="step active">1. Registration</div>
-    {% if employee %}
-    <div class="step"><a href="{% url 'emp:employee_details' employee.id %}">2. Education/Experience/Family</a></div>
-    <div class="step"><a href="{% url 'emp:employee_uploads' employee.id %}">3. Uploads</a></div>
-    <div class="step"><a href="{% url 'emp:employee_view' employee.id %}">4. Print Profile</a></div>
-    {% else %}
-    <div class="step">2. Education/Experience/Family</div>
-    <div class="step">3. Uploads</div>
-    <div class="step">4. Print Profile</div>
-    {% endif %}
+    <div class="content">
+        <div class="container-fluid wizard-container">
 
-</div>
-    <section class="content">
-        <div class="container-fluid">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Employee Details</h3>
-                </div>
-                <div class="card-body">
-                    <form id="employeeForm" method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <!-- <div class="photo-preview-container  text-center right float-right" style="max-width: 200px;max-height: 300px;width: 200px;height: 300px;">
-                            <img id="photo-preview" src="{% static 'img/nopic.jpg' %}" alt="Photo Preview" class="img-thumbnail" style="max-width: 200px;">
-                        </div> -->
-                        <!-- <div class="photo-preview-container position-absolute" style="top:60; right:20px; width:300px;">
-                            <img id="photo-preview" src="{% static 'img/nopic.jpg' %}" class="img-thumbnail w-100">
-                        </div> -->
-                        
-                        {% crispy employee_form %}
-                        
-                        <button type="submit" class="btn btn-primary">{% if employee %}Update{% else %}Save and Proceed to Uploads{% endif %}</button>
+            <!-- Wizard Header -->
+            <div class="wizard-header">
+                <h1>
+                    <i class="fas fa-user-plus mr-2"></i>
+                    {% if employee %}Edit Employee Profile{% else %}Add New Employee{% endif %}
+                </h1>
 
-                    </form>
+                <!-- Progress Stepper -->
+                <div class="progress-stepper">
+                    <div class="step-item active">
+                        <div class="step-number">1</div>
+                        <div class="step-title">Registration</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-title">Education & Experience</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <div class="step-title">Documents</div>
+                        <div class="step-line"></div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">4</div>
+                        <div class="step-title">Review & Submit</div>
+                    </div>
                 </div>
             </div>
+
+            <form id="employeeForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="row">
+                    <!-- LEFT COLUMN -->
+                    <div class="col-lg-6">
+
+                        <!-- Photo Upload Card -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="fas fa-camera section-icon"></i>
+                                Employee Photo
+                            </div>
+                            <div class="photo-upload-zone {% if employee.photo %}has-photo{% endif %}"
+                                id="photoUploadZone">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <img id="photoPreview" class="photo-preview {% if employee.photo %}show{% endif %}"
+                                    src="{% if employee.photo %}{{ employee.photo.url }}{% else %}/static/dist/img/default-150x150.png{% endif %}"
+                                    alt="Employee Photo">
+                                <p class="mb-2"><strong>Click to upload or drag & drop</strong></p>
+                                <p class="text-muted small mb-0">JPG, PNG • Max 2MB</p>
+                                <input type="file" id="id_photo" name="photo" accept="image/*" style="display:none;">
+                                <button type="button" class="btn btn-sm btn-primary mt-2 change-photo-btn"
+                                    onclick="document.getElementById('id_photo').click()">
+                                    <i class="fas fa-sync mr-1"></i>Change Photo
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Basic Information Card -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="fas fa-user section-icon"></i>
+                                Basic Information
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {{ employee_form.first_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ employee_form.middle_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ employee_form.last_name|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ employee_form.father_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ employee_form.mother_name|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {{ employee_form.gender|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ employee_form.blood_group|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ employee_form.marital_status|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ employee_form.dob|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ employee_form.nationality|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information Card -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="fas fa-phone section-icon"></i>
+                                Contact Information
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="validation-wrapper">
+                                        {{ employee_form.contact_no|as_crispy_field }}
+                                        <div class="validation-message" id="mobileValidation"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    {{ employee_form.email|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {{ employee_form.emergency_person_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ employee_form.emergency_relation|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ employee_form.emergency_contact|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Correspondence Address Card -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="fas fa-map-marker-alt section-icon"></i>
+                                Correspondence Address
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    {{ employee_form.cor_address|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {{ employee_form.cor_state|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ employee_form.cor_city|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ employee_form.cor_pincode|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permanent Address Card -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="fas fa-home section-icon"></i>
+                                Permanent Address
+                            </div>
+                            <div class="copy-address-box">
+                                <label>
+                                    <input type="checkbox" id="sameAsCorrespondence">
+                                    Same as Correspondence Address
+                                </label>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    {{ employee_form.per_address|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {{ employee_form.per_state|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ employee_form.per_city|as_crispy_field }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ employee_form.per_pincode|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- RIGHT COLUMN -->
+                    <div class="col-lg-6">
+
+                        <!-- Employment Details Card -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="fas fa-briefcase section-icon"></i>
+                                Employment Details
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ employee_form.department|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ employee_form.designation|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ employee_form.site|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ employee_form.joining_date|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    {{ employee_form.status|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Identity Documents Card -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="fas fa-id-card section-icon"></i>
+                                Identity Documents
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="validation-wrapper">
+                                        {{ employee_form.aadhaar_no|as_crispy_field }}
+                                        <div class="validation-message" id="aadhaarValidation"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="validation-wrapper">
+                                        {{ employee_form.pan_card|as_crispy_field }}
+                                        <div class="validation-message" id="panValidation"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ employee_form.passport_no|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ employee_form.uan_no|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ employee_form.other_id_proof_type|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ employee_form.other_id_proof_no|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bank Details Card -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="fas fa-university section-icon"></i>
+                                Bank Details
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ employee_form.bank_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ employee_form.account_no|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="validation-wrapper">
+                                        {{ employee_form.ifsc_code|as_crispy_field }}
+                                        <div class="validation-message" id="ifscValidation"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    {{ employee_form.upi_id|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    {{ employee_form.pf_esic_no|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <!-- Wizard Actions -->
+                <div class="wizard-actions">
+                    <div>
+                        <a href="{% url 'emp:employee_list' %}" class="btn btn-wizard btn-wizard-secondary">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </a>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-wizard btn-wizard-secondary mr-2" id="saveDraftBtn">
+                            <i class="fas fa-save mr-2"></i>Save Draft
+                        </button>
+                        <button type="submit" class="btn btn-wizard btn-wizard-primary" id="submitBtn">
+                            <span id="submitText">
+                                {% if employee %}
+                                <i class="fas fa-check mr-2"></i>Update & Continue
+                                {% else %}
+                                <i class="fas fa-arrow-right mr-2"></i>Save & Next Step
+                                {% endif %}
+                            </span>
+                            <span id="submitSpinner" style="display:none;">
+                                <span class="spinner"></span> Processing...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+
         </div>
-    </section>
+    </div>
 </div>
 {% endblock %}
-{% block extra_scripts %}
 
+{% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+    $(document).ready(function () {
+        let employeeId = 4;
 
-    
-    // Function to load cities based on state
-    function loadCities_per(stateCode, selectedCity) {
-        if (stateCode) {
-            $.ajax({
-                url: "{% url 'emp:get_cities' %}",
-                type: 'GET',
-                data: { state_code: stateCode },
-                success: function(response) {
-                    var citySelect = $('#id_per_city');
-                    // alert(response)
-                    citySelect.empty().append('<option value="">Select City</option>');
-                    $.each(response.cities, function(index, city) {
-                        var option = $('<option></option>').attr('value', city[0]).text(city[1]);
-                        if (selectedCity && city[0] === selectedCity) {
-                            option.attr('selected', 'selected');
-                        }
-                        citySelect.append(option);
-                    });
-                    citySelect.trigger('change'); // Trigger Select2 to update
-                },
-                error: function() {
-                    console.log('Error loading cities');
-                }
-            });
-        } else {
-            $('#id_cor_city').empty().append('<option value="">Select City</option>').trigger('change');
-        }
-    }
-    // Function to load cities based on state
-    function loadCities_cor(stateCode, selectedCity) {
-        if (stateCode) {
-            $.ajax({
-                url: "{% url 'emp:get_cities' %}",
-                type: 'GET',
-                data: { state_code: stateCode },
-                success: function(response) {
-                    var citySelect = $('#id_cor_city');
-                    // alert(response)
-                    citySelect.empty().append('<option value="">Select City</option>');
-                    $.each(response.cities, function(index, city) {
-                        var option = $('<option></option>').attr('value', city[0]).text(city[1]);
-                        if (selectedCity && city[0] === selectedCity) {
-                            option.attr('selected', 'selected');
-                        }
-                        citySelect.append(option);
-                    });
-                    citySelect.trigger('change'); // Trigger Select2 to update
-                },
-                error: function() {
-                    console.log('Error loading cities');
-                }
-            });
-        } else {
-            $('#id_cor_city').empty().append('<option value="">Select City</option>').trigger('change');
-        }
-    }
-    $(document).ready(function() {
-
-        
-        photo_preview = document.getElementById('photo-preview');
-        
-        {% if employee %}
-            // alert("Photo URL is: " + photo_preview.src +  "{{ employee.photo.url }}");
-            {% if employee.cor_state %}
-                $('select[name="state"]').val('{{ employee.cor_state }}').trigger('change');
-                photo_preview.src = "{{ employee.photo.url }}";
-                
-                {% if employee.cor_city %}
-                    setTimeout(function() {
-                        $('select[name="city"]').val('{{ employee.cor_city }}').trigger('change');
-                    }, 500); // Delay to ensure cities are loaded
-                {% endif %}
-            {% endif %}
-        {% endif %}
-        // Initialize Select2 for all select fields
-        $('#id_designation, #id_department, #id_site, #id_cor_state, #id_cor_city, #id_per_state, #id_per_city').select2({
-            placeholder: "Select an option",
-            allowClear: true
+        // Initialize Select2 for specific fields
+        $('select[name="department"], select[name="designation"], select[name="site"], select[name="status"], select[name="gender"], select[name="blood_group"], select[name="marital_status"]').select2({
+            placeholder: 'Select...',
+            allowClear: true,
+            width: '100%'
         });
 
-        
-        // Load cities on state change
-        $('#id_cor_state').change(function() {
-            var stateCode = $(this).val();
-            loadCities_cor(stateCode, null);
-        });
-        
-        // Load cities on state change
-        $('#id_per_state').change(function() {
-            var stateCode = $(this).val();
-            loadCities_per(stateCode, null);
-        });
+        // State/City selects will be initialized after population
 
-
-
-            // Initialize city dropdown for edit mode
-            `{% if initial_state and initial_city %}
-            loadCities('{{ initial_state }}', '{{ initial_city }}');
-            {% elif initial_state %}
-            loadCities('{{ initial_state }}', null);
-            {% endif %}
-            // Set initial city if editing
-            `
-        
-            $('#employeeForm').submit(function(e) {
-                e.preventDefault();
-                $.ajax({
-                    url: '',
-                    type: 'POST',
-                    data: new FormData(this),
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        // console.log(response.status)
-                        if (response.status === 'success') {
-                            SuccessMSG(response.message);
-                            SuccessMSG(response.redirect);
-                            window.location.hreftreroute = response.redirect;
-                        } else 
-                        {
-
-                            console.log(response.errors.responseJSON)
-                            $('#step1_Errors').val(response.errors.responseJSON);
-                            for (var field in response.errors) {
-                                console.log(response.errors[field])
-                                ErrorMSG(response.errors[field])
-                                // $('#id_' + field + '_errors').text(response.errors[field]).show();
-                            }
-                        }
-                    },
-                    // error: function(jqXHR, textStatus, errorThrown) {
-                    error: function(response) {
-                        // console.log(response, response.status)
-                        // console.log("AJAX Error:", jqXHR, textStatus, errorThrown);                    
-                        // console.log(response.responseJSON.errors)
-                        $('#step1_Errors').val(response.responseJSON.errors);
-                        for (var field in response.responseJSON.errors) {
-                            console.log(response.responseJSON.errors[field])
-                            ErrorMSG(response.responseJSON.errors[field])
-                        }
-                    }
-                });
-            });
-        
-
-        const span_status = false;
-        function correct_span(){
-            // Find the element with the specified classes
-            const selectElements = document.querySelectorAll('.select2-selection.select2-selection--single');
-
-            selectElements.forEach(element => {
-                // console.log(element)
-                element.style.height = '40px';
-            });
-            // Find the element with the specified classes
-            const selectElements2 = document.querySelectorAll('.select2.select2-container.select2-container--default');
-
-            selectElements2.forEach(element => {
-                // console.log(element)
-                element.style.width = '100%';
-            });
-        }
-        if (span_status == false) {
-            var stateCode =  $('#id_cor_state').val();
-            initial_city = "{{ initial_city }}"
-            // InfoMSG("SELECT STATE IS "+ stateCode + " - " + initial_city)
-            loadCities_cor(stateCode, initial_city);
-
-            
-            var stateCode =  $('#id_per_state').val();
-            initial_city = "{{ initial_city }}"
-            // InfoMSG("SELECT STATE IS "+ stateCode + " - " + initial_city)
-            loadCities_per(stateCode, initial_city);
-            // document.addEventListener('DOMContentLoaded', correct_span);
-            setTimeout(correct_span, 1000);
-            
-            if  (span_status) {
-            span_status = true }
-        }
-        // Get the file input element (Crispy Forms renders this from the 'photo' field)
-        const photoInput = document.getElementById('id_photo');
-        // Get the image element for the preview
-        const photoPreview = document.getElementById('photo-preview');
-
-        // Listen for changes on the file input
-        photoInput.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                // Create a FileReader object to read the file
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Set the image source to the file's data URL
-                    photoPreview.src = e.target.result;
-                    // Make the image visible
-                    photoPreview.style.display = 'block';
-                };
-                // Read the file as a data URL
-                reader.readAsDataURL(file);
-            } else {
-                // If no file is selected, hide the preview
-                photoPreview.src = '#';
-                photoPreview.style.display = 'none';
+        // Photo Upload Handling
+        $('#photoUploadZone').on('click', function (e) {
+            if (!$(e.target).is('button') && !$(e.target).closest('button').length) {
+                $('#id_photo').click();
             }
         });
-    });
-    </script>
 
-<script>
-   document.addEventListener('DOMContentLoaded', function() {
-        // Get the IFSC input field by its ID (assuming Crispy Forms generates 'id_ifsc_code')
-        const ifscInput = document.getElementById('id_ifsc_code');
-        const bankNameSpan = document.getElementById('id_bank_name');
-        const branchNameinput = document.getElementById('id_branch_details');
-        const errorMessageDiv = document.getElementById('ifsc_error_message');
-
-        // Function to clear displayed details and error message
-        function clearDetails() {
-            bankNameSpan.textContent = '';
-            // branchNameSpan.textContent = '';
-            // branchAddressSpan.textContent = '';
-            errorMessageDiv.textContent = '';
-        }
-
-        // Add the 'blur' event listener to the IFSC input field
-        if (ifscInput) {
-            ifscInput.addEventListener('blur', function() {
-                const ifscCode = this.value.trim().toUpperCase(); // Get value, trim whitespace, convert to uppercase for consistency
-
-                clearDetails(); // Clear previous details and errors on blur
-
-                if (!ifscCode) {
-                    errorMessageDiv.textContent = 'IFSC code cannot be empty.';
-                    ErrorMSG('IFSC code cannot be empty.');
+        $('#id_photo').on('change', function () {
+            const file = this.files[0];
+            if (file) {
+                // Validate file
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('File size must be less than 2MB');
+                    this.value = ''; // Clear the input
                     return;
                 }
 
-                // Simple CSRF token for Django POST requests (essential for security)
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+                    alert('Only JPG and PNG files are allowed');
+                    this.value = ''; // Clear the input
+                    return;
+                }
 
-                // Make the AJAX request
-                fetch('/emp/get-ifsc-data/', { // Adjust URL based on your urls.py setup
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-CSRFToken': csrfToken
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#photoPreview').attr('src', e.target.result).addClass('show');
+                    $('#photoUploadZone').addClass('has-photo');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Drag & Drop
+        $('#photoUploadZone').on('dragover', function (e) {
+            e.preventDefault();
+            $(this).css('border-color', '#667eea');
+        });
+
+        $('#photoUploadZone').on('dragleave', function (e) {
+            $(this).css('border-color', '#d1d5db');
+        });
+
+        $('#photoUploadZone').on('drop', function (e) {
+            e.preventDefault();
+            $(this).css('border-color', '#d1d5db');
+            const files = e.originalEvent.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                document.getElementById('id_photo').files = files;
+                $('#id_photo').trigger('change');
+            }
+        });
+
+        // Duplicate Checking
+        function checkDuplicate(field, value) {
+            if (!value) return;
+
+            const validationEl = document.getElementById(field + 'Validation');
+            const inputEl = $(`input[name="${field}"]`);
+
+            // Show loading
+            validationEl.innerHTML = '<span class="validation-warning"><i class="fas fa-spinner fa-spin"></i> Checking...</span>';
+            inputEl.removeClass('field-warning field-valid'); // Clear previous states
+
+            $.ajax({
+                url: '/emp/api/check-duplicate/',
+                data: {
+                    field: field, // The field name is already correct
+                    value: value,
+                    employee_id: employeeId
+                },
+                success: function (data) {
+                    if (data.exists) {
+                        validationEl.innerHTML = '<span class="validation-warning"><i class="fas fa-exclamation-triangle"></i> Already exists in system</span>';
+                        inputEl.addClass('field-warning');
+                    } else {
+                        validationEl.innerHTML = '<span class="validation-success"><i class="fas fa-check-circle"></i> Available</span>';
+                        inputEl.addClass('field-valid');
+                    }
+                },
+                error: function () {
+                    validationEl.innerHTML = '<span class="validation-error"><i class="fas fa-times-circle"></i> Error checking duplicate</span>';
+                }
+            });
+        }
+
+        // Debounce duplicate checking
+        let checkTimeout;
+        $('input[name="aadhaar_no"], input[name="pan_card"], input[name="contact_no"]').on('keyup', function () {
+            clearTimeout(checkTimeout);
+            const field = this.name;
+            const value = this.value;
+
+            checkTimeout = setTimeout(function () {
+                if (field === 'aadhaar_no' && value.length === 12) {
+                    checkDuplicate(field, value);
+                } else if (field === 'pan_card' && value.length === 10) {
+                    checkDuplicate(field, value);
+                } else if (field === 'contact_no' && value.length === 10) {
+                    checkDuplicate(field, value);
+                } else {
+                    // Clear validation message if input is not valid length
+                    $(`#${field}Validation`).empty();
+                    $(`input[name="${field}"]`).removeClass('field-warning field-valid');
+                }
+            }, 500);
+        });
+
+        // IFSC Code Lookup
+        $('input[name="ifsc_code"]').on('blur', function () {
+            const ifsc = $(this).val();
+            if (ifsc && ifsc.length === 11) {
+                $('#ifscValidation').html('<span class="validation-warning"><i class="fas fa-spinner fa-spin"></i> Fetching bank details...</span>');
+
+                $.ajax({
+                    url: '/emp/get-ifsc-data/',
+                    data: { ifsc_code: ifsc },
+                    success: function (data) {
+                        if (data.status === 'success') {
+                            $('input[name="bank_name"]').val(data.bank + ' - ' + data.branch);
+                            $('#ifscValidation').html('<span class="validation-success"><i class="fas fa-check-circle"></i> Bank: ' + data.bank + '</span>');
+                        } else {
+                            $('#ifscValidation').html('<span class="validation-error"><i class="fas fa-times-circle"></i> Invalid IFSC code</span>');
+                        }
                     },
-                    body: new URLSearchParams({
-                        'ifsc_code': ifscCode
-                    })
-                })
-                .then(response => {
-                    // Check if the response is OK (status code 2xx) or an error (e.g., 400, 404)
-                    if (!response.ok) {
-                        return response.json().then(err => { 
-                            throw new Error(err.message || 'Server error'); // Throw a proper error
+                    error: function () {
+                        $('#ifscValidation').html('<span class="validation-error"><i class="fas fa-times-circle"></i> Could not fetch details</span>');
+                    }
+                });
+            } else {
+                $('#ifscValidation').empty(); // Clear message if IFSC is empty or invalid length
+            }
+        });
+
+        // Variables to store pending city selections for edit mode
+        let pendingCorCity = null;
+        let pendingPerCity = null;
+
+        // State/City Cascading - Correspondence
+        $('select[name="cor_state"]').on('change', function () {
+            const state = $(this).val();
+            const citySelect = $('select[name="cor_city"]');
+
+            console.log('Correspondence State changed:', state);
+
+            citySelect.empty().append('<option value="">Loading cities...</option>');
+            citySelect.select2('destroy'); // Destroy Select2 before populating
+
+            if (state) {
+                $.ajax({
+                    url: '/emp/get-cities/',
+                    method: 'GET',
+                    data: { state: state },
+                    success: function (data) {
+                        console.log('Cities received for correspondence:', data);
+                        citySelect.empty().append('<option value="">Select City</option>');
+                        if (data.cities && data.cities.length > 0) {
+                            data.cities.forEach(function (city) {
+                                citySelect.append($('<option></option>').val(city).text(city));
+                            });
+                        }
+
+                        // Re-initialize Select2
+                        citySelect.select2({
+                            placeholder: 'Select City',
+                            allowClear: true,
+                            width: '100%'
+                        });
+
+                        // If there's a pending city value (from edit mode), set it now
+                        if (pendingCorCity) {
+                            console.log('Setting pending correspondence city:', pendingCorCity);
+                            citySelect.val(pendingCorCity).trigger('change');
+                            pendingCorCity = null; // Clear it
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading cities:', error);
+                        citySelect.empty().append('<option value="">Error loading cities</option>');
+                        citySelect.select2({
+                            placeholder: 'Select City',
+                            allowClear: true,
+                            width: '100%'
                         });
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'success') {
-                        // Populate the spans with received data
-                        bankNameSpan.value = data.data.BANK || 'N/A';
-                        branchNameSpan = data.data.BRANCH || 'N/A';
-                        branchAddressSpan = data.data.ADDRESS || 'N/A';
-                        id_branch_details.value = branchNameSpan + ', ' + branchAddressSpan;
-                    } else {
-                        // Display error message from the backend
-                        errorMessageDiv.textContent = data.message || 'An unknown error occurred.';
-                        ErrorMSG(data.message || 'An unknown error occurred.');
-                    }
-                })
-                .catch(error => {
-                    // Log the error for debugging and display a user-friendly message
-                    console.error('Error fetching IFSC details:', error);
-                    errorMessageDiv.textContent = error.message || 'Failed to connect to the server or unexpected error.';
-                    ErrorMSG(error.message || 'Failed to connect to the server or unexpected error.');
                 });
+            } else {
+                citySelect.empty().append('<option value="">Select State First</option>');
+                citySelect.select2({
+                    placeholder: 'Select City',
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        });
+
+        // State/City Cascading - Permanent
+        $('select[name="per_state"]').on('change', function () {
+            const state = $(this).val();
+            const citySelect = $('select[name="per_city"]');
+
+            console.log('Permanent State changed:', state);
+
+            citySelect.empty().append('<option value="">Loading cities...</option>');
+            citySelect.select2('destroy'); // Destroy Select2 before populating
+
+            if (state) {
+                $.ajax({
+                    url: '/emp/get-cities/',
+                    method: 'GET',
+                    data: { state: state },
+                    success: function (data) {
+                        console.log('Cities received for permanent:', data);
+                        citySelect.empty().append('<option value="">Select City</option>');
+                        if (data.cities && data.cities.length > 0) {
+                            data.cities.forEach(function (city) {
+                                citySelect.append($('<option></option>').val(city).text(city));
+                            });
+                        }
+
+                        // Re-initialize Select2
+                        citySelect.select2({
+                            placeholder: 'Select City',
+                            allowClear: true,
+                            width: '100%'
+                        });
+
+                        // If there's a pending city value (from edit mode), set it now
+                        if (pendingPerCity) {
+                            console.log('Setting pending permanent city:', pendingPerCity);
+                            citySelect.val(pendingPerCity).trigger('change');
+                            pendingPerCity = null; // Clear it
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading cities:', error);
+                        citySelect.empty().append('<option value="">Error loading cities</option>');
+                        citySelect.select2({
+                            placeholder: 'Select City',
+                            allowClear: true,
+                            width: '100%'
+                        });
+                    }
+                });
+            } else {
+                citySelect.empty().append('<option value="">Select State First</option>');
+                citySelect.select2({
+                    placeholder: 'Select City',
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        });
+
+        // Load saved values in edit mode
+        {% if employee and employee.cor_state %}
+        console.log('Edit mode: Loading correspondence address');
+        console.log('  State:', '{{ employee.cor_state }}');
+        console.log('  City:', '{{ employee.cor_city }}');
+
+        // Set the pending city value BEFORE triggering state change
+        pendingCorCity = '{{ employee.cor_city }}';
+
+        // Now trigger state change - the AJAX success callback will set the city
+        setTimeout(function () {
+            $('select[name="cor_state"]').val('{{ employee.cor_state }}').trigger('change');
+        }, 500);
+        {% endif %}
+
+        {% if employee and employee.per_state %}
+        console.log('Edit mode: Loading permanent address');
+        console.log('  State:', '{{ employee.per_state }}');
+        console.log('  City:', '{{ employee.per_city }}');
+
+        // Set the pending city value BEFORE triggering state change
+        pendingPerCity = '{{ employee.per_city }}';
+
+        // Now trigger state change - the AJAX success callback will set the city
+        setTimeout(function () {
+            $('select[name="per_state"]').val('{{ employee.per_state }}').trigger('change');
+        }, 500);
+        {% endif %}
+
+        // Initialize Select2 for state/city fields after initial values are set (if any)
+        // This ensures they are styled correctly even if no initial value is present
+        setTimeout(function () {
+            $('select[name="cor_state"], select[name="cor_city"], select[name="per_state"], select[name="per_city"]').each(function () {
+                if (!$(this).data('select2')) { // Only initialize if not already initialized
+                    $(this).select2({
+                        placeholder: 'Select...',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                }
             });
-        } else {
-            console.error("IFSC input field with ID 'id_ifsc_code' not found.");
-        }
+        }, 1500); // A bit longer to ensure all initial loads are done
+
+        // Copy Correspondence to Permanent Address
+        $('#sameAsCorrespondence').on('change', function () {
+            console.log('Checkbox changed:', this.checked);
+            if (this.checked) {
+                // Copy address text
+                const corAddress = $('textarea[name="cor_address"]').val();
+                console.log('Copying address:', corAddress);
+                $('textarea[name="per_address"]').val(corAddress);
+
+                // Copy pincode
+                const corPincode = $('input[name="cor_pincode"]').val();
+                console.log('Copying pincode:', corPincode);
+                $('input[name="per_pincode"]').val(corPincode);
+
+                // Copy state and trigger city load
+                const corState = $('select[name="cor_state"]').val();
+                console.log('Copying state:', corState);
+
+                if (corState) {
+                    $('select[name="per_state"]').val(corState).trigger('change');
+
+                    // Wait for cities to load, then copy city
+                    setTimeout(function () {
+                        const corCity = $('select[name="cor_city"]').val();
+                        console.log('Copying city:', corCity);
+                        if (corCity) {
+                            $('select[name="per_city"]').val(corCity).trigger('change');
+                            console.log('City copied successfully');
+                        }
+                    }, 1500); // Increased timeout to ensure cities are loaded
+                }
+
+                console.log('Address copy completed');
+            } else {
+                // Clear permanent address fields if unchecked
+                console.log('Clearing permanent address fields');
+                $('textarea[name="per_address"]').val('');
+                $('select[name="per_state"]').val('').trigger('change');
+                $('select[name="per_city"]').val('').trigger('change');
+                $('input[name="per_pincode"]').val('');
+            }
+        });
+
+        // Form Submission
+        $('#employeeForm').on('submit', function (e) {
+            e.preventDefault();
+
+            // Show loading
+            $('#submitBtn').prop('disabled', true);
+            $('#submitText').hide();
+            $('#submitSpinner').show();
+
+            const formData = new FormData(this);
+
+            $.ajax({
+                url: '',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.status === 'success') {
+                        // Redirect to next step
+                        window.location.href = response.redirect;
+                    } else {
+                        alert('Error: ' + JSON.stringify(response.errors));
+                        $('#submitBtn').prop('disabled', false);
+                        $('#submitText').show();
+                        $('#submitSpinner').hide();
+                    }
+                },
+                error: function (xhr) {
+                    const errors = xhr.responseJSON?.errors || {};
+                    let errorMsg = 'Please fix the following errors:\n\n';
+                    for (let field in errors) {
+                        errorMsg += field + ': ' + errors[field] + '\n';
+                    }
+                    alert(errorMsg);
+                    $('#submitBtn').prop('disabled', false);
+                    $('#submitText').show();
+                    $('#submitSpinner').hide();
+                }
+            });
+        });
+
+        // Save Draft
+        $('#saveDraftBtn').on('click', function () {
+            // Implement auto-save functionality
+            alert('Draft saved! (Feature to be implemented)');
+        });
     });
 </script>
-{% endblock extra_scripts %}
+{% endblock %}

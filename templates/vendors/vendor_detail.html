@@ -1,0 +1,333 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .info-card {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-card .card-header {
+        font-weight: 600;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+</style>
+
+<div class="content-wrapper">
+    <!-- Header -->
+    <section class="content-header py-2">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-sm-6">
+                    <h1 class="m-0">
+                        <i class="fas fa-truck text-primary"></i>
+                        {{ vendor.vendor_name }}
+                        <span class="status-badge status-{{ vendor.status|lower }} ml-2">{{ vendor.status }}</span>
+                    </h1>
+                    <small class="text-muted">{{ vendor.vendor_code }}</small>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'vendors:vendor_list' %}"><i
+                                    class="fas fa-list"></i> Vendors</a></li>
+                        <li class="breadcrumb-item active">{{ vendor.vendor_code }}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <!-- Action Buttons -->
+            <div class="mb-3">
+                <a href="{% url 'vendors:vendor_update' vendor.vendor_id %}" class="btn btn-primary">
+                    <i class="fas fa-edit mr-1"></i>Edit Vendor
+                </a>
+                <button class="btn btn-danger" id="deleteBtn">
+                    <i class="fas fa-trash mr-1"></i>Delete Vendor
+                </button>
+                <a href="{% url 'vendors:vendor_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left mr-1"></i>Back to List
+                </a>
+            </div>
+
+            <div class="row">
+                <!-- Left Column -->
+                <div class="col-md-6">
+                    <!-- Basic Information -->
+                    <div class="card info-card">
+                        <div class="card-header bg-gradient-primary">
+                            <h3 class="card-title"><i class="fas fa-info-circle mr-2"></i>Basic Information</h3>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th style="width: 40%">Vendor Code:</th>
+                                    <td><strong>{{ vendor.vendor_code }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>Business Type:</th>
+                                    <td><span class="badge badge-info">{{ vendor.business_type }}</span></td>
+                                </tr>
+                                {% if vendor.category %}
+                                <tr>
+                                    <th>Category:</th>
+                                    <td>{{ vendor.category }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <th>Status:</th>
+                                    <td><span class="status-badge status-{{ vendor.status|lower }}">{{ vendor.status
+                                            }}</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="card info-card">
+                        <div class="card-header bg-gradient-info">
+                            <h3 class="card-title"><i class="fas fa-address-card mr-2"></i>Contact Information</h3>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th style="width: 40%">Contact Person:</th>
+                                    <td>{{ vendor.contact_person }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Designation:</th>
+                                    <td>{{ vendor.designation }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Mobile:</th>
+                                    <td>{{ vendor.mobile_no }}</td>
+                                </tr>
+                                {% if vendor.mobile_no_2 %}
+                                <tr>
+                                    <th>Alternate Mobile:</th>
+                                    <td>{{ vendor.mobile_no_2 }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if vendor.email %}
+                                <tr>
+                                    <th>Email:</th>
+                                    <td><a href="mailto:{{ vendor.email }}">{{ vendor.email }}</a></td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="card info-card">
+                        <div class="card-header bg-gradient-secondary">
+                            <h3 class="card-title"><i class="fas fa-map-marker-alt mr-2"></i>Address</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ vendor.address }}</p>
+                            {% if vendor.city or vendor.state or vendor.pincode %}
+                            <p class="mb-0">
+                                {% if vendor.city %}{{ vendor.city }}, {% endif %}
+                                {% if vendor.state %}{{ vendor.get_state_display }}, {% endif %}
+                                {% if vendor.pincode %}{{ vendor.pincode }}{% endif %}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="col-md-6">
+                    <!-- Registration IDs -->
+                    <div class="card info-card">
+                        <div class="card-header bg-gradient-warning">
+                            <h3 class="card-title"><i class="fas fa-id-card mr-2"></i>Registration IDs</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if vendor.registration_ids.all %}
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>ID Type</th>
+                                        <th>ID Number</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for reg_id in vendor.registration_ids.all %}
+                                    <tr>
+                                        <td>{{ reg_id.id_type }} {% if reg_id.is_primary %}<span
+                                                class="badge badge-success">Primary</span>{% endif %}</td>
+                                        <td>{{ reg_id.id_number }}</td>
+                                        <td>
+                                            {% if reg_id.verified %}
+                                            <span class="badge badge-success">Verified</span>
+                                            {% else %}
+                                            <span class="badge badge-secondary">Not Verified</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <p class="text-muted">No registration IDs added</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Payment Information -->
+                    <div class="card info-card">
+                        <div class="card-header bg-gradient-success">
+                            <h3 class="card-title"><i class="fas fa-credit-card mr-2"></i>Payment Information</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if vendor.payment_info %}
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <th style="width: 40%">Payment Mode:</th>
+                                    <td>{{ vendor.payment_info.payment_mode }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Schedule:</th>
+                                    <td>{{ vendor.payment_info.payment_schedule_display }}</td>
+                                </tr>
+                                {% if vendor.payment_info.bank_name %}
+                                <tr>
+                                    <th>Bank Name:</th>
+                                    <td>{{ vendor.payment_info.bank_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Account Number:</th>
+                                    <td>{{ vendor.payment_info.account_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>IFSC Code:</th>
+                                    <td>{{ vendor.payment_info.ifsc_code }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if vendor.payment_info.upi_id %}
+                                <tr>
+                                    <th>UPI ID:</th>
+                                    <td>{{ vendor.payment_info.upi_id }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                            {% else %}
+                            <p class="text-muted">No payment information added</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Documents -->
+                    <div class="card info-card">
+                        <div class="card-header bg-gradient-purple">
+                            <h3 class="card-title"><i class="fas fa-file-alt mr-2"></i>Documents</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if vendor.documents.all %}
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for doc in vendor.documents.all %}
+                                    <tr>
+                                        <td>{{ doc.document_type }}</td>
+                                        <td>{{ doc.document_name|default:doc.document_type }}</td>
+                                        <td>
+                                            <a href="{{ doc.document_file.url }}" target="_blank"
+                                                class="btn btn-sm btn-info">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <p class="text-muted">No documents uploaded</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Remarks (if any) -->
+            {% if vendor.remarks %}
+            <div class="card info-card">
+                <div class="card-header bg-gradient-dark">
+                    <h3 class="card-title"><i class="fas fa-comment mr-2"></i>Remarks</h3>
+                </div>
+                <div class="card-body">
+                    <p>{{ vendor.remarks }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Meta Information -->
+            <div class="card">
+                <div class="card-body">
+                    <small class="text-muted">
+                        Created by: {{ vendor.created_by.username }} on {{ vendor.created_at|date:"d M Y, h:i A" }}
+                        | Last updated: {{ vendor.updated_at|date:"d M Y, h:i A" }}
+                    </small>
+                </div>
+            </div>
+
+        </div>
+    </section>
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    $('#deleteBtn').click(function () {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Delete Vendor?',
+            text: 'Are you sure you want to delete "{{ vendor.vendor_name }}"? This action cannot be undone.',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = $('<form>', {
+                    'method': 'POST',
+                    'action': '{% url "vendors:vendor_delete" vendor.vendor_id %}'
+                });
+
+                form.append($('<input>', {
+                    'type': 'hidden',
+                    'name': 'csrfmiddlewaretoken',
+                    'value': '{{ csrf_token }}'
+                }));
+
+                $('body').append(form);
+                form.submit();
+            }
+        });
+    });
+</script>
+
+{% endblock %}

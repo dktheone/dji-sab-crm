@@ -10,7 +10,7 @@ EMPLOYEE UPLOAD
 <!-- <link rel="stylesheet" href="{% static 'form_main.css' %}"> -->
 <style>
     .myinput input {
-        margin-bottom: 2px!important;
+        margin-bottom: 2px !important;
     }
 </style>
 
@@ -21,6 +21,7 @@ EMPLOYEE UPLOAD
         justify-content: space-between;
         margin-bottom: 20px;
     }
+
     .step {
         flex: 1;
         text-align: center;
@@ -28,6 +29,7 @@ EMPLOYEE UPLOAD
         background: #eee;
         border: 1px solid #ddd;
     }
+
     .step.active {
         background: #007bff;
         color: white;
@@ -46,12 +48,13 @@ EMPLOYEE UPLOAD
     <div class="content-header">
         <h1>Document Uploads for {{ employee.first_name }} {{ employee.last_name }}</h1>
     </div>
-    <div class="wizard-steps">        
+    <div class="wizard-steps">
         <div class="step"><a href="{% url 'emp:employee_edit' employee.id %}">1. Registration</a></div>
-        <div class="step"><a href="{% url 'emp:employee_details' employee.id %}">2. Education/Experience/Family</a></div>
+        <div class="step"><a href="{% url 'emp:employee_details' employee.id %}">2. Education/Experience/Family</a>
+        </div>
         <div class="step active">3. Uploads</div>
         <div class="step"><a href="{% url 'emp:employee_view' employee.id %}">4. Print Profile</a></div>
-        
+
     </div>
     <section class="content">
         <div class="container-fluid">
@@ -80,7 +83,7 @@ EMPLOYEE UPLOAD
                             <tr>
                                 <td>{{ upload.document_type }}</td>
                                 <td>{{ upload.description|default:"-" }}</td>
-                                <td><a href="{{ upload.file_path }}" target="_blank">View</a></td>
+                                <td><a href="{{ upload.file_path.url }}" target="_blank">View</a></td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -96,14 +99,14 @@ EMPLOYEE UPLOAD
 
 <script>
 
-    $(document).ready(function() {
+    $(document).ready(function () {
 
-         // Initialize Select2 for document_type
+        // Initialize Select2 for document_type
         $('#id_document_type').select2({
             placeholder: "Select Document Type",
             allowClear: true
         });
-        $('#uploadForm').submit(function(e) {
+        $('#uploadForm').submit(function (e) {
             e.preventDefault();
             $.ajax({
                 url: '',
@@ -111,7 +114,7 @@ EMPLOYEE UPLOAD
                 data: new FormData(this),
                 processData: false,
                 contentType: false,
-                success: function(response) {
+                success: function (response) {
                     if (response.status === 'success') {
                         SuccessMSG(response.message);
                         $('#uploadForm')[0].reset();
@@ -128,23 +131,23 @@ EMPLOYEE UPLOAD
                         }
                     }
                 },
-                error:function(response) {
+                error: function (response) {
                     for (var field in response.responseJSON.errors) {
                         ErrorMSG(response.responseJSON.errors[field])
                     }
                 }
-                
+
             });
         });
-    
-        $('#addMore').click(function() {
+
+        $('#addMore').click(function () {
             $('#uploadForm')[0].reset();
             $('.invalid-feedback').empty();
         });
     });
 
     const span_status = false;
-    function correct_span(){
+    function correct_span() {
         // Find the element with the specified classes
         const selectElements = document.querySelectorAll('.select2-selection.select2-selection--single');
 
@@ -162,9 +165,9 @@ EMPLOYEE UPLOAD
     }
     if (span_status == false) {
         setTimeout(correct_span, 1000);
-        if  (span_status) { span_status = true }
+        if (span_status) { span_status = true }
     }
-    
-    </script>
+
+</script>
 
 {% endblock extra_scripts %}

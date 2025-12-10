@@ -1,0 +1,223 @@
+<!-- templates/leads/employee_activity.html -->
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Sales Activity: {{ employee.first_name }} {{ employee.last_name }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'leads:lead_list' %}">Leads</a></li>
+                        <li class="breadcrumb-item active">Employee Activity</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Messages (if any from view) -->
+            {% if messages %}
+                <div class="row">
+                    <div class="col-12">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Employee Summary Cards -->
+            <div class="row">
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h3>{{ total_leads }}</h3>
+                            <p>Total Leads Created</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <a href="{% url 'leads:lead_list' %}?employee={{ employee.id }}" class="small-box-footer">
+                            View Details <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h3>{{ conversions_count }}</h3>
+                            <p>Conversions</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <a href="{% url 'leads:conversion_logs' %}" class="small-box-footer">
+                            View Logs <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-warning">
+                        <div class="inner">
+                            <h3>{{ follow_ups_count }}</h3>
+                            <p>Follow-Ups Made</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <a href="#" class="small-box-footer">More Info <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-danger">
+                        <div class="inner">
+                            <h3>{{ conversion_rate }}%</h3>
+                            <p>Conversion Rate</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <a href="#" class="small-box-footer">Details <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Recent Leads Table -->
+                <div class="col-md-6">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent Leads Created ({{ leads.count }})</h3>
+                        </div>
+                        <div class="card-body table-responsive p-0">
+                            {% if leads %}
+                                <table class="table table-valign-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Lead ID</th>
+                                            <th>Client Name</th>
+                                            <th>Status</th>
+                                            <th>Entry Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for l in leads|slice:":5" %}  <!-- Limit to 5 recent -->
+                                            <tr>
+                                                <td>{{ l.lead_id }}</td>
+                                                <td><a href="#">{{ l.client_name|truncatechars:20 }}</a></td>
+                                                <td>
+                                                    <span class="badge badge-{% if l.lead_status == 'New' %}info elif l.lead_status == 'Converted' %}success else warning {% endif %}">
+                                                        {{ l.get_lead_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ l.entry_date|date:"M d, Y" }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-user-plus fa-2x mb-2"></i>
+                                    <p>No leads created yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Follow-Ups Table -->
+                <div class="col-md-6">
+                    <div class="card card-success">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent Follow-Ups ({{ follow_ups|length }})</h3>
+                        </div>
+                        <div class="card-body table-responsive p-0">
+                            {% if follow_ups %}
+                                <table class="table table-valign-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Lead</th>
+                                            <th>Feedback</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for fu in follow_ups %}
+                                            <tr>
+                                                <td>{{ fu.follow_up_date|date:"M d, Y" }}</td>
+                                                <td>{{ fu.lead.client_name|truncatechars:15 }}</td>
+                                                <td>
+                                                    <span class="badge badge-{% if fu.feedback == 'Positive' %}success elif fu.feedback == 'Negative' %}danger else info {% endif %}">
+                                                        {{ fu.get_feedback_display }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-comments fa-2x mb-2"></i>
+                                    <p>No follow-ups yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversions Table (Full List) -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-warning">
+                        <div class="card-header">
+                            <h3 class="card-title">Conversions ({{ conversions_count }})</h3>
+                        </div>
+                        <div class="card-body table-responsive p-0">
+                            {% if conversions %}
+                                <table class="table table-valign-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Lead S.No.</th>
+                                            <th>Site Name</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for conv in conversions %}
+                                            <tr>
+                                                <td>{{ conv.conversion_date|date:"M d, Y" }}</td>
+                                                <td>{{ conv.lead.lead_id }}</td>
+                                                <td><a href="/emp/sites/{{ conv.site.id }}/">{{ conv.site.site_name|truncatechars:20 }}</a></td>
+                                                <td>{{ conv.remarks|truncatechars:30|default:"N/A" }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-exchange-alt fa-2x mb-2"></i>
+                                    <p>No conversions yet.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

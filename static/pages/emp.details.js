@@ -142,13 +142,14 @@ $(document).ready(function() {
         
         if (action === 'edit') {
             var row = button.closest('tr');
+            console.log(row);
             var id = row.data('id');
             $('#experienceId').val(id);
             var data = {
                 company_name: row.find('td:eq(0)').text(),
                 job_title: row.find('td:eq(1)').text(),
-                start_date: row.find('td:eq(2)').text(),
-                end_date: row.find('td:eq(3)').text() !== '-' ? row.find('td:eq(3)').text() : '',
+                start_date: row.find('td:eq(2)').data('start-date') || '',
+                end_date: row.find('td:eq(3)').data('end-date') || '',
                 gross_salary: row.find('td:eq(4)').text() !== '-' ? row.find('td:eq(4)').text() : '',
                 responsibilities: row.find('td:eq(5)').text() !== '-' ? row.find('td:eq(5)').text() : '',
                 reason_for_leaving: row.find('td:eq(6)').text() !== '-' ? row.find('td:eq(6)').text() : ''

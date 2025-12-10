@@ -24,3 +24,16 @@ requirements_anaconda.txt
 updates_2025_08_19.txt
 *.sqlite3
 requirements_copy.txt
+
+# Media uploads
+media/uploads/
+
+# IDE settings
+.vscode/
+
+# Temporary files
+walkthrough.md
+known_issues.md
+
+# Duplicate/backup files
+requirements copy.txt

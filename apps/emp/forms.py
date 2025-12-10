@@ -1,14 +1,16 @@
 from django import forms
 # from apps.emp.models import Department, Designation, Employee, EmployeeUpload, Site, CustomUser
-from apps.emp.models import Department, Designation, Site
+from apps.emp.models import Department, Designation, Site, Contacts
 from apps.emp.models import Employee, EmployeeEducation, EmployeeExperience, EmployeeFamily, EmployeeUpload, EmployeeSalaryMaster, EmployeeAdjustment, EmployeeSalaryTransaction
+
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column, Fieldset, HTML, ButtonHolder, BaseInput, Field
+from crispy_forms.layout import Layout, Submit, Row, Column, Fieldset, HTML, ButtonHolder, BaseInput, Field, Div
 from django_select2.forms import Select2Widget
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
 from django.templatetags.static import static
+
 
 # from django_select2 import forms as s2forms
 # class DepartmentWidget(s2forms.ModelSelect2Widget):
@@ -64,12 +66,10 @@ class DesignationForm(forms.ModelForm):
             )
         )
 
-
-
 class SitesForm(forms.ModelForm):
     class Meta:
         model = Site
-        fields = ['site_name', 'address', 'city', 'state', 'pincode', 'status', 'remark']
+        fields = ['site_name', 'address', 'contact1', 'contact2', 'website', 'email', 'city', 'state', 'pincode', 'status', 'remark']
         widgets = {
             'state':  Select2Widget(attrs={'class': 'form-control form-select custom_select'}),
             'city':   Select2Widget(attrs={'class': 'form-control form-select custom_select'}),
@@ -82,22 +82,102 @@ class SitesForm(forms.ModelForm):
         self.helper.form_tag = False  # We'll handle form tag in template
         self.helper.layout = Layout(
             Row(
-                Column(Field('site_name'), css_class='form-group myinput col-md-9 mb-0'),
-                Column(Field('status'), css_class='form-group myinput col-md-3')
+                Column(Field('site_name'), css_class='form-group myinput col-md-12 mb-0')
+            ),
+            Row(
+                Column(Field('contact1'), css_class='form-group myinput col-md-6 mb-0'),
+                Column(Field('contact2'), css_class='form-group myinput col-md-6')
+            ),
+            Row(
+                Column(Field('email'), css_class='form-group myinput col-md-6 mb-0'),
+                Column(Field('website'), css_class='form-group myinput col-md-6')
             ),
             Row(
                 Column(Field('address'), css_class='form-group myinput col-md-12'),
             ),
             Row(
-                Column(Field('state'), css_class='form-group myinput col-md-4'),
-                Column(Field('city'), css_class='form-group myinput col-md-4'),
-                Column(Field('pincode'), css_class='form-group myinput col-md-4'),
+                Column(Field('state'), css_class='form-group myinput col-md-6'),
+                Column(Field('city'), css_class='form-group myinput col-md-6'),
             ),
+            Row(
+                
+            Column(Field('pincode'), css_class='form-group myinput col-md-6'),
+            Column(Field('status'), css_class='form-group myinput col-md-6')
+            ),
+            
             Row(
                 Column(Field('remark'), css_class='form-group myinput col-md-12'),
             ),
+            
         )
-     
+
+class ContactForm(forms.ModelForm):
+    site = forms.ModelChoiceField(queryset=Site.objects.all(), empty_label="Select Site")
+
+    class Meta:
+        model = Contacts
+        fields = [
+            'site', 'first_name', 'last_name', 'gender', 'address', 'state', 'city', 'pincode',
+            'dob', 'event_date', 'event_date_remark', 'contact1', 'contact2', 'contact3',
+            'email', 'designation', 'department'
+        ]
+        widgets = {
+            'dob': forms.DateInput(attrs={'type': 'date'}),
+            'event_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            'site',  # Initially visible
+            Div(id='site-details'),  # Dynamic site info
+            Div(
+                Row(
+                    Column(Div('first_name', css_class='input-group mb-3', prepend='<i class="fas fa-user"></i>'), css_class='form-group col-md-6 mb-0'),
+                    Column(Div('last_name', css_class='input-group mb-3', prepend='<i class="fas fa-user"></i>'), css_class='form-group col-md-6 mb-0'),
+                    css_class='form-row'
+                ),
+                Row(
+                    Column(Div('gender', css_class='input-group mb-3', prepend='<i class="fas fa-venus-mars"></i>'), css_class='form-group col-md-4 mb-0'),
+                    Column(Div('email', css_class='input-group mb-3', prepend='<i class="fas fa-envelope"></i>'), css_class='form-group col-md-8 mb-0'),
+                    css_class='form-row'
+                ),
+                Row(
+                    Column(Div('contact1', css_class='input-group mb-3', prepend='<i class="fas fa-phone"></i>'), css_class='form-group col-md-4 mb-0'),
+                    Column(Div('contact2', css_class='input-group mb-3', prepend='<i class="fas fa-phone-alt"></i>'), css_class='form-group col-md-4 mb-0'),
+                    Column(Div('contact3', css_class='input-group mb-3', prepend='<i class="fas fa-phone-alt"></i>'), css_class='form-group col-md-4 mb-0'),
+                    css_class='form-row'
+                ),
+                Row(
+                    Column(Div('address', css_class='input-group mb-3', prepend='<i class="fas fa-map-marker-alt"></i>'), css_class='form-group col-md-12 mb-0'),
+                    css_class='form-row'
+                ),
+                Row(
+                    Column(Div('city', css_class='input-group mb-3', prepend='<i class="fas fa-city"></i>'), css_class='form-group col-md-4 mb-0'),
+                    Column(Div('state', css_class='input-group mb-3', prepend='<i class="fas fa-flag"></i>'), css_class='form-group col-md-4 mb-0'),
+                    Column(Div('pincode', css_class='input-group mb-3', prepend='<i class="fas fa-mail-bulk"></i>'), css_class='form-group col-md-4 mb-0'),
+                    css_class='form-row'
+                ),
+                Row(
+                    Column(Div('dob', css_class='input-group mb-3', prepend='<i class="fas fa-birthday-cake"></i>'), css_class='form-group col-md-6 mb-0'),
+                    Column(Div('event_date', css_class='input-group mb-3', prepend='<i class="fas fa-calendar-alt"></i>'), css_class='form-group col-md-6 mb-0'),
+                    css_class='form-row'
+                ),
+                Row(
+                    Column(Div('event_date_remark', css_class='input-group mb-3', prepend='<i class="fas fa-comment"></i>'), css_class='form-group col-md-12 mb-0'),
+                    css_class='form-row'
+                ),
+                Row(
+                    Column(Div('designation', css_class='input-group mb-3', prepend='<i class="fas fa-briefcase"></i>'), css_class='form-group col-md-6 mb-0'),
+                    Column(Div('department', css_class='input-group mb-3', prepend='<i class="fas fa-building"></i>'), css_class='form-group col-md-6 mb-0'),
+                    css_class='form-row'
+                ),
+                css_id='form-rest'
+            ),
+            Submit('submit', 'Save', css_class='btn btn-primary btn-sm')
+        )     
 # Regex validator for a 10-digit mobile number
 mobile_validator = RegexValidator(
     regex=r'^\d{10}$',
@@ -447,7 +527,6 @@ class EmployeeFamilyForm(forms.ModelForm):
             Field('address'),
         )
 
-
 class EmployeeUploadForm(forms.ModelForm):
     file = forms.FileField(required=False)  # For file upload
     class Meta:
@@ -554,9 +633,6 @@ class SalaryPreparationForm(forms.Form):
             Field('leave_days'),
             Field('remarks'),
         )
-
-
-
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(

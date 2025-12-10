@@ -1,0 +1,11 @@
+# Add this new view at the end of leads/views.py
+
+@role_required('sales', 'admin', 'hr', 'manager', 'employee')
+def my_activity(request):
+    """Redirect to logged-in user's own activity page"""
+    try:
+        employee = Employee.objects.get(emp_code=request.user.username, status='Active')
+        return redirect('leads:employee_activity', employee_id=employee.id)
+    except Employee.DoesNotExist:
+        messages.error(request, 'You must be linked to an Employee record to view activity.')
+        return redirect('leads:lead_list')

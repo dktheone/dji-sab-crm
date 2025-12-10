@@ -1,0 +1,176 @@
+{% extends 'layouts/base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block content %}
+<style>
+    .section-card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-card .card-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        font-weight: 600;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .bank-details-section {
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+    }
+</style>
+
+<div class="content-wrapper">
+    <!-- Header -->
+    <section class="content-header py-2">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-sm-6">
+                    <h1 class="m-0">
+                        <i class="fas fa-credit-card text-primary"></i>
+                        Payment Information - {{ vendor.vendor_name }}
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'vendors:vendor_list' %}"><i
+                                    class="fas fa-list"></i> Vendors</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'vendors:vendor_detail' vendor.vendor_id %}">{{
+                                vendor.vendor_code }}</a></li>
+                        <li class="breadcrumb-item active">Payment Info</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <!-- Messages -->
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i
+                    class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% else %}info-circle{% endif %} mr-2"></i>
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <!-- Payment Information Card -->
+                <div class="card section-card">
+                    <div class="card-header">
+                        <i class="fas fa-money-check-alt mr-2"></i>
+                        <span>Payment Information</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ form.payment_mode|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.payment_schedule_value|as_crispy_field }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.payment_schedule_unit|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <!-- Bank Details Section (conditional) -->
+                        <div id="bankDetailsSection" class="bank-details-section" style="display: none;">
+                            <h5 class="mb-3"><i class="fas fa-university mr-2"></i>Bank Details</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.bank_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.account_holder_name|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.account_number|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.ifsc_code|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.branch_name|as_crispy_field }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.upi_id|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.cancelled_cheque|as_crispy_field }}
+                                    <small class="form-text text-muted">Upload cancelled cheque (Max 5MB,
+                                        PDF/Image)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card">
+                    <div class="card-body text-center py-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save mr-2"></i>
+                            Save Payment Information
+                        </button>
+                        <a href="{% url 'vendors:vendor_update' vendor.vendor_id %}"
+                            class="btn btn-secondary btn-lg ml-3">
+                            <i class="fas fa-times mr-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+    </section>
+</div>
+
+<script>
+    $(document).ready(function () {
+        const paymentModeField = $('#id_payment_mode');
+        const bankDetailsSection = $('#bankDetailsSection');
+
+        function toggleBankDetails() {
+            const paymentMode = paymentModeField.val();
+
+            // Show bank details for Cheque, Net Banking, and Bank Transfer
+            if (paymentMode === 'Cheque' || paymentMode === 'Net Banking' || paymentMode === 'Bank Transfer') {
+                bankDetailsSection.slideDown();
+            } else {
+                bankDetailsSection.slideUp();
+            }
+        }
+
+        // Initial check
+        toggleBankDetails();
+
+        // Listen for changes
+        paymentModeField.change(toggleBankDetails);
+    });
+</script>
+
+{% endblock %}

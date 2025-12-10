@@ -29,7 +29,8 @@ urlpatterns = [
     path('login/', custom_login, name='custom_login'),
     path('log_out/', custom_logout, name='custom_logout'),
     path('emp/', include('apps.emp.urls', namespace='emp')),
-    
+    path('leads/', include('apps.leads.urls')),
+    path('vendors/', include('apps.vendors.urls', namespace='vendors')),
     # path('', include('apps.dyn_dt.urls')),
     # path('', include('apps.dyn_api.urls')),
     path('charts/', include('apps.charts.urls')),

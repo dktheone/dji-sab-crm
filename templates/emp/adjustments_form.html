@@ -1,11 +1,11 @@
 <script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+        return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
         if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
             try {
                 var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
@@ -19,11 +19,11 @@
 
                 // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
                 var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                    row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
                 );
                 // Fallback
                 if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
+                    headerRowIndex = 0;
                 }
 
                 // Convert filtered JSON back to CSV
@@ -36,8 +36,8 @@
             }
         }
         return gk_fileData[filename] || "";
-        }
-        </script>{% extends 'layouts/base.html' %}
+    }
+</script>{% extends 'layouts/base.html' %}
 {% load static %}
 {% load crispy_forms_tags %}
 {% block title %}Adjustments for {{ employee }}{% endblock %}
@@ -48,18 +48,23 @@
     .content-wrapper {
         padding: 20px;
     }
+
     .table {
         font-size: 14px;
     }
+
     .select2-container {
         width: 100% !important;
     }
+
     .select2-selection--single {
         height: 38px !important;
     }
+
     .select2-selection__rendered {
         line-height: 38px !important;
     }
+
     .select2-selection__arrow {
         height: 38px !important;
     }
@@ -117,7 +122,7 @@
                     </table>
                 </div>
             </div>
-            <a href="{% url 'emp:adjustments_list' %}" class="btn btn-secondary mt-3">Back to List</a>
+            <a href="" class="btn btn-secondary mt-3">Back to List</a>
         </div>
     </section>
 </div>
@@ -127,7 +132,7 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Initialize Select2 for dropdowns
         $('select').select2({
             placeholder: "Select an option",
@@ -135,7 +140,7 @@
         });
 
         // Form submission via AJAX
-        $('#adjustmentForm').submit(function(e) {
+        $('#adjustmentForm').submit(function (e) {
             e.preventDefault();
             $.ajax({
                 url: '',
@@ -143,7 +148,7 @@
                 data: new FormData(this),
                 processData: false,
                 contentType: false,
-                success: function(response) {
+                success: function (response) {
                     if (response.status === 'success') {
                         alert(response.message); // Replace with SweetAlert2 if used
                         location.reload();
@@ -156,7 +161,7 @@
                         }
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     alert('Error occurred while saving adjustment.');
                 }
             });

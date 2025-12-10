@@ -73,6 +73,8 @@ INSTALLED_APPS = [
     
     # emp
     "apps.emp",
+    'apps.leads',
+    'apps.vendors',
     
     # Tooling API-GEN
     'rest_framework',            # Include DRF           # <-- NEW 
@@ -128,6 +130,10 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.leads.context_processors.menu_context",  # Custom context processor                
+                'apps.leads.context_processors.active_menus',  # Add this
+                'apps.emp.context_processors.active_menus',  # Add this
+                "apps.emp.context_processors.menu_context",  # Custom context processor
             ],
         },
     },
@@ -219,7 +225,23 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = '/login'  # or whatever your login view path is
 LOGIN_REDIRECT_URL = '/dashboard'  # where to go after login
 
-
+# settings.py (in LOGGING dict)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'apps.leads': {  # Your module logger
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

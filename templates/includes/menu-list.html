@@ -1,159 +1,258 @@
 {% load static %}
-<ul class="nav nav-pills nav-sidebar flex-column"
-    data-widget="treeview"
-    role="menu"
-    data-accordion="false">
-    <!-- Add icons to the links using the .nav-icon class
-with font-awesome or any other icon font library -->
-    {% if user.groups.all.0.name in 'employee' %}
-        <li class="nav-header">
-            <strong>CREATE</strong>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'emp:site_crud' %}"
-               class="nav-link {% if 'emp:site_crud' in segment %}active{% endif %}">
-                <i class="far fa-hospital nav-icon"></i>
-                <p>Sites</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'emp:employee_list' %}"
-               class="nav-link {% if 'emp:employee_list' in segment %}active{% endif %}">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Employee List</p>
-            </a>
-        </li>
-    {% endif %}
+<ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+
     {% if user.groups.all.0.name in 'admin,hr' %}
-        <li class="nav-header">
-            <strong>CREATE</strong>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'emp:department_crud' %}"
-               class="nav-link {% if 'emp:department_crud' in segment %}active{% endif %}">
-                <i class="nav-icon fas fa-th-large"></i>
-                <p>Departments</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'emp:designation_crud' %}"
-               class="nav-link {% if 'emp:designation_crud' in segment %}active{% endif %}">
-                <i class="nav-icon fas fa-th"></i>
-                <p>Designation</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'emp:site_crud' %}"
-               class="nav-link {% if 'emp:site_crud' in segment %}active{% endif %}">
-                <i class="far fa-hospital nav-icon"></i>
-                <p>Sites</p>
-            </a>
-        </li>
-    <li class="nav-header">CRM MODULES</li>
+
+    <!-- ADMIN & HR: FULL ACCESS -->
+
+    <!-- MASTER DATA SECTION -->
+    <li class="nav-header"><i class="fas fa-database"></i> MASTER DATA</li>
+
     <li class="nav-item">
-      <a href="#" class="nav-link">
-        <!-- <i class="nav-icon fas fa-circle"></i> -->
-        <i class="nav-icon fa-solid fa-people-group"></i>
-        <p>
-          HRMS
-          <i class="right fas fa-angle-left"></i>
-        </p>
-      </a>
-      <ul class="nav nav-treeview">
-        <li class="nav-item">
-            <a href="{% url 'emp:employee_dash' %}"
-               class="nav-link {% if 'emp:employee_dash' in segment %}active{% endif %}">
-                <i class="far fa-circle nav-icon"></i>
-                <p>Employee Dash</p>
-            </a>
-        </li>
-        <li class="nav-item">
-          
-            <a href="{% url 'emp:employee_list' %}"
-               class="nav-link {% if 'emp:employee_list' in segment %}active{% endif %}">
-                
-                <i class="nav-icon fa-solid fa-list-check"></i>
-                <p>Employee List</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'emp:create_employee_user' %}"
-               class="nav-link {% if 'emp:create_employee_user' in segment %}active{% endif %}">
-                
-                <i class="nav-icon fa-solid fa-user-shield"></i>
-                <p>Create Employee Login</p>
-            </a>
-        </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon fa-solid fa-money-bills"></i>
+        <a href="{% url 'emp:department_crud' %}"
+            class="nav-link {% if view_name == 'emp:department_crud' %}active{% endif %}">
+            <i class="nav-icon fas fa-building"></i>
+            <p>Departments</p>
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a href="{% url 'emp:designation_crud' %}"
+            class="nav-link {% if view_name == 'emp:designation_crud' %}active{% endif %}">
+            <i class="nav-icon fas fa-id-badge"></i>
+            <p>Designations</p>
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a href="{% url 'emp:site_crud' %}" class="nav-link {% if view_name == 'emp:site_crud' %}active{% endif %}">
+            <i class="nav-icon fas fa-map-marker-alt"></i>
+            <p>Sites / Locations</p>
+        </a>
+    </li>
+
+    <!-- MAIN MODULES -->
+    <li class="nav-header"><i class="fas fa-th-large"></i> MODULES</li>
+
+    <!-- HRMS MODULE -->
+    <li class="nav-item has-treeview {% if 'emp' in view_name %}menu-open{% endif %}">
+        <a href="#" class="nav-link {% if 'emp' in view_name %}active{% endif %}">
+            <i class="nav-icon fas fa-users"></i>
             <p>
-              SALARY
-              <i class="right fas fa-angle-left"></i>
+                HRMS
+                <i class="right fas fa-angle-left"></i>
             </p>
-          </a>
-          <ul class="nav nav-treeview">
+        </a>
+        <ul class="nav nav-treeview">
+
+            <!-- Employee Management Subgroup -->
+            <li class="nav-header pl-3"><small>EMPLOYEE MANAGEMENT</small></li>
+
             <li class="nav-item">
-                <a href="{% url 'emp:salary_master_list' %}" class="nav-link {% if 'emp:salary_master_list' in segment %}active{% endif %}">
-                    
-                    <i class="nav-icon fa-solid fa-list-ul"></i>
-                    <p>Salary Master List</p>
+                <a href="{% url 'emp:employee_dash' %}"
+                    class="nav-link {% if view_name == 'emp:employee_dash' %}active{% endif %}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Employee Dashboard</p>
                 </a>
             </li>
+
             <li class="nav-item">
-                <a href="{% url 'emp:adjustments_list' %}" class="nav-link {% if 'emp:adjustments_list' in segment %}active{% endif %}">                    
-                    <i class="nav-icon fa-solid fa-money-bill-transfer"></i>
-                    <p>Salary Adjustments old</p>
+                <a href="{% url 'emp:employee_list' %}"
+                    class="nav-link {% if view_name == 'emp:employee_list' %}active{% endif %}">
+                    <i class="fas fa-list nav-icon"></i>
+                    <p>Employee List</p>
                 </a>
             </li>
+
             <li class="nav-item">
-                <a href="{% url 'emp:adjustments_page' %}" class="nav-link {% if 'emp:adjustments_page' in segment %}active{% endif %}">                    
-                    <i class="nav-icon fa-solid fa-money-bill-transfer"></i>
-                    <p>Salary Adjustments new</p>
+                <a href="{% url 'emp:employee_form' %}"
+                    class="nav-link {% if view_name == 'emp:employee_form' %}active{% endif %}">
+                    <i class="fas fa-user-plus nav-icon"></i>
+                    <p>Add New Employee</p>
                 </a>
             </li>
+
             <li class="nav-item">
-                <a href="{% url 'emp:salary_preparation' %}" class="nav-link {% if 'emp:salary_preparation' in segment %}active{% endif %}">
-                    
-                    <i class="nav-icon fa-solid fa-money-bill-1-wave"></i>
+                <a href="{% url 'emp:create_employee_user' %}"
+                    class="nav-link {% if view_name == 'emp:create_employee_user' %}active{% endif %}">
+                    <i class="fas fa-user-shield nav-icon"></i>
+                    <p>Create User Login</p>
+                </a>
+            </li>
+
+            <!-- Payroll & Salary Subgroup -->
+            <li class="nav-header pl-3"><small>PAYROLL & SALARY</small></li>
+
+            <li class="nav-item">
+                <a href="{% url 'emp:salary_master_list' %}"
+                    class="nav-link {% if view_name == 'emp:salary_master_list' %}active{% endif %}">
+                    <i class="fas fa-money-check nav-icon"></i>
+                    <p>Salary Master</p>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a href="{% url 'emp:salary_preparation' %}"
+                    class="nav-link {% if view_name == 'emp:salary_preparation' %}active{% endif %}">
+                    <i class="fas fa-calculator nav-icon"></i>
                     <p>Salary Preparation</p>
                 </a>
             </li>
-          </ul>
-        </li>
-      </ul>
+
+        </ul>
     </li>
-    {% endif %}
-    {% if request.user.is_authenticated %}
-        <li class="nav-header">
-            <strong>USER</strong>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'custom_logout' %}" class="nav-link">
-                <i class="fa fa-sign-out-alt nav-icon"></i>
-                <p>Logout</p>
-            </a>
-        </li>
+
+    <!-- LEADS MODULE -->
+    <li class="nav-item has-treeview {% if 'leads' in view_name %}menu-open{% endif %}">
+        <a href="#" class="nav-link {% if 'leads' in view_name %}active{% endif %}">
+            <i class="nav-icon fas fa-bullseye"></i>
+            <p>
+                LEADS
+                <i class="right fas fa-angle-left"></i>
+            </p>
+        </a>
+        <ul class="nav nav-treeview">
+
+
+
+            <li class="nav-item">
+                <a href="{% url 'leads:lead_list' %}"
+                    class="nav-link {% if view_name == 'leads:lead_list' %}active{% endif %}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Leads List</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'leads:lead_form_add' %}"
+                    class="nav-link {% if view_name == 'leads:lead_form_add' %}active{% endif %}">
+                    <i class="fas fa-plus-circle nav-icon"></i>
+                    <p>Add New Lead</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'leads:my_activity' %}"
+                    class="nav-link {% if view_name == 'leads:employee_activity' %}active{% endif %}">
+                    <i class="fas fa-chart-line nav-icon"></i>
+                    <p>My Activity</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'leads:conversion_logs' %}"
+                    class="nav-link {% if view_name == 'leads:conversion_logs' %}active{% endif %}">
+                    <i class="fas fa-exchange-alt nav-icon"></i>
+                    <p>Conversion Logs</p>
+                </a>
+            </li>
+        </ul>
+    </li>
+
+    <!-- VENDORS MODULE -->
+    <li class="nav-item has-treeview {% if 'vendors' in view_name %}menu-open{% endif %}">
+        <a href="#" class="nav-link {% if 'vendors' in view_name %}active{% endif %}">
+            <i class="nav-icon fas fa-truck"></i>
+            <p>
+                VENDORS
+                <i class="right fas fa-angle-left"></i>
+            </p>
+        </a>
+        <ul class="nav nav-treeview">
+
+            <li class="nav-item">
+                <a href="{% url 'vendors:vendor_list' %}"
+                    class="nav-link {% if view_name == 'vendors:vendor_list' %}active{% endif %}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Vendors List</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'vendors:vendor_create' %}"
+                    class="nav-link {% if view_name == 'vendors:vendor_create' %}active{% endif %}">
+                    <i class="fas fa-plus-circle nav-icon"></i>
+                    <p>Add New Vendor</p>
+                </a>
+            </li>
+        </ul>
+    </li>
+
     {% else %}
-        <li class="nav-item">
-            <a href="{% url 'custom_login' %}" class="nav-link">
-                <i class="fa fa-sign-in-alt nav-icon"></i>
-                <p>Login</p>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fa fa-user-plus nav-icon"></i>
-                <p>Register</p>
-            </a>
-        </li>
-    {% endif %}
+
+    <!-- MANAGER, SALES & OTHER ROLES: LIMITED ACCESS -->
+
+    <li class="nav-header"><i class="fas fa-briefcase"></i> MY WORKSPACE</li>
+
+    <!-- Sites Access -->
     <li class="nav-item">
-        <a target="_blank"
-           href="https://app-generator.dev/support/"
-           class="nav-link">
-            <i class="fa fa-rocket text-danger nav-icon"></i>
-            <p>Support</p>
+        <a href="{% url 'emp:site_crud' %}" class="nav-link {% if view_name == 'emp:site_crud' %}active{% endif %}">
+            <i class="nav-icon fas fa-map-marker-alt"></i>
+            <p>Sites / Locations</p>
         </a>
     </li>
+
+    <!-- LEADS MODULE -->
+    <li class="nav-item has-treeview {% if 'leads' in view_name %}menu-open{% endif %}">
+        <a href="#" class="nav-link {% if 'leads' in view_name %}active{% endif %}">
+            <i class="nav-icon fas fa-bullseye"></i>
+            <p>
+                LEADS
+                <i class="right fas fa-angle-left"></i>
+            </p>
+        </a>
+        <ul class="nav nav-treeview">
+
+            <li class="nav-item">
+                <a href="{% url 'leads:lead_list' %}"
+                    class="nav-link {% if view_name == 'leads:lead_list' %}active{% endif %}">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>My Leads</p>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a href="{% url 'leads:lead_form_add' %}"
+                    class="nav-link {% if view_name == 'leads:lead_form_add' %}active{% endif %}">
+                    <i class="fas fa-plus-circle nav-icon"></i>
+                    <p>Add New Lead</p>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a href="{% url 'leads:my_activity' %}"
+                    class="nav-link {% if view_name == 'leads:employee_activity' %}active{% endif %}">
+                    <i class="fas fa-chart-line nav-icon"></i>
+                    <p>My Activity</p>
+                </a>
+            </li>
+
+        </ul>
+    </li>
+
+    {% endif %}
+
+    <!-- USER SECTION (All Users) -->
+    <li class="nav-header"><i class="fas fa-user-circle"></i> ACCOUNT</li>
+
+    {% if request.user.is_authenticated %}
+    <li class="nav-item">
+        <a href="{% url 'custom_logout' %}" class="nav-link">
+            <i class="fas fa-sign-out-alt nav-icon"></i>
+            <p>Logout</p>
+        </a>
+    </li>
+    {% else %}
+    <li class="nav-item">
+        <a href="{% url 'custom_login' %}" class="nav-link">
+            <i class="fas fa-sign-in-alt nav-icon"></i>
+            <p>Login</p>
+        </a>
+    </li>
+    {% endif %}
+
+    <!-- SUPPORT -->
+    <li class="nav-item">
+        <a href="https://app-generator.dev/support/" target="_blank" class="nav-link">
+            <i class="fas fa-question-circle nav-icon text-info"></i>
+            <p>Help & Support</p>
+        </a>
+    </li>
+
 </ul>

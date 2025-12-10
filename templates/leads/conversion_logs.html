@@ -1,0 +1,39 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<div class="content-wrapper">
+    <section class="content-header">
+        <h1>Conversion Logs <small>Lead to Site Tracking</small></h1>
+    </section>
+    <section class="content">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th><th>Lead S.No.</th><th>Site Name</th><th>Converted By</th><th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr>
+                                    <td>{{ log.conversion_date|date:"Y-m-d H:i" }}</td>
+                                    <td>{{ log.lead.lead_id }}</td>
+                                    <td><a href="/emp/sites/view/{{ log.site.id }}/">{{ log.site.site_name }}</a></td>
+                                    <td>{{ log.converted_by.first_name }}</td>
+                                    <td>{{ log.remarks|truncatewords:10 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5">No conversions yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

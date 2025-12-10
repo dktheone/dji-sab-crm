@@ -17,16 +17,7 @@ MANAGE SITES
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
 <style>
     /* Compact table styling */
-    .table.dataTable {
-        font-size: 0.9rem;
-    }
-    .table.dataTable thead th {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-    }
-    .table.dataTable tbody td {
-        padding: 8px;
-    }
+    
     /* Compact modal styling */
     .modal-content {
         border-radius: 0.5rem;
@@ -67,8 +58,8 @@ MANAGE SITES
                     </div>
                 </div>
                 <div class="card-body">
-                    <table id="siteTable" class="table table-hover table-primary">
-                        <thead>
+                    <table id="siteTable" class="table table-striped">
+                        <thead class="thead-dark">
                             <tr>
                                 <th>#</th>
                                 <th style="width: 50%;">Name & Address</th>
@@ -218,7 +209,8 @@ MANAGE SITES
 
 {% endblock content %}
 {% block extra_scripts %}
-<script src="{% static 'plugins/select2/select2.min.js' %}"></script>
+
+
 <script>
     
     $('#sitesTable').DataTable({
