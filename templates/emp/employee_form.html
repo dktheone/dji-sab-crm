@@ -372,8 +372,8 @@
                                     src="{% if employee.photo %}{{ employee.photo.url }}{% else %}/static/dist/img/default-150x150.png{% endif %}"
                                     alt="Employee Photo">
                                 <p class="mb-2"><strong>Click to upload or drag & drop</strong></p>
-                                <p class="text-muted small mb-0">JPG, PNG • Max 2MB</p>
-                                <input type="file" id="id_photo" name="photo" accept="image/*" style="display:none;">
+                                <p class="text-muted small mb-0">JPG, JPEG, PNG, WEBP • Max 2MB</p>
+                                <input type="file" id="id_photo" name="photo" accept="image/jpeg,image/jpg,image/png,image/webp" style="display:none;">
                                 <button type="button" class="btn btn-sm btn-primary mt-2 change-photo-btn"
                                     onclick="document.getElementById('id_photo').click()">
                                     <i class="fas fa-sync mr-1"></i>Change Photo
@@ -670,7 +670,8 @@
         // Photo Upload Handling
         $('#photoUploadZone').on('click', function (e) {
             if (!$(e.target).is('button') && !$(e.target).closest('button').length) {
-                $('#id_photo').click();
+                e.stopPropagation(); // Prevent event bubbling
+                document.getElementById('id_photo').click(); // Use native DOM method
             }
         });
 
@@ -684,8 +685,8 @@
                     return;
                 }
 
-                if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-                    alert('Only JPG and PNG files are allowed');
+                if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+                    alert('Only JPG, JPEG, PNG, and WEBP files are allowed');
                     this.value = ''; // Clear the input
                     return;
                 }

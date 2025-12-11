@@ -367,7 +367,7 @@ def employee_form(request, employee_id=None):
             return JsonResponse({
                 'status': 'success',
                 'message': 'Employee saved successfully',
-                'redirect': f'/emp/upload/{employee.id}/'
+                'redirect': f'/emp/details/{employee.id}/'
             })
         else:
             return JsonResponse({'status': 'error', 'errors': form.errors, 'test': '7275'}, status=400)

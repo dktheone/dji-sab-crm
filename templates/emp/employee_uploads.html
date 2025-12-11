@@ -83,7 +83,13 @@ EMPLOYEE UPLOAD
                             <tr>
                                 <td>{{ upload.document_type }}</td>
                                 <td>{{ upload.description|default:"-" }}</td>
-                                <td><a href="{{ upload.file_path.url }}" target="_blank">View</a></td>
+                                <td>
+                                    {% if upload.file_path %}
+                                        <a href="{{ upload.file_path.url }}" target="_blank">View</a>
+                                    {% else %}
+                                        <span class="text-muted">No file uploaded</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
