@@ -1,0 +1,822 @@
+{% extends 'layouts/base_md3.html' %}
+{% load static crispy_forms_tags %}
+
+{% block title %}{% if employee %}Edit Employee{% else %}Add Employee{% endblock %}
+
+{% block breadcrumb_title %}{% if employee %}Edit Employee{% else %}Add Employee{% endif %}{% endblock %}
+
+{% block extrastyle %}
+<style>
+/* Photo Upload Card */
+.photo-upload-card {
+    background: #f9fafb;
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.photo-upload-card:hover {
+    border-color: #667eea;
+    background: #f3f4f6;
+}
+
+.photo-upload-card.has-photo {
+    border-style: solid;
+    border-color: #10b981;
+    background: #ecfdf5;
+}
+
+.photo-preview {
+    width: 200px;
+    height: 200px;
+    border-radius: 12px;
+    object-fit: cover;
+    margin: 0 auto 1rem;
+    display: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.photo-preview.show {
+    display: block;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+}
+
+.photo-upload-card.has-photo .upload-icon {
+    display: none;
+}
+
+.change-photo-btn {
+    display: none;
+}
+
+.photo-upload-card.has-photo .change-photo-btn {
+    display: inline-block;
+}
+
+/* Material Dashboard Form Enhancements */
+.input-group-outline input:focus,
+.input-group-outline textarea:focus,
+.input-group-outline select:focus {
+    border-color: #e91e63;
+}
+
+/* Checkbox styling */
+.copy-address-box {
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.copy-address-box label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.copy-address-box input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Validation messages */
+.validation-message {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.validation-message.success {
+    color: #10b981;
+}
+
+.validation-message.error {
+    color: #ef4444;
+}
+
+/* Make select2 match Material Dashboard style */
+.select2-container--default .select2-selection--single {
+    min-height: 42px;
+    border: 1px solid #d2d6da;
+    border-radius: 0.375rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 40px;
+    padding-left: 12px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 40px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Page Header Card -->
+        <div class="card my-4">
+            <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
+                    <div class="d-flex align-items-center justify-content-between px-3">
+                        <div>
+                            <h6 class="text-white text-capitalize mb-0">
+                                <i class="material-symbols-rounded opacity-10 me-2">person_add</i>
+                                {% if employee %}Edit Employee Profile{% else %}Add New Employee{% endif %}
+                            </h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body px-4 pb-2">
+                <form id="employeeForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <!-- LEFT COLUMN -->
+                        <div class="col-lg-6">
+
+                            <!-- Photo Upload Section -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-sm mb-3">
+                                    <i class="material-symbols-rounded text-primary me-1" style="vertical-align: middle;">photo_camera</i>
+                                    Employee Photo
+                                </h6>
+                                <div class="photo-upload-card {% if employee.photo %}has-photo{% endif %}" id="photoUploadZone">
+                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                    <img id="photoPreview" class="photo-preview {% if employee.photo %}show{% endif %}" 
+                                         src="{% if employee.photo %}{{ employee.photo.url }}{% else %}/static/dist/img/default-150x150.png{% endif %}" 
+                                         alt="Employee Photo">
+                                    <p class="mb-2"><strong>Click to upload or drag & drop</strong></p>
+                                    <p class="text-muted small mb-0">JPG, JPEG, PNG, WEBP • Max 2MB</p>
+                                    <input type="file" id="id_photo" name="photo" accept="image/jpeg,image/jpg,image/png,image/webp" style="display:none;">
+                                    <button type="button" class="btn btn-sm bg-gradient-primary mt-2 change-photo-btn" 
+                                            onclick="document.getElementById('id_photo').click()">
+                                        <i class="material-symbols-rounded me-1" style="font-size: 1rem;">sync</i>Change Photo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Basic Information -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-sm mb-3">
+                                    <i class="material-symbols-rounded text-primary me-1" style="vertical-align: middle;">person</i>
+                                    Basic Information
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">First Name *</label>
+                                            {{ employee_form.first_name }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Middle Name</label>
+                                            {{ employee_form.middle_name }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Last Name *</label>
+                                            {{ employee_form.last_name }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Father's Name</label>
+                                            {{ employee_form.father_name }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Mother's Name</label>
+                                            {{ employee_form.mother_name }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Gender</label>
+                                            {{ employee_form.gender }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Blood Group</label>
+                                            {{ employee_form.blood_group }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Marital Status</label>
+                                            {{ employee_form.marital_status }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Date of Birth</label>
+                                            {{ employee_form.dob }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Nationality</label>
+                                            {{ employee_form.nationality }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Information -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-sm mb-3">
+                                    <i class="material-symbols-rounded text-primary me-1" style="vertical-align: middle;">phone</i>
+                                    Contact Information
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Contact Number *</label>
+                                            {{ employee_form.contact_no }}
+                                        </div>
+                                        <div class="validation-message" id="mobileValidation"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Email *</label>
+                                            {{ employee_form.email }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Emergency Contact Name</label>
+                                            {{ employee_form.emergency_person_name }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Relation</label>
+                                            {{ employee_form.emergency_relation }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Emergency Contact</label>
+                                            {{ employee_form.emergency_contact }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Correspondence Address -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-sm mb-3">
+                                    <i class="material-symbols-rounded text-primary me-1" style="vertical-align: middle;">location_on</i>
+                                    Correspondence Address
+                                </h6>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Address</label>
+                                            {{ employee_form.cor_address }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">State</label>
+                                            {{ employee_form.cor_state }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">City</label>
+                                            {{ employee_form.cor_city }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Pincode</label>
+                                            {{ employee_form.cor_pincode }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Permanent Address -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-sm mb-3">
+                                    <i class="material-symbols-rounded text-primary me-1" style="vertical-align: middle;">home</i>
+                                    Permanent Address
+                                </h6>
+                                <div class="copy-address-box">
+                                    <label>
+                                        <input type="checkbox" id="sameAsCorrespondence">
+                                        <span class="text-sm">Same as Correspondence Address</span>
+                                    </label>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Address</label>
+                                            {{ employee_form.per_address }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">State</label>
+                                            {{ employee_form.per_state }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">City</label>
+                                            {{ employee_form.per_city }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Pincode</label>
+                                            {{ employee_form.per_pincode }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- RIGHT COLUMN -->
+                        <div class="col-lg-6">
+
+                            <!-- Employment Details -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-sm mb-3">
+                                    <i class="material-symbols-rounded text-primary me-1" style="vertical-align: middle;">work</i>
+                                    Employment Details
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Department *</label>
+                                            {{ employee_form.department }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Designation *</label>
+                                            {{ employee_form.designation }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Site</label>
+                                            {{ employee_form.site }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Joining Date</label>
+                                            {{ employee_form.joining_date }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Status *</label>
+                                            {{ employee_form.status }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Identity Documents -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-sm mb-3">
+                                    <i class="material-symbols-rounded text-primary me-1" style="vertical-align: middle;">badge</i>
+                                    Identity Documents
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Aadhaar Number</label>
+                                            {{ employee_form.aadhaar_no }}
+                                        </div>
+                                        <div class="validation-message" id="aadhaarValidation"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">PAN Card</label>
+                                            {{ employee_form.pan_card }}
+                                        </div>
+                                        <div class="validation-message" id="panValidation"></div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Passport Number</label>
+                                            {{ employee_form.passport_no }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">UAN Number</label>
+                                            {{ employee_form.uan_no }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Other ID Proof Type</label>
+                                            {{ employee_form.other_id_proof_type }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Other ID Proof Number</label>
+                                            {{ employee_form.other_id_proof_no }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bank Details -->
+                            <div class="mb-4">
+                                <h6 class="text-uppercase text-sm mb-3">
+                                    <i class="material-symbols-rounded text-primary me-1" style="vertical-align: middle;">account_balance</i>
+                                    Bank Details
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Bank Name</label>
+                                            {{ employee_form.bank_name }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">Account Number</label>
+                                            {{ employee_form.account_no }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">IFSC Code</label>
+                                            {{ employee_form.ifsc_code }}
+                                        </div>
+                                        <div class="validation-message" id="ifscValidation"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">UPI ID</label>
+                                            {{ employee_form.upi_id }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="input-group input-group-outline mb-3">
+                                            <label class="form-label">PF/ESIC Number</label>
+                                            {{ employee_form.pf_esic_no }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'emp:employee_list' %}" class="btn btn-outline-secondary">
+                                    <i class="material-symbols-rounded me-1" style="font-size: 1rem;">cancel</i>
+                                    Cancel
+                                </a>
+                                <div>
+                                    <button type="submit" class="btn bg-gradient-dark" id="submitBtn">
+                                        <i class="material-symbols-rounded me-1" style="font-size: 1rem;">save</i>
+                                        <span id="submitText">
+                                            {% if employee %}Update Employee{% else %}Save Employee{% endif %}
+                                        </span>
+                                        <span id="submitSpinner" style="display:none;">
+                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            Processing...
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        let employeeId = {{ employee.id|default:'null' }};
+
+        // Initialize Select2 for dropdowns
+        $('select[name="department"], select[name="designation"], select[name="site"], select[name="status"], select[name="gender"], select[name="blood_group"], select[name="marital_status"]').select2({
+            placeholder: 'Select...',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Photo Upload Handling
+        $('#photoUploadZone').on('click', function (e) {
+            if (!$(e.target).is('button') && !$(e.target).closest('button').length) {
+                e.stopPropagation();
+                document.getElementById('id_photo').click();
+            }
+        });
+
+        $('#id_photo').on('change', function () {
+            const file = this.files[0];
+            if (file) {
+                // Validate file
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('File size must be less than 2MB');
+                    this.value = '';
+                    return;
+                }
+
+                if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+                    alert('Only JPG, JPEG, PNG, and WEBP files are allowed');
+                    this.value = '';
+                    return;
+                }
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#photoPreview').attr('src', e.target.result).addClass('show');
+                    $('#photoUploadZone').addClass('has-photo');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Drag & Drop
+        $('#photoUploadZone').on('dragover', function (e) {
+            e.preventDefault();
+            $(this).css('border-color', '#667eea');
+        });
+
+        $('#photoUploadZone').on('dragleave', function (e) {
+            $(this).css('border-color', '#d1d5db');
+        });
+
+        $('#photoUploadZone').on('drop', function (e) {
+            e.preventDefault();
+            $(this).css('border-color', '#d1d5db');
+            const files = e.originalEvent.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                document.getElementById('id_photo').files = files;
+                $('#id_photo').trigger('change');
+            }
+        });
+
+        // Same as Correspondence Address
+        $('#sameAsCorrespondence').on('change', function () {
+            if ($(this).is(':checked')) {
+                $('textarea[name="per_address"]').val($('textarea[name="cor_address"]').val());
+                $('select[name="per_state"]').val($('select[name="cor_state"]').val()).trigger('change');
+                $('input[name="per_pincode"]').val($('input[name="cor_pincode"]').val());
+                
+                // For city, we need to wait for cities to load
+                setTimeout(function() {
+                    $('select[name="per_city"]').val($('select[name="cor_city"]').val()).trigger('change');
+                }, 500);
+            }
+        });
+
+        // Duplicate Checking
+        function checkDuplicate(field, value) {
+            if (!value) return;
+
+            const validationEl = document.getElementById(field + 'Validation');
+            const inputEl = $(`input[name="${field}"]`);
+
+            validationEl.innerHTML = '<span class="validation-message"><i class="fas fa-spinner fa-spin"></i> Checking...</span>';
+            inputEl.removeClass('field-warning field-valid');
+
+            $.ajax({
+                url: '/emp/api/check-duplicate/',
+                data: {
+                    field: field,
+                    value: value,
+                    employee_id: employeeId
+                },
+                success: function (data) {
+                    if (data.exists) {
+                        validationEl.innerHTML = '<span class="validation-message error"><i class="fas fa-exclamation-triangle"></i> Already exists</span>';
+                        inputEl.addClass('field-warning');
+                    } else {
+                        validationEl.innerHTML = '<span class="validation-message success"><i class="fas fa-check-circle"></i> Available</span>';
+                        inputEl.addClass('field-valid');
+                    }
+                },
+                error: function () {
+                    validationEl.innerHTML = '<span class="validation-message error"><i class="fas fa-times-circle"></i> Error checking</span>';
+                }
+            });
+        }
+
+        // Debounce duplicate checking
+        let checkTimeout;
+        $('input[name="aadhaar_no"], input[name="pan_card"], input[name="contact_no"]').on('keyup', function () {
+            clearTimeout(checkTimeout);
+            const field = this.name;
+            const value = this.value;
+
+            checkTimeout = setTimeout(function () {
+                if (field === 'aadhaar_no' && value.length === 12) {
+                    checkDuplicate(field, value);
+                } else if (field === 'pan_card' && value.length === 10) {
+                    checkDuplicate(field, value);
+                } else if (field === 'contact_no' && value.length === 10) {
+                    checkDuplicate(field, value);
+                } else {
+                    $(`#${field}Validation`).empty();
+                    $(`input[name="${field}"]`).removeClass('field-warning field-valid');
+                }
+            }, 500);
+        });
+
+        // IFSC Code Lookup
+        $('input[name="ifsc_code"]').on('blur', function () {
+            const ifsc = $(this).val();
+            if (ifsc && ifsc.length === 11) {
+                $('#ifscValidation').html('<span class="validation-message"><i class="fas fa-spinner fa-spin"></i> Fetching...</span');
+
+                $.ajax({
+                    url: '/emp/get-ifsc-data/',
+                    data: { ifsc_code: ifsc },
+                    success: function (data) {
+                        if (data.status === 'success') {
+                            $('input[name="bank_name"]').val(data.bank + ' - ' + data.branch);
+                            $('#ifscValidation').html('<span class="validation-message success"><i class="fas fa-check-circle"></i> ' + data.bank + '</span>');
+                        } else {
+                            $('#ifscValidation').html('<span class="validation-message error"><i class="fas fa-times-circle"></i> Invalid IFSC</span>');
+                        }
+                    },
+                    error: function () {
+                        $('#ifscValidation').html('<span class="validation-message error"><i class="fas fa-times-circle"></i> Could not fetch</span>');
+                    }
+                });
+            } else {
+                $('#ifscValidation').empty();
+            }
+        });
+
+        // State/City Cascading - Correspondence
+        let pendingCorCity = '{{ employee.cor_city|default:"" }}';
+        let pendingPerCity = '{{ employee.per_city|default:"" }}';
+
+        $('select[name="cor_state"]').on('change', function () {
+            const state = $(this).val();
+            const citySelect = $('select[name="cor_city"]');
+
+            citySelect.empty().append('<option value="">Loading...</option>');
+            citySelect.select2('destroy');
+
+            if (state) {
+                $.ajax({
+                    url: '/emp/get-cities/',
+                    method: 'GET',
+                    data: { state: state },
+                    success: function (data) {
+                        citySelect.empty().append('<option value="">Select City</option>');
+                        if (data.cities && data.cities.length > 0) {
+                            data.cities.forEach(function (city) {
+                                citySelect.append($('<option></option>').val(city).text(city));
+                            });
+                        }
+
+                        citySelect.select2({
+                            placeholder: 'Select City',
+                            allowClear: true,
+                            width: '100%'
+                        });
+
+                        if (pendingCorCity) {
+                            citySelect.val(pendingCorCity).trigger('change');
+                            pendingCorCity = null;
+                        }
+                    },
+                    error: function () {
+                        citySelect.empty().append('<option value="">Error loading</option>');
+                        citySelect.select2({ placeholder: 'Select City', allowClear: true, width: '100%' });
+                    }
+                });
+            } else {
+                citySelect.empty().append('<option value="">Select State First</option>');
+                citySelect.select2({ placeholder: 'Select City', allowClear: true, width: '100%' });
+            }
+        });
+
+        // State/City Cascading - Permanent
+        $('select[name="per_state"]').on('change', function () {
+            const state = $(this).val();
+            const citySelect = $('select[name="per_city"]');
+
+            citySelect.empty().append('<option value="">Loading...</option>');
+            citySelect.select2('destroy');
+
+            if (state) {
+                $.ajax({
+                    url: '/emp/get-cities/',
+                    method: 'GET',
+                    data: { state: state },
+                    success: function (data) {
+                        citySelect.empty().append('<option value="">Select City</option>');
+                        if (data.cities && data.cities.length > 0) {
+                            data.cities.forEach(function (city) {
+                                citySelect.append($('<option></option>').val(city).text(city));
+                            });
+                        }
+
+                        citySelect.select2({
+                            placeholder: 'Select City',
+                            allowClear: true,
+                            width: '100%'
+                        });
+
+                        if (pendingPerCity) {
+                            citySelect.val(pendingPerCity).trigger('change');
+                            pendingPerCity = null;
+                        }
+                    },
+                    error: function () {
+                        citySelect.empty().append('<option value="">Error loading</option>');
+                        citySelect.select2({ placeholder: 'Select City', allowClear: true, width: '100%' });
+                    }
+                });
+            } else {
+                citySelect.empty().append('<option value="">Select State First</option>');
+                citySelect.select2({ placeholder: 'Select City', allowClear: true, width: '100%' });
+            }
+        });
+
+        // Initialize city selects for state/city dropdowns
+        $('select[name="cor_city"], select[name="per_city"]').select2({
+            placeholder: 'Select City',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Trigger state change if editing to load cities
+        if ('{{ employee.cor_state }}') {
+            $('select[name="cor_state"]').trigger('change');
+        }
+        if ('{{ employee.per_state }}') {
+            $('select[name="per_state"]').trigger('change');
+        }
+
+        // Form Submit
+        $('#employeeForm').on('submit', function () {
+            $('#submitText').hide();
+            $('#submitSpinner').show();
+            $('#submitBtn').prop('disabled', true);
+        });
+    });
+</script>
+{% endblock %}

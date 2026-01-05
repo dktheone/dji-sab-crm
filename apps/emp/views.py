@@ -478,6 +478,38 @@ def employee_form(request, employee_id=None):
             'view_name': request.resolver_match.view_name,
             'step': 1  # For wizard indicator
         })
+
+# Material Dashboard 3 version of employee form (side-by-side with old template)
+@role_required('admin', 'hr', 'employee')
+def employee_form_md3(request, employee_id=None):
+    """Material Dashboard 3 version of employee form"""
+    employee = get_object_or_404(Employee, id=employee_id) if employee_id else None
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, request.FILES, instance=employee)
+        if form.is_valid():
+            employee = form.save(commit=False)
+            employee.created_by = request.user
+            employee.save()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Employee saved successfully',
+                'redirect': f'/emp/details/{employee.id}'
+            })
+        else:
+            return JsonResponse({'status': 'error', 'errors': form.errors, 'test': '7275'}, status=400)
+    else:
+        employee_form = EmployeeForm(instance=employee)
+        initial_city = employee.cor_city if employee else None
+        initial_state = employee.cor_state if employee else None
+        return render(request, 'emp/employee_form_md3.html', {
+            'employee_form': employee_form,
+            'employee': employee,
+            'initial_city': initial_city,
+            'initial_state': initial_state,
+            'view_name': request.resolver_match.view_name,
+            'step': 1  # For wizard indicator
+        })
+
 # New view for additional details (Education, Experience, Family)
 @role_required('admin', 'hr', 'employee')
 def employee_additional(request, employee_id):

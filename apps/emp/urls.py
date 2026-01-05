@@ -90,6 +90,10 @@ urlpatterns = [
     path('get-cities/', emp_views.get_cities, name='get_cities'),
     path('create-user/', emp_views.create_employee_user, name='create_employee_user'),
     
+    # Material Dashboard 3 URLs (side-by-side with old templates)
+    path('add-md3/', emp_views.employee_form_md3, name='employee_form_md3'),
+    path('edit-md3/<int:employee_id>/', emp_views.employee_form_md3, name='employee_edit_md3'),
+    
     # Employee profile popup
     path('employee-profile/<int:employee_id>/', emp_views.employee_profile_popup, name='employee_profile_popup'),
     

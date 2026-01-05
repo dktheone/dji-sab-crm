@@ -50,6 +50,9 @@ urlpatterns = [
     # Material 3 Test Page (remove after migration complete)
     path('material3-test/', TemplateView.as_view(template_name='material3_test.html'), name='material3_test'),
     
+    # Material Dashboard 3 Test (NEW)
+    path('md3-dashboard/', TemplateView.as_view(template_name='md3_test_dashboard.html'), name='md3_dashboard'),
+    
     path('emp/', include('apps.emp.urls', namespace='emp')),
     path('leads/', include('apps.leads.urls')),
     path('vendors/', include('apps.vendors.urls', namespace='vendors')),
