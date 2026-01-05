@@ -126,13 +126,108 @@ def dashboard(request):
         return custom_logout(request)
     
 
+# Password Change View (for logged-in users and admin changing user passwords)
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
+from django.contrib.auth import update_session_auth_hash
+
+@login_required
+def password_change(request, employee_id=None):
+    """
+    Handle password change for:
+    1. Users changing their own password (employee_id=None or their own ID)
+    2. Admin/HR changing another user's password (employee_id provided)
+    """
+    # Get current user's role
+    user_role = request.user.groups.first().name if request.user.groups.exists() else None
+    
+    # Determine target employee and user
+    if employee_id:
+        # Someone is trying to change a specific employee's password
+        try:
+            target_employee = Employee.objects.get(id=employee_id)
+            target_user = User.objects.get(username=target_employee.emp_code)
+        except (Employee.DoesNotExist, User.DoesNotExist):
+            messages.error(request, 'Employee or user not found')
+            return redirect('/dashboard/')
+        
+        # Check permissions
+        if user_role not in ['admin', 'hr']:
+            # Non-admin/hr users can only change their own password
+            current_employee = Employee.objects.filter(emp_code=request.user.username).first()
+            if not current_employee or current_employee.id != employee_id:
+                messages.error(request, 'You can only change your own password')
+                return redirect('/dashboard/')
+    else:
+        # No employee_id provided - user changing their own password
+        try:
+            target_employee = Employee.objects.get(emp_code=request.user.username)
+            target_user = request.user
+        except Employee.DoesNotExist:
+            # User might be admin without employee record
+            target_employee = None
+            target_user = request.user
+    
+    # Check if user is changing their own password
+    is_self = target_user == request.user
+    
+    if request.method == 'POST':
+        if is_self:
+            # User changing own password - requires old password
+            form = PasswordChangeForm(request.user, request.POST)
+        else:
+            # Admin changing user password - no old password required
+            form = SetPasswordForm(target_user, request.POST)
+        
+        if form.is_valid():
+            user = form.save()
+            
+            # Keep current user logged in if they changed their own password
+            if is_self:
+                update_session_auth_hash(request, user)
+            
+            message = 'Password changed successfully' if is_self else f'Password updated for {target_user.get_full_name() or target_user.username}'
+            return JsonResponse({'status': 'success', 'message': message})
+        else:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+    else:
+        if is_self:
+            form = PasswordChangeForm(request.user)
+        else:
+            form = SetPasswordForm(target_user)
+    
+    return render(request, 'password_change.html', {
+        'form': form,
+        'target_user': target_user,
+        'target_employee': target_employee,
+        'is_self': is_self
+    })
+
+# Password Reset Views (for forgot password flow)
+from django.contrib.auth.views import (
+    PasswordResetView, 
+    PasswordResetDoneView,
+    PasswordResetConfirmView,
+    PasswordResetCompleteView
+)
+from django.urls import reverse_lazy
 
 class CustomPasswordResetView(PasswordResetView):
-    form_class = CustomPasswordResetForm
-    template_name = 'password_reset.html'
-    email_template_name = 'password_reset_email.html'
-    subject_template_name = 'password_reset_subject.txt'
-    success_url = 'password-reset/done/'
+    template_name = 'password_reset_form.html'
+    email_template_name = 'email/password_reset_email.html'
+    subject_template_name = 'email/password_reset_subject.txt'
+    success_url = reverse_lazy('password_reset_done')
+    
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'password_reset_done.html'
+    
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+    
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'password_reset_complete.html'
+
 
 @role_required('admin', 'hr')
 def department_crud(request):
@@ -1607,10 +1702,12 @@ def get_employee_profile(request, employee_id):
             user = User.objects.get(username=employee.emp_code)
             has_user = True
             username = user.username
+            user_id = user.id
             user_role = user.groups.first().name if user.groups.exists() else 'Employee'
         except User.DoesNotExist:
             has_user = False
             username = None
+            user_id = None
             user_role = None
         
         data = {
@@ -1624,12 +1721,14 @@ def get_employee_profile(request, employee_id):
             'photo': employee.photo.url if employee.photo else '/static/dist/img/default-150x150.png',
             'has_user': has_user,
             'username': username,
+            'user_id': user_id,
             'user_role': user_role
         }
         
         return JsonResponse(data)
     except Employee.DoesNotExist:
         return JsonResponse({'error': 'Employee not found'}, status=404)
+
 
 @role_required('admin', 'hr')
 def get_employees_list(request):
