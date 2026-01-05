@@ -1,0 +1,227 @@
+/* Material 3 Theme for SAB CRM */
+
+:root {
+  /* Primary Colors */
+  --md-sys-color-primary: #6750A4;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #EADDFF;
+  --md-sys-color-on-primary-container: #21005D;
+  
+  /* Secondary Colors */
+  --md-sys-color-secondary: #625B71;
+  --md-sys-color-on-secondary: #FFFFFF;
+  --md-sys-color-secondary-container: #E8DEF8;
+  --md-sys-color-on-secondary-container: #1D192B;
+  
+  /* Tertiary Colors */
+  --md-sys-color-tertiary: #7D5260;
+  --md-sys-color-on-tertiary: #FFFFFF;
+  --md-sys-color-tertiary-container: #FFD8E4;
+  --md-sys-color-on-tertiary-container: #31111D;
+  
+  /* Error Colors */
+  --md-sys-color-error: #B3261E;
+  --md-sys-color-on-error: #FFFFFF;
+  --md-sys-color-error-container: #F9DEDC;
+  --md-sys-color-on-error-container: #410E0B;
+  
+  /* Background Colors */
+  --md-sys-color-background: #FFFBFE;
+  --md-sys-color-on-background: #1C1B1F;
+  
+  /* Surface Colors */
+  --md-sys-color-surface: #FFFBFE;
+  --md-sys-color-on-surface: #1C1B1F;
+  --md-sys-color-surface-variant: #E7E0EC;
+  --md-sys-color-on-surface-variant: #49454F;
+  
+  /* Outline */
+  --md-sys-color-outline: #79747E;
+  --md-sys-color-outline-variant: #CAC4D0;
+  
+  /* Typography - Roboto */
+  --md-sys-typescale-display-large-font: 'Roboto';
+  --md-sys-typescale-display-medium-font: 'Roboto';
+  --md-sys-typescale-display-small-font: 'Roboto';
+  --md-sys-typescale-headline-large-font: 'Roboto';
+  --md-sys-typescale-headline-medium-font: 'Roboto';
+  --md-sys-typescale-headline-small-font: 'Roboto';
+  --md-sys-typescale-title-large-font: 'Roboto';
+  --md-sys-typescale-title-medium-font: 'Roboto';
+  --md-sys-typescale-title-small-font: 'Roboto';
+  --md-sys-typescale-body-large-font: 'Roboto';
+  --md-sys-typescale-body-medium-font: 'Roboto';
+  --md-sys-typescale-body-small-font: 'Roboto';
+  --md-sys-typescale-label-large-font: 'Roboto';
+  --md-sys-typescale-label-medium-font: 'Roboto';
+  --md-sys-typescale-label-small-font: 'Roboto';
+}
+
+/* Dark Mode (optional) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --md-sys-color-primary: #D0BCFF;
+    --md-sys-color-on-primary: #381E72;
+    --md-sys-color-primary-container: #4F378B;
+    --md-sys-color-on-primary-container: #EADDFF;
+    
+    --md-sys-color-background: #1C1B1F;
+    --md-sys-color-on-background: #E6E1E5;
+    
+    --md-sys-color-surface: #1C1B1F;
+    --md-sys-color-on-surface: #E6E1E5;
+  }
+}
+
+/* Base Body Styling */
+.m3-body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Top App Bar */
+.m3-top-app-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.m3-top-app-bar-title {
+  font-size: 22px;
+  font-weight: 500;
+  margin-left: 16px;
+}
+
+/* Navigation Drawer */
+.m3-navigation-drawer {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  background-color: var(--md-sys-color-surface);
+  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.3);
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 99;
+  overflow-y: auto;
+}
+
+.m3-navigation-drawer.open {
+  transform: translateX(0);
+}
+
+.m3-navigation-drawer-header {
+  padding: 24px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.m3-navigation-drawer-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+}
+
+.m3-navigation-list {
+  padding: 8px 0;
+}
+
+.m3-navigation-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  text-decoration: none;
+  color: var(--md-sys-color-on-surface);
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.m3-navigation-item:hover {
+  background-color: rgba(103, 80, 164, 0.08);
+}
+
+.m3-navigation-item md-icon {
+  margin-right: 12px;
+  font-size: 24px;
+}
+
+.m3-navigation-item span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Navigation Scrim */
+.m3-navigation-scrim {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  z-index: 98;
+}
+
+.m3-navigation-scrim.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Main Content */
+.m3-main-content {
+  margin-top: 64px;
+  padding: 24px;
+  min-height: calc(100vh - 64px);
+}
+
+/* Toast Container */
+.m3-toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+}
+
+/* Desktop Navigation (always visible) */
+@media (min-width: 840px) {
+  .m3-navigation-drawer {
+    transform: translateX(0);
+  }
+  
+  .m3-navigation-scrim {
+    display: none;
+  }
+  
+  .m3-main-content {
+    margin-left: 280px;
+  }
+  
+  .m3-top-app-bar md-icon-button#menu-button {
+    display: none;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 839px) {
+  .m3-main-content {
+    padding: 16px;
+  }
+}

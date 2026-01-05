@@ -19,6 +19,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth.views import LogoutView
 from django.views.generic import RedirectView # Import RedirectView
+from django.views.generic import TemplateView
 from apps.emp.views import (
     custom_login, 
     custom_logout, 
@@ -45,6 +46,9 @@ urlpatterns = [
     path('password-reset/done/', CustomPasswordResetDoneView.as_view(), name='password_reset_done'),
     path('password-reset-confirm/<uidb64>/<token>/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('password-reset-complete/', CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),
+    
+    # Material 3 Test Page (remove after migration complete)
+    path('material3-test/', TemplateView.as_view(template_name='material3_test.html'), name='material3_test'),
     
     path('emp/', include('apps.emp.urls', namespace='emp')),
     path('leads/', include('apps.leads.urls')),

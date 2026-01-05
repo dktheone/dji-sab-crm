@@ -1,0 +1,183 @@
+{% extends 'layouts/base_material3.html' %}
+
+{% block title %}Material 3 Test{% endblock %}
+
+{% block page_title %}Material 3 Components Test{% endblock %}
+
+{% block content %}
+<div class="m3-container">
+  
+  <!-- Header -->
+  <h1 class="m3-headline-large m3-mb-3">Material 3 Test Page</h1>
+  <p class="m3-body-large m3-mb-4">Testing Material 3 Web Components integration</p>
+  
+  <!-- Buttons Card -->
+  <div class="m3-card-elevated m3-mb-3">
+    <h2 class="m3-card-header">Buttons</h2>
+    <div class="m3-button-group">
+      <md-filled-button>
+        <md-icon slot="icon">save</md-icon>
+        Filled Button
+      </md-filled-button>
+      
+      <md-outlined-button>
+        <md-icon slot="icon">edit</md-icon>
+        Outlined Button
+      </md-outlined-button>
+      
+      <md-text-button>
+        <md-icon slot="icon">cancel</md-icon>
+        Text Button
+      </md-text-button>
+      
+      <md-elevated-button>
+        <md-icon slot="icon">add</md-icon>
+        Elevated Button
+      </md-elevated-button>
+    </div>
+  </div>
+  
+  <!-- Text Fields Card -->
+  <div class="m3-card-elevated m3-mb-3">
+    <h2 class="m3-card-header">Text Fields</h2>
+    <div class="m3-grid m3-grid-2">
+      <md-outlined-text-field label="First Name" value="John"></md-outlined-text-field>
+      <md-outlined-text-field label="Last Name" value="Doe"></md-outlined-text-field>
+      <md-outlined-text-field label="Email" type="email" value="john@example.com"></md-outlined-text-field>
+      <md-outlined-text-field label="Phone" type="tel" value="1234567890"></md-outlined-text-field>
+    </div>
+  </div>
+  
+  <!-- Select Dropdown Card -->
+  <div class="m3-card-elevated m3-mb-3">
+    <h2 class="m3-card-header">Select Dropdown (Replacing Select2!)</h2>
+    <div class="m3-grid m3-grid-2">
+      <md-outlined-select label="Department">
+        <md-select-option value="hr">
+          <div slot="headline">Human Resources</div>
+        </md-select-option>
+        <md-select-option value="it" selected>
+          <div slot="headline">Information Technology</div>
+        </md-select-option>
+        <md-select-option value="sales">
+          <div slot="headline">Sales</div>
+        </md-select-option>
+        <md-select-option value="finance">
+          <div slot="headline">Finance</div>
+        </md-select-option>
+      </md-outlined-select>
+      
+      <md-outlined-select label="Status">
+        <md-select-option value="active" selected>
+          <div slot="headline">Active</div>
+        </md-select-option>
+        <md-select-option value="inactive">
+          <div slot="headline">Inactive</div>
+        </md-select-option>
+        <md-select-option value="on-leave">
+          <div slot="headline">On Leave</div>
+        </md-select-option>
+      </md-outlined-select>
+    </div>
+  </div>
+  
+  <!-- Checkbox and Switch Card -->
+  <div class="m3-card-elevated m3-mb-3">
+    <h2 class="m3-card-header">Checkbox & Switch</h2>
+    <div class="m3-flex-column m3-flex-gap-2">
+      <label class="m3-flex m3-flex-gap-2">
+        <md-checkbox checked></md-checkbox>
+        <span>Accept terms and conditions</span>
+      </label>
+      
+      <label class="m3-flex m3-flex-gap-2">
+        <md-checkbox></md-checkbox>
+        <span>Subscribe to newsletter</span>
+      </label>
+      
+      <label class="m3-flex m3-flex-gap-2">
+        <md-switch checked></md-switch>
+        <span>Enable notifications</span>
+      </label>
+    </div>
+  </div>
+  
+  <!-- Chips Card -->
+  <div class="m3-card-elevated m3-mb-3">
+    <h2 class="m3-card-header">Chips (Status Indicators)</h2>
+    <div class="m3-flex m3-flex-gap-2">
+      <md-chip-set>
+        <md-filter-chip label="Active" selected></md-filter-chip>
+        <md-filter-chip label="Pending"></md-filter-chip>
+        <md-filter-chip label="Completed"></md-filter-chip>
+        <md-filter-chip label="Cancelled"></md-filter-chip>
+      </md-chip-set>
+    </div>
+  </div>
+  
+  <!-- Dialog Test -->
+  <div class="m3-card-elevated m3-mb-3">
+    <h2 class="m3-card-header">Dialog (Replacing Bootstrap Modal)</h2>
+    <md-filled-button id="open-dialog">
+      <md-icon slot="icon">add</md-icon>
+      Open Dialog
+    </md-filled-button>
+  </div>
+  
+  <!-- Progress Indicators Card -->
+  <div class="m3-card-elevated m3-mb-3">
+    <h2 class="m3-card-header">Progress Indicators</h2>
+    <div class="m3-flex-column m3-flex-gap-3">
+      <div>
+        <p class="m3-body-medium m3-mb-1">Circular Progress:</p>
+        <md-circular-progress indeterminate></md-circular-progress>
+      </div>
+      <div>
+        <p class="m3-body-medium m3-mb-1">Linear Progress:</p>
+        <md-linear-progress value="0.5"></md-linear-progress>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Test Dialog -->
+<md-dialog id="test-dialog">
+  <div slot="headline">Add New Employee</div>
+  <form slot="content" method="dialog" id="dialog-form">
+    <div class="m3-flex-column m3-flex-gap-2">
+      <md-outlined-text-field label="Employee Name" required></md-outlined-text-field>
+      <md-outlined-text-field label="Email" type="email" required></md-outlined-text-field>
+      <md-outlined-select label="Department" required>
+        <md-select-option value="hr">
+          <div slot="headline">Human Resources</div>
+        </md-select-option>
+        <md-select-option value="it">
+          <div slot="headline">IT</div>
+        </md-select-option>
+      </md-outlined-select>
+    </div>
+  </form>
+  <div slot="actions">
+    <md-text-button form="dialog-form" value="cancel">Cancel</md-text-button>
+    <md-filled-button form="dialog-form" value="save">Save</md-filled-button>
+  </div>
+</md-dialog>
+
+<script>
+  // Dialog functionality
+  const openDialogBtn = document.getElementById('open-dialog');
+  const dialog = document.getElementById('test-dialog');
+  
+  if (openDialogBtn && dialog) {
+    openDialogBtn.addEventListener('click', () => {
+      dialog.open = true;
+    });
+    
+    dialog.addEventListener('close', () => {
+      console.log('Dialog closed with value:', dialog.returnValue);
+    });
+  }
+</script>
+
+{% endblock %}

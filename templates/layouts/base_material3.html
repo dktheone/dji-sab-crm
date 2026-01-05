@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SAB-CRM | {% block title %}{% endblock title %}</title>
+
+  <!-- Material 3 Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+  
+  <!-- Material 3 Web Components (CDN for now) -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@material/web@latest/all.js"></script>
+  
+  <!-- Material 3 Theme -->
+  <link rel="stylesheet" href="{% static 'css/material3-theme.css' %}">
+  <link rel="stylesheet" href="{% static 'css/material3-utilities.css' %}">
+  
+  {% block extrastyle %}{% endblock extrastyle %}
+</head>
+<body class="m3-body">
+
+  <!-- Top App Bar -->
+  {% block topbar %}
+    <header class="m3-top-app-bar">
+      <md-icon-button id="menu-button">
+        <md-icon>menu</md-icon>
+      </md-icon-button>
+      <div class="m3-top-app-bar-title">
+        SAB CRM - {% block page_title %}Dashboard{% endblock %}
+      </div>
+      <div style="flex: 1"></div>
+      <!-- Top bar actions -->
+      <md-icon-button>
+        <md-icon>account_circle</md-icon>
+      </md-icon-button>
+    </header>
+  {% endblock topbar %}
+
+  <!-- Navigation Drawer -->
+  {% block navigation %}
+    <aside class="m3-navigation-drawer" id="navigationDrawer">
+      <div class="m3-navigation-drawer-header">
+        <h2>SAB CRM</h2>
+      </div>
+      <nav class="m3-navigation-list">
+        <!-- Navigation items will go here -->
+        <a href="{% url 'dashboard' %}" class="m3-navigation-item">
+          <md-icon>dashboard</md-icon>
+          <span>Dashboard</span>
+        </a>
+        <a href="{% url 'emp:employee_list' %}" class="m3-navigation-item">
+          <md-icon>people</md-icon>
+          <span>Employees</span>
+        </a>
+        <a href="{% url 'leads:lead_list' %}" class="m3-navigation-item">
+          <md-icon>business_center</md-icon>
+          <span>Leads</span>
+        </a>
+        <a href="{% url 'vendors:vendor_list' %}" class="m3-navigation-item">
+          <md-icon>local_shipping</md-icon>
+          <span>Vendors</span>
+        </a>
+      </nav>
+    </aside>
+    
+    <!-- Scrim for mobile drawer -->
+    <div class="m3-navigation-scrim" id="navigationScrim"></div>
+  {% endblock navigation %}
+  
+  <!-- Main Content -->
+  <main class="m3-main-content">
+    {% block content %}{% endblock content %}
+    
+    <!-- Toast/Snackbar container -->
+    <div id="toast-container" class="m3-toast-container"></div>
+  </main>
+
+  <!-- Material 3 JavaScript -->
+  <script>
+    // Navigation drawer toggle
+    const menuButton = document.getElementById('menu-button');
+    const drawer = document.getElementById('navigationDrawer');
+    const scrim = document.getElementById('navigationScrim');
+    
+    if (menuButton && drawer && scrim) {
+      menuButton.addEventListener('click', () => {
+        drawer.classList.toggle('open');
+        scrim.classList.toggle('visible');
+      });
+      
+      scrim.addEventListener('click', () => {
+        drawer.classList.remove('open');
+        scrim.classList.remove('visible');
+      });
+    }
+  </script>
+  
+  {% block extra_scripts %}{% endblock extra_scripts %}
+
+</body>
+</html>
