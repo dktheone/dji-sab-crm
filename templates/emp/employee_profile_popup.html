@@ -1,220 +1,230 @@
-<div class="modal-header bg-primary text-white">
-    <h5 class="modal-title">
-        <i class="fas fa-user-circle"></i> Employee Profile - {{ employee.first_name }} {{ employee.last_name }}
+<div class="modal-header header-gradient text-white">
+    <h5 class="modal-title font-weight-bold">
+        <i class="fas fa-id-card mr-2"></i>Employee Profile
     </h5>
-    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+    <button type="button" class="close text-white opacity-100" data-dismiss="modal">&times;</button>
 </div>
 
-<div class="modal-body">
-    <!-- 70:30 Profile Card -->
-    <div class="card mb-3 shadow-sm">
-        <div class="card-body">
+<div class="modal-body bg-light p-0">
+    <!-- Profile Header Card -->
+    <div class="bg-white p-4 shadow-sm mb-3">
+        <div class="d-flex align-items-center">
+            <img src="{{ employee.photo.url|default:'/static/img/nopic.jpg' }}"
+                class="rounded-circle mr-4 border shadow-sm" style="width: 80px; height: 80px; object-fit: cover;">
+            <div class="flex-grow-1">
+                <h4 class="font-weight-bold mb-1">{{ employee.first_name }} {{ employee.last_name }}</h4>
+                <div class="text-muted mb-2">{{ employee.designation.designation_name }} • {{ employee.department.department_name }}</div>
+                <div>
+                    <span class="badge badge-light border mr-2"><i class="fas fa-briefcase text-primary mr-1"></i> {{ employee.emp_code }}</span>
+                    <span class="badge badge-light border mr-2"><i class="fas fa-calendar-alt text-success mr-1"></i> Joined: {{ employee.joining_date|date:"M d, Y" }}</span>
+                    <span class="badge badge-info"><i class="fas fa-clock mr-1"></i> {{ duration_str }}</span>
+                </div>
+            </div>
+            <div class="text-right">
+                <a href="{% url 'emp:employee_view' employee.id %}" class="btn btn-outline-primary btn-sm mb-2">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </a>
+                <br>
+                <a href="{% url 'emp:adjustments_form' employee.id %}" class="btn btn-outline-info btn-sm">
+                    <i class="fas fa-receipt"></i> Adjustments
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="px-3">
+        <ul class="nav nav-tabs nav-fill" id="profileTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active font-weight-bold" id="overview-tab" data-toggle="tab" href="#overview" role="tab">Overview</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link font-weight-bold" id="salary-tab" data-toggle="tab" href="#salary" role="tab">Salary History</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link font-weight-bold" id="adjustments-tab" data-toggle="tab" href="#adjustments" role="tab">Adjustments</a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content p-3" id="profileTabContent">
+        
+        <!-- Tab 1: Overview -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel">
             <div class="row">
-                <!-- LEFT 70% - Profile Info -->
-                <div class="col-md-8 border-right">
-                    <div class="d-flex align-items-start">
-                        <img src="{{ employee.photo.url|default:'/static/img/nopic.jpg' }}"
-                            class="rounded-circle mr-3 border" style="width: 60px; height: 60px; object-fit: cover;"
-                            alt="{{ employee.first_name }}">
-                        <div class="flex-grow-1">
-                            <h5 class="mb-1">{{ employee.first_name }} {{ employee.middle_name|default:'' }} {{
-                                employee.last_name }}</h5>
-                            <p class="mb-1">
-                                <span class="badge badge-secondary">{{ employee.emp_code }}</span>
-                            </p>
-                            <p class="text-muted mb-1 small">
-                                <i class="fas fa-building"></i> {{ employee.department.department_name }} -
-                                <i class="fas fa-briefcase"></i> {{ employee.designation.designation_name }}
-                            </p>
-                            <p class="text-muted mb-1 small">
-                                <i class="fas fa-map-marker-alt"></i> {{ employee.site.site_name }}
-                            </p>
-                            <p class="text-muted mb-0 small">
-                                <i class="fas fa-calendar"></i> Joined: {{ employee.joining_date|date:"M d, Y" }}
-                                <span class="ml-2 font-weight-bold text-info">
-                                    <i class="fas fa-clock"></i> {{ duration_str }}
-                                </span>
-                            </p>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-header bg-white font-weight-bold text-primary">Status Checks</div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    Login Access
+                                    {% if has_login %}
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Enabled</span>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-outline-danger py-0" onclick="window.location.href='{% url 'emp:create_employee_user' %}'">Create Login</button>
+                                    {% endif %}
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    Salary Master
+                                    {% if has_salary %}
+                                    <span class="badge badge-success"><i class="fas fa-check"></i> Assigned</span>
+                                    {% else %}
+                                    <a href="{% url 'emp:salary_master_form' employee.id %}" class="btn btn-sm btn-outline-warning py-0">Setup</a>
+                                    {% endif %}
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    Last Payroll
+                                    {% if payroll_processed %}
+                                    <span class="badge badge-success">Processed</span>
+                                    {% else %}
+                                    <span class="badge badge-secondary">None</span>
+                                    {% endif %}
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
-
-                <!-- RIGHT 30% - Status Checks -->
-                <div class="col-md-4">
-                    <h6 class="mb-3 text-muted text-uppercase small">Status Checks</h6>
-
-                    <!-- Login Status -->
-                    <div class="mb-3">
-                        {% if has_login %}
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success fa-lg mr-2"></i>
-                            <span class="small">Login Created</span>
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-header bg-white font-weight-bold text-success">Contact Info</div>
+                        <div class="card-body">
+                            <p class="mb-2"><i class="fas fa-phone fa-fw text-muted mr-2"></i> {{ employee.contact_no }}</p>
+                            <p class="mb-2"><i class="fas fa-envelope fa-fw text-muted mr-2"></i> {{ employee.email|default:"No Email" }}</p>
+                            <p class="mb-2"><i class="fas fa-map-marker-alt fa-fw text-muted mr-2"></i> {{ employee.per_city }}, {{ employee.per_state }}</p>
+                            <p class="mb-0 small text-muted">Site: {{ employee.site.site_name }}</p>
                         </div>
-                        {% else %}
-                        <div class="d-flex align-items-center mb-1">
-                            <i class="fas fa-times-circle text-danger fa-lg mr-2"></i>
-                            <span class="small">Login Not Created</span>
-                        </div>
-                        <a href="{% url 'emp:create_employee_user' %}" class="btn btn-primary btn-xs btn-block">
-                            <i class="fas fa-user-plus"></i> Create Login
-                        </a>
-                        {% endif %}
-                    </div>
-
-                    <!-- Salary Status -->
-                    <div class="mb-3">
-                        {% if has_salary %}
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success fa-lg mr-2"></i>
-                            <span class="small">Salary Assigned</span>
-                        </div>
-                        {% else %}
-                        <div class="d-flex align-items-center mb-1">
-                            <i class="fas fa-times-circle text-danger fa-lg mr-2"></i>
-                            <span class="small">Salary Pending</span>
-                        </div>
-                        <a href="{% url 'emp:salary_master_form' employee.id %}"
-                            class="btn btn-warning btn-xs btn-block">
-                            <i class="fas fa-dollar-sign"></i> Setup Salary
-                        </a>
-                        {% endif %}
-                    </div>
-
-                    <!-- Payroll Status -->
-                    <div class="mb-2">
-                        {% if payroll_processed %}
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success fa-lg mr-2"></i>
-                            <span class="small">Payroll Processed</span>
-                        </div>
-                        {% else %}
-                        <div class="d-flex align-items-center mb-1">
-                            <i class="fas fa-exclamation-circle text-warning fa-lg mr-2"></i>
-                            <span class="small">Payroll Pending</span>
-                        </div>
-                        <a href="{% url 'emp:salary_preparation' %}" class="btn btn-success btn-xs btn-block">
-                            <i class="fas fa-money-check-alt"></i> Process Payroll
-                        </a>
-                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Last Salary Card -->
-    <div class="card mb-3">
-        <div class="card-header bg-light">
-            <h6 class="mb-0"><i class="fas fa-money-bill-wave text-success"></i> Last Withdrawn Salary</h6>
-        </div>
-        <div class="card-body">
-            {% if last_salary %}
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted">{{ last_salary.month|date:"F" }} {{ last_salary.year }}</span>
-                </div>
-                <div>
-                    <h4 class="mb-0 text-success">₹{{ last_salary.net_salary|floatformat:2 }}</h4>
-                </div>
-            </div>
-            <hr>
-            <div class="small text-muted">
-                <div class="row">
-                    <div class="col-6">Base: ₹{{ last_salary.salary_amount }}</div>
-                    <div class="col-6 text-right">Adjustments: ₹{{ last_salary.adjustments_net }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-6">Leave Days: {{ last_salary.leave_days }}</div>
-                    <div class="col-6 text-right">Deduction: -₹{{ last_salary.leave_deduction|floatformat:2 }}</div>
-                </div>
-            </div>
-            {% else %}
-            <p class="text-muted mb-0 text-center">
-                <i class="fas fa-info-circle"></i> No salary transactions yet
-            </p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Adjustment Masters Card -->
-    <div class="card mb-3">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="fas fa-receipt text-info"></i> Adjustments Overview (Last 5)</h6>
-            <a href="{% url 'emp:adjustments_form' employee.id %}" class="btn btn-info btn-sm">
-                <i class="fas fa-plus-circle"></i> Manage Adjustments
-            </a>
-        </div>
-        <div class="card-body">
-            {% if adjustment_masters %}
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
+        <!-- Tab 2: Salary History -->
+        <div class="tab-pane fade" id="salary" role="tabpanel">
+            <div class="card border-0 shadow-sm">
+                <table class="table table-hover table-striped mb-0 text-center">
                     <thead class="thead-light">
                         <tr>
-                            <th>Type</th>
-                            <th>Date</th>
-                            <th>Total</th>
-                            <th>Cleared</th>
-                            <th>Outstanding</th>
+                            <th>Month</th>
+                            <th title="Days Present">Present</th>
+                            <th title="Days Absent">Absent</th>
+                            <th>Salary</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for master in adjustment_masters %}
+                        {% for sal in salaries %}
                         <tr>
-                            <td>
-                                <span
-                                    class="badge badge-{% if master.adjustment_type == 'Bonus' or master.adjustment_type == 'Reward' %}success{% else %}warning{% endif %}">
-                                    {{ master.adjustment_type }}
-                                </span>
-                            </td>
-                            <td class="small">{{ master.date_issued|date:"M d, Y" }}</td>
-                            <td class="font-weight-bold">₹{{ master.total_amount }}</td>
-                            <td class="text-success">₹{{ master.cleared_amount }}</td>
-                            <td class="text-danger font-weight-bold">₹{{ master.outstanding_amount }}</td>
-                            <td>
-                                {% if master.status == 'Closed' %}
-                                <span class="badge badge-success small">
-                                    <i class="fas fa-check"></i> Closed
-                                </span>
-                                {% else %}
-                                <span class="badge badge-primary small">
-                                    <i class="fas fa-clock"></i> Active
-                                </span>
-                                {% endif %}
-                            </td>
+                            <td>{{ sal.month_name }} {{ sal.year }}</td>
+                            <td class="text-success">{{ sal.present_days }}</td>
+                            <td class="text-danger">{{ sal.leave_days }}</td>
+                            <td class="font-weight-bold">₹{{ sal.net_salary|floatformat:0 }}</td>
+                            <td><span class="badge badge-success">Processed</span></td>
                         </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-muted">No salary history found.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
+                <!-- Ajax Pagination for Salary -->
+                {% if salaries.has_other_pages %}
+                <div class="card-footer bg-white d-flex justify-content-center">
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if salaries.has_previous %}
+                            <li class="page-item"><a class="page-link ajax-link" href="#" data-url="?page_sal={{ salaries.previous_page_number }}&page_adj={{ adjustments.number }}#salary">&laquo;</a></li>
+                            {% endif %}
+                            <li class="page-item disabled"><span class="page-link">Page {{ salaries.number }} of {{ salaries.paginator.num_pages }}</span></li>
+                            {% if salaries.has_next %}
+                            <li class="page-item"><a class="page-link ajax-link" href="#" data-url="?page_sal={{ salaries.next_page_number }}&page_adj={{ adjustments.number }}#salary">&raquo;</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
             </div>
-            {% else %}
-            <p class="text-muted mb-0 text-center">
-                <i class="fas fa-info-circle"></i> No adjustment records
-            </p>
-            {% endif %}
         </div>
-    </div>
 
-    <!-- Transaction History Card -->
-    <div class="card">
-        <div class="card-header bg-light">
-            <h6 class="mb-0"><i class="fas fa-history text-primary"></i> Settlement History (Last 10)</h6>
-        </div>
-        <div class="card-body">
-            {% if all_transactions %}
-            <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
+        <!-- Tab 3: Adjustments -->
+        <div class="tab-pane fade" id="adjustments" role="tabpanel">
+            <div class="card border-0 shadow-sm">
+                <table class="table table-hover table-striped mb-0 text-center">
                     <thead class="thead-light">
                         <tr>
-                            <th>Adjustment</th>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Paid</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for adj in adjustments %}
+                        <tr>
+                            <td>{{ adj.date_issued|date:"M d, Y" }}</td>
+                            <td>{{ adj.adjustment_type }}</td>
+                            <td class="font-weight-bold">₹{{ adj.total_amount|floatformat:0 }}</td>
+                            <td class="text-success">₹{{ adj.cleared_amount|floatformat:0 }}</td>
+                            <td class="text-danger">₹{{ adj.outstanding_amount|floatformat:0 }}</td>
+                            <td>
+                                {% if adj.status == 'Closed' %}
+                                <span class="badge badge-success">Closed</span>
+                                {% else %}
+                                <span class="badge badge-warning">Active</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-muted">No adjustment records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <!-- Ajax Pagination for Adjustments -->
+                 {% if adjustments.has_other_pages %}
+                <div class="card-footer bg-white d-flex justify-content-center">
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if adjustments.has_previous %}
+                            <li class="page-item"><a class="page-link ajax-link" href="#" data-url="?page_sal={{ salaries.number }}&page_adj={{ adjustments.previous_page_number }}#adjustments">&laquo;</a></li>
                             {% endif %}
+                            <li class="page-item disabled"><span class="page-link">Page {{ adjustments.number }} of {{ adjustments.paginator.num_pages }}</span></li>
+                            {% if adjustments.has_next %}
+                            <li class="page-item"><a class="page-link ajax-link" href="#" data-url="?page_sal={{ salaries.number }}&page_adj={{ adjustments.next_page_number }}#adjustments">&raquo;</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
+</div>
 
-    <div class="modal-footer">
-        <a href="{% url 'emp:employee_view' employee.id %}" class="btn btn-primary">
-            <i class="fas fa-user-edit"></i> View Full Profile
-        </a>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-    </div>
+<script>
+    // Handle AJAX Pagination clicks within the modal
+    $('.ajax-link').click(function(e) {
+        e.preventDefault();
+        const urlParams = $(this).data('url');
+        const empId = {{ employee.id }};
+        const activeTab = urlParams.split('#')[1]; // Capture tab hash
+        
+        // Reload modal content
+        $.get(`/emp/employee-profile/${empId}/` + urlParams, function(data) {
+            $('#profileModalContent').html(data);
+            
+            // Restore active tab
+            if (activeTab) {
+                $(`#profileTabs a[href="#${activeTab}"]`).tab('show');
+            }
+        });
+    });
+</script>
+
+<style>
+    .header-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .nav-tabs .nav-link { color: #555; border: none; border-bottom: 3px solid transparent; }
+    .nav-tabs .nav-link.active { color: #667eea; border-bottom: 3px solid #667eea; background: none; }
+    .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(0,0,0,.02); }
+</style>

@@ -30,21 +30,30 @@ User = get_user_model()
 
 # Create or get admin user
 admin_user, created = User.objects.get_or_create(
-    username='admin',
+    username='SAB0001',
     defaults={
-        'email': 'admin@sab.com',
+        'email': 'info@sabhospitality.com',
         'is_staff': True,
         'is_superuser': True,
-        'is_active': True
+        'is_active': True,
+        'first_name': 'Santosh',
+        'last_name': 'Chand',
+        'emp_id': 1  # Setup assumption: First employee
     }
 )
 
 if created:
-    admin_user.set_password('admin123')
+    admin_user.set_password('ChangeMe123!')
     admin_user.save()
-    print(f"   [+] Created Admin User: {admin_user.username}")
+    print(f"   [+] Created Admin User: {admin_user.username} (Emp ID: 1)")
 else:
     print(f"   [*] Admin User Exists: {admin_user.username}")
+    
+# Force update emp_id via raw SQL since it's not in the model
+from django.db import connection
+with connection.cursor() as cursor:
+    cursor.execute("UPDATE auth_user SET emp_id = 1, first_name = 'Santosh', last_name = 'Chand' WHERE username = %s", [admin_user.username])
+    print(f"   [+] Updated Admin User with Emp ID 1, First/Last Name (Raw SQL)")
 
 # Ensure admin has superuser status
 if not admin_user.is_superuser:
@@ -182,18 +191,37 @@ for desig_name in designations_list:
     print(f"   {'[+] Created' if created else '[*] Exists'}: {desig_name}")
 
 # ============================================================
-# STEP 4: Verify CEO Employee
+# STEP 4: Create CEO Employee
 # ============================================================
-print(f"\n[7] Verifying CEO Employee Record...")
+print(f"\n[7] Creating/Verifying CEO Employee Record...")
 
 try:
-    ceo_employee = Employee.objects.get(emp_code='SAB0001')
-    print(f"   [*] CEO Employee Exists: {ceo_employee.first_name} {ceo_employee.last_name}")
-    print(f"       Code: {ceo_employee.emp_code}")
-    print(f"       Designation: {ceo_employee.designation}")
-    print(f"       Department: {ceo_employee.department}")
-except Employee.DoesNotExist:
-    print(f"   [!] CEO Employee not found - please create manually")
+    ceo_department = Department.objects.get(department_name='Administration')
+    ceo_designation = Designation.objects.get(designation_name='CEO')
+    
+    ceo_employee, created = Employee.objects.get_or_create(
+        emp_code='SAB0001',
+        defaults={
+            'first_name': 'Santosh',
+            'last_name': 'Chand',
+            'designation': ceo_designation,
+            'department': ceo_department,
+            'joining_date': date(2015, 1, 1),
+            'dob': date(1990, 5, 10),
+            'email': 'info@sabhospitality.com',
+            'contact_no': '9839374447',
+            'status': 'Active',
+            'created_by': admin_user
+        }
+    )
+    
+    if created:
+        print(f"   [+] Created CEO Employee: {ceo_employee.first_name} {ceo_employee.last_name} ({ceo_employee.emp_code})")
+    else:
+        print(f"   [*] CEO Employee Exists: {ceo_employee.first_name} {ceo_employee.last_name}")
+
+except Exception as e:
+    print(f"   [!] Error creating CEO Employee: {e}")
 
 # ============================================================
 # Summary

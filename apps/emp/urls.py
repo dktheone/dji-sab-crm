@@ -109,4 +109,7 @@ urlpatterns = [
     path('api/employees-list/', emp_views.get_employees_list, name='get_employees_list'),
     path('api/check-duplicate/', emp_views.check_duplicate, name='check_duplicate'),
     path('employee/<int:employee_id>/profile/', emp_views.get_employee_profile, name='get_employee_profile'),
+    
+    # Admin Role Assignment
+    path('admin/roles/', emp_views.admin_role_assignment, name='admin_role_assignment'),
 ]

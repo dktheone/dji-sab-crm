@@ -82,33 +82,26 @@ class SitesForm(forms.ModelForm):
         self.helper.form_tag = False  # We'll handle form tag in template
         self.helper.layout = Layout(
             Row(
-                Column(Field('site_name'), css_class='form-group myinput col-md-12 mb-0')
+                Column(Field('site_name', placeholder='Enter Site Name'), css_class='form-group myinput col-md-8 mb-1'),
+                Column(Field('status'), css_class='form-group myinput col-md-4 mb-1')
             ),
             Row(
-                Column(Field('contact1'), css_class='form-group myinput col-md-6 mb-0'),
-                Column(Field('contact2'), css_class='form-group myinput col-md-6')
+                Column(Field('address', placeholder='Enter Address', rows='2'), css_class='form-group myinput col-md-12 mb-1'),
             ),
             Row(
-                Column(Field('email'), css_class='form-group myinput col-md-6 mb-0'),
-                Column(Field('website'), css_class='form-group myinput col-md-6')
+                Column(Field('state'), css_class='form-group myinput col-md-4 mb-1'),
+                Column(Field('city'), css_class='form-group myinput col-md-4 mb-1'),
+                Column(Field('pincode', placeholder='6-digit Pin'), css_class='form-group myinput col-md-4 mb-1'),
             ),
             Row(
-                Column(Field('address'), css_class='form-group myinput col-md-12'),
+                Column(Field('contact1', placeholder='Pri. Contact'), css_class='form-group myinput col-md-4 mb-1'),
+                Column(Field('contact2', placeholder='Sec. Contact'), css_class='form-group myinput col-md-4 mb-1'),
+                Column(Field('email', placeholder='Email Address'), css_class='form-group myinput col-md-4 mb-1')
             ),
             Row(
-                Column(Field('state'), css_class='form-group myinput col-md-6'),
-                Column(Field('city'), css_class='form-group myinput col-md-6'),
+                Column(Field('website', placeholder='Website URL'), css_class='form-group myinput col-md-6 mb-1'),
+                Column(Field('remark', placeholder='Any remarks...', rows='1'), css_class='form-group myinput col-md-6 mb-1'),
             ),
-            Row(
-                
-            Column(Field('pincode'), css_class='form-group myinput col-md-6'),
-            Column(Field('status'), css_class='form-group myinput col-md-6')
-            ),
-            
-            Row(
-                Column(Field('remark'), css_class='form-group myinput col-md-12'),
-            ),
-            
         )
 
 class ContactForm(forms.ModelForm):
@@ -285,6 +278,31 @@ class EmployeeForm(forms.ModelForm):
         self.helper.form_tag = False  # We'll handle form tag in template
         self.helper.label_class = "font-weight-bold"
         self.helper.field_class = "mb-2"
+        
+        # Add better labels and help text for form fields
+        self.fields['cor_address'].label = "Correspondence Address"
+        self.fields['cor_address'].help_text = "Full current/correspondence address"
+        
+        self.fields['cor_state'].label = "Correspondence State"
+        self.fields['cor_state'].help_text = "Select state for correspondence address"
+        
+        self.fields['cor_city'].label = "Correspondence City"
+        self.fields['cor_city'].help_text = "Select city for correspondence address"
+        
+        self.fields['cor_pincode'].label = "Correspondence Pincode"
+        self.fields['cor_pincode'].help_text = "6-digit pincode"
+        
+        self.fields['per_address'].label = "Permanent Address"
+        self.fields['per_address'].help_text = "Full permanent address"
+        
+        self.fields['per_state'].label = "Permanent State"
+        self.fields['per_state'].help_text = "Select state for permanent address"
+        
+        self.fields['per_city'].label = "Permanent City"
+        self.fields['per_city'].help_text = "Select city for permanent address"
+        
+        self.fields['per_pincode'].label = "Permanent Pincode"
+        self.fields['per_pincode'].help_text = "6-digit pincode"
 
         self.helper.layout = Layout(
 
@@ -578,9 +596,22 @@ class EmployeeSalaryMasterForm(forms.ModelForm):
         model = EmployeeSalaryMaster
         fields = ['salary_amount', 'effective_from', 'status', 'remarks']
         widgets = {
-            'effective_from': forms.DateInput(attrs={'type': 'date'}),
-            'status': forms.Select(),
-            'remarks': forms.Textarea(attrs={'rows': 3}),
+            'effective_from': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Add any notes or remarks about this salary revision'}),
+            'salary_amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'e.g., 50000.00', 'step': '0.01'}),
+        }
+        labels = {
+            'salary_amount': 'Salary Amount (₹)',
+            'effective_from': 'Effective From Date',
+            'status': 'Status',
+            'remarks': 'Remarks/Notes'
+        }
+        help_texts = {
+            'salary_amount': 'Enter the gross monthly salary amount',
+            'effective_from': 'Date from which this salary will be effective',
+            'status': 'Active salaries will be used for payroll calculations',
+            'remarks': 'Optional: Add any additional notes about this salary revision'
         }
 
     def __init__(self, *args, **kwargs):

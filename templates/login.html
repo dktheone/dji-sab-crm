@@ -69,10 +69,7 @@
       <div id="login-errors" class="text-danger mt-2"></div>
             
       <p class="mb-1">
-        <a href="#">I forgot my password</a>
-      </p>
-      <p class="mb-0">
-        <a href="#" class="text-center">Register a new membership</a>
+        <a href="/password-reset/">I forgot my password</a>
       </p>
     </div>
     <!-- /.card-body -->
@@ -142,6 +139,28 @@
       });
   });
   </script>
+
+  <!-- Toast Container -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true" style="position: fixed; top: 1rem; right: 1rem; z-index: 9999;"></div>
+
+  <!-- Messages Handler -->
+  {% if messages %}
+  <script>
+    $(document).ready(function() {
+        {% for message in messages %}
+            {% if message.tags == 'success' %}
+                SuccessMSG("{{ message|escapejs }}");
+            {% elif message.tags == 'error' %}
+                ErrorMSG("{{ message|escapejs }}");
+            {% elif message.tags == 'warning' %}
+                WarningMSG("{{ message|escapejs }}");
+            {% else %}
+                InfoMSG("{{ message|escapejs }}");
+            {% endif %}
+        {% endfor %}
+    });
+  </script>
+  {% endif %}
   
   
 

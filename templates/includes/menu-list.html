@@ -8,6 +8,16 @@
     <!-- MASTER DATA SECTION -->
     <li class="nav-header"><i class="fas fa-database"></i> MASTER DATA</li>
 
+    {% if user.groups.all.0.name == 'admin' %}
+    <li class="nav-item">
+        <a href="{% url 'emp:admin_role_assignment' %}"
+            class="nav-link {% if view_name == 'emp:admin_role_assignment' %}active{% endif %}">
+            <i class="nav-icon fas fa-user-tag"></i>
+            <p>Role Assignment</p>
+        </a>
+    </li>
+    {% endif %}
+
     <li class="nav-item">
         <a href="{% url 'emp:department_crud' %}"
             class="nav-link {% if view_name == 'emp:department_crud' %}active{% endif %}">
@@ -228,16 +238,35 @@
 
     {% endif %}
 
-    <!-- USER SECTION (All Users) -->
-    <li class="nav-header"><i class="fas fa-user-circle"></i> ACCOUNT</li>
-
     {% if request.user.is_authenticated %}
-    <li class="nav-item">
-        <a href="{% url 'custom_logout' %}" class="nav-link">
-            <i class="fas fa-sign-out-alt nav-icon"></i>
-            <p>Logout</p>
+    <!-- ACCOUNT MODULE -->
+    <li class="nav-item has-treeview {% if 'account' in view_name %}menu-open{% endif %}">
+        <a href="#" class="nav-link {% if 'account' in view_name %}active{% endif %}">
+            <i class="nav-icon fas fa-user-circle"></i>
+            <p>
+                ACCOUNT
+                <i class="right fas fa-angle-left"></i>
+            </p>
         </a>
+        
+        <ul class="nav nav-treeview">
+
+            <li class="nav-item">
+                <a href="{% url 'password_change' %}" class="nav-link">
+                    <i class="fas fa-key nav-icon"></i>
+                    <p>Change Password</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'custom_logout' %}" class="nav-link">
+                    <i class="fas fa-sign-out-alt nav-icon"></i>
+                    <p>Logout</p>
+                </a>
+            </li>
+        </ul>
     </li>
+    
+  
     {% else %}
     <li class="nav-item">
         <a href="{% url 'custom_login' %}" class="nav-link">

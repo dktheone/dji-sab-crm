@@ -3,6 +3,8 @@ from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.views import PasswordResetView
@@ -12,7 +14,7 @@ from django.db.models import OuterRef, Subquery, Value, CharField
 from django.db.models.functions import Coalesce
 from django.db import models
 from decimal import Decimal
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import calendar
 
 from apps.emp.forms import DepartmentForm, DesignationForm, SitesForm, CustomLoginForm, CustomPasswordResetForm, Contacts, ContactForm
@@ -23,13 +25,13 @@ from apps.emp.utils import role_required, fetch_ifsc_details
 from country_state_city import City
 
 def custom_login(request):
-    print('login request POST', request.POST, request.method)
+    # print('login request POST', request.POST, request.method)
     if request.method == 'POST':
         form = CustomLoginForm(data=request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
-            print(username, password)
+            # print(username, password)
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
@@ -68,7 +70,7 @@ def custom_login(request):
 
 def custom_logout(request):
     logout(request)
-    messages.success(request, "You have been logged out successfully.")
+    # messages.success(request, "You have been logged out successfully.")
     return redirect('/login')  # Name of your login URL
     # return render(request, 'logout.html')
 
@@ -82,12 +84,12 @@ def dashboard(request):
     from apps.leads.models import Lead, LeadStatus
     
     employee_id = request.user
-    print(employee_id, request.user)
-    print(request.user.is_authenticated, request.user.username)
+    # print(employee_id, request.user)
+    # print(request.user.is_authenticated, request.user.username)
     
     if request.user.is_authenticated:
         employee = get_object_or_404(Employee, emp_code=request.user.username) if employee_id else None
-        print('$'* 20, 'employee', employee)
+        # print('$'* 20, 'employee', employee)
         
         # Get user role
         user_role = request.user.groups.first().name if request.user.groups.exists() else None
@@ -126,13 +128,109 @@ def dashboard(request):
         return custom_logout(request)
     
 
+# Password Change View (for logged-in users and admin changing user passwords)
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
+from django.contrib.auth import update_session_auth_hash
+
+@login_required
+def password_change(request, employee_id=None):
+    """
+    Handle password change for:
+    1. Users changing their own password (employee_id=None or their own ID)
+    2. Admin/HR changing another user's password (employee_id provided)
+    """
+    # Get current user's role
+    user_role = request.user.groups.first().name if request.user.groups.exists() else None
+    
+    # Determine target employee and user
+    if employee_id:
+        # Someone is trying to change a specific employee's password
+        try:
+            target_employee = Employee.objects.get(id=employee_id)
+            target_user = User.objects.get(username=target_employee.emp_code)
+        except (Employee.DoesNotExist, User.DoesNotExist):
+            messages.error(request, 'Employee or user not found')
+            return redirect('/dashboard/')
+        
+        # Check permissions
+        if user_role not in ['admin', 'hr']:
+            # Non-admin/hr users can only change their own password
+            current_employee = Employee.objects.filter(emp_code=request.user.username).first()
+            if not current_employee or current_employee.id != employee_id:
+                messages.error(request, 'You can only change your own password')
+                return redirect('/dashboard/')
+    else:
+        # No employee_id provided - user changing their own password
+        try:
+            target_employee = Employee.objects.get(emp_code=request.user.username)
+            target_user = request.user
+        except Employee.DoesNotExist:
+            # User might be admin without employee record
+            target_employee = None
+            target_user = request.user
+    
+    # Check if user is changing their own password
+    is_self = target_user == request.user
+    
+    if request.method == 'POST':
+        if is_self:
+            # User changing own password - requires old password
+            form = PasswordChangeForm(request.user, request.POST)
+        else:
+            # Admin changing user password - no old password required
+            form = SetPasswordForm(target_user, request.POST)
+        
+        if form.is_valid():
+            user = form.save()
+            
+            # Keep current user logged in if they changed their own password
+            if is_self:
+                update_session_auth_hash(request, user)
+            
+            message = 'Password changed successfully' if is_self else f'Password updated for {target_user.get_full_name() or target_user.username}'
+            return JsonResponse({'status': 'success', 'message': message})
+        else:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+    else:
+        if is_self:
+            form = PasswordChangeForm(request.user)
+        else:
+            form = SetPasswordForm(target_user)
+    
+    return render(request, 'password_change.html', {
+        'form': form,
+        'target_user': target_user,
+        'target_employee': target_employee,
+        'is_self': is_self
+    })
+
+# Password Reset Views (for forgot password flow)
+from django.contrib.auth.views import (
+    PasswordResetView, 
+    PasswordResetDoneView,
+    PasswordResetConfirmView,
+    PasswordResetCompleteView
+)
+from django.urls import reverse_lazy
 
 class CustomPasswordResetView(PasswordResetView):
-    form_class = CustomPasswordResetForm
-    template_name = 'password_reset.html'
-    email_template_name = 'password_reset_email.html'
-    subject_template_name = 'password_reset_subject.txt'
-    success_url = 'password-reset/done/'
+    template_name = 'password_reset_form.html'
+    email_template_name = 'emp/emails/password_reset.html' # Use HTML file for text body (fallback) - ideally should be .txt
+    html_email_template_name = 'emp/emails/password_reset.html' # Use HTML file for HTML body
+    subject_template_name = 'email/password_reset_subject.txt'
+    success_url = reverse_lazy('password_reset_done')
+    
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'password_reset_done.html'
+    
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+    
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'password_reset_complete.html'
+
 
 @role_required('admin', 'hr')
 def department_crud(request):
@@ -241,7 +339,7 @@ def delete_designation(request, designation_id):
 def site_crud(request, site_id=None):
     site_details = get_object_or_404(Site, id=site_id) if site_id else None
     if request.method == 'POST':
-        if 'edit_id' in request.POST:
+        if request.POST.get('edit_id'):
             # Handle edit form submission
             site = get_object_or_404(Site, id=request.POST['edit_id'])
             form = SitesForm(request.POST, instance=site)
@@ -576,8 +674,8 @@ def get_cities(request):
         
         if state_code:
             cities = City.get_cities_of_state('IN', state_code)
-            city_choices = [(city.name, city.name) for city in cities]
-            return JsonResponse({'cities': city_choices})
+            city_list = [city.name for city in cities]  # Return just the city names
+            return JsonResponse({'cities': city_list})
         return JsonResponse({'cities': []}, status=400)
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
@@ -598,11 +696,54 @@ def create_employee_user(request):
                     email=employee.email or '',
                     first_name=employee.first_name,
                     last_name=employee.last_name
-                    # emp_id=employee.id
                 )
-                employee_group = Group.objects.get(name='employee')
-                user.groups.add(employee_group)
+                
+                # Update emp_id using Raw SQL (Field not in Django Model)
+                from django.db import connection
+                with connection.cursor() as cursor:
+                    cursor.execute("UPDATE auth_user SET emp_id = %s WHERE id = %s", [employee.id, user.id])
+                
+                # Assign Role based on Designation
+                role_name = 'employee'
+                if employee.designation:
+                    d_name = employee.designation.name.lower()
+                    if 'hr' in d_name or 'human resource' in d_name:
+                        role_name = 'hr'
+                    elif 'manager' in d_name:
+                        role_name = 'manager'
+                
+                try:
+                    group = Group.objects.get(name=role_name)
+                    user.groups.add(group)
+                except Group.DoesNotExist:
+                    # Fallback to employee
+                    try:
+                        group = Group.objects.get(name='employee')
+                        user.groups.add(group)
+                    except Group.DoesNotExist:
+                        pass
                 user.save()
+
+                # Send Welcome Email
+                if employee.email:
+                    try:
+                        subject = 'Welcome to SAB Hospitality - Your Login Details'
+                        html_message = render_to_string('emp/emails/account_created.html', {
+                            'employee_name': f"{employee.first_name} {employee.last_name}",
+                            'username': user.username,
+                            'password': user.username, # Password is same as emp_code initially
+                        })
+                        send_mail(
+                            subject,
+                            message='', # Plain text fallback (could be better)
+                            from_email=None, # Uses DEFAULT_FROM_EMAIL
+                            recipient_list=[employee.email],
+                            html_message=html_message,
+                            fail_silently=True
+                        )
+                    except Exception as e:
+                        print(f"Error sending email: {e}")
+
                 return JsonResponse({'status': 'success', 'message': f'User created for {employee.emp_code}'})
             except Exception as e:
                 return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
@@ -636,12 +777,35 @@ class EmployeeDashboardView(ListView):
         check_month = prev_month.month
         check_year = prev_month.year
 
-        # Annotate statuses
+        from django.db.models import Exists, OuterRef
+        
+        # Annotate statuses using Subqueries to avoid Cartesian product (duplication)
+        has_processed_transaction = Exists(
+            EmployeeSalaryTransaction.objects.filter(
+                employee=OuterRef('pk'),
+                month=check_month,
+                year=check_year
+            )
+        )
+        
+        has_active_salary_master = Exists(
+            EmployeeSalaryMaster.objects.filter(
+                employee=OuterRef('pk'),
+                status='Active',
+                effective_from__lte=timezone.now()
+            )
+        )
+        
+        has_pending_adjustment = Exists(
+            EmployeeAdjustment.objects.filter(
+                employee=OuterRef('pk'),
+                status='Pending'
+            )
+        )
+
         queryset = queryset.annotate(
             payroll_status=Case(
-                When(salary_transactions__month=check_month, 
-                     salary_transactions__year=check_year,
-                     then=Value('Processed')),
+                When(has_processed_transaction, then=Value('Processed')),
                 default=Value('Pending'),
                 output_field=CharField()
             ),
@@ -652,17 +816,17 @@ class EmployeeDashboardView(ListView):
                 output_field=CharField()
             ),
             salary_status=Case(
-                When(salary_masters__status='Active', salary_masters__effective_from__lte=timezone.now(),
-                     then=Value('Assigned')),
+                When(has_active_salary_master, then=Value('Assigned')),
                 default=Value('Pending'),
                 output_field=CharField()
             ),
             adjustments_status=Case(
-                When(adjustments__status='PENDING', then=Value('Pending')),
+                When(has_pending_adjustment, then=Value('Pending')),
                 default=Value('No Pending'),
                 output_field=CharField()
             )
-        ).distinct()
+        ) # distinct() is no longer strictly necessary if joins are removed, but keeping it is safe.
+        queryset = queryset.distinct()
 
         # Apply quick filters
         filter_type = self.request.GET.get('filter')
@@ -732,20 +896,8 @@ class EmployeeDashboardView(ListView):
 
 @role_required('admin', 'hr')
 def salary_master_form(request, employee_id):
-    employee = get_object_or_404(Employee, id=employee_id)
-    if request.method == 'POST':
-        form = EmployeeSalaryMasterForm(request.POST)
-        if form.is_valid():
-            salary_master = form.save(commit=False)
-            salary_master.employee = employee
-            salary_master.created_by = request.user
-            salary_master.save()
-            return JsonResponse({'status': 'success', 'message': 'Salary master saved'})
-        else:
-            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
-    form = EmployeeSalaryMasterForm()
-    masters = EmployeeSalaryMaster.objects.filter(employee=employee)
-    return render(request, 'emp/salary_master_form.html', {'form': form, 'employee': employee, 'masters': masters,'view_name': request.resolver_match.view_name})
+    # REDIRECT to the unified Detail/History view
+    return redirect('apps.emp:salary_master_detail', emp_id=employee_id)
 
 @role_required('admin', 'hr')
 def adjustments_list(request):
@@ -754,7 +906,7 @@ def adjustments_list(request):
 
 @role_required('admin', 'hr')
 def adjustments_form(request, employee_id):
-    from apps.emp.models import EmployeeAdjustmentMaster
+    from apps.emp.models import EmployeeAdjustmentMaster, EmployeeAdjustmentTransaction
     
     employee = get_object_or_404(Employee, id=employee_id)
     if request.method == 'POST':
@@ -779,17 +931,47 @@ def adjustments_form(request, employee_id):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     
-    # Show both old and new adjustments for transition period
-    old_adjustments = EmployeeAdjustment.objects.filter(employee=employee)
-    new_adjustments = EmployeeAdjustmentMaster.objects.filter(employee=employee)
+    
+    # Unified History Logic
+    masters = EmployeeAdjustmentMaster.objects.filter(employee=employee)
+    transactions = EmployeeAdjustmentTransaction.objects.filter(adjustment_master__employee=employee)
+    
+    history = []
+    
+    # Add Masters to history
+    for m in masters:
+        history.append({
+            'date': m.date_issued,
+            'type': m.adjustment_type,
+            'amount': m.total_amount,
+            'category': 'Master',
+            'status': m.status,
+            'description': m.description,
+            'raw_obj': m
+        })
+        
+    # Add Transactions to history
+    for t in transactions:
+        history.append({
+            'date': t.settlement_date,
+            'type': f"{t.transaction_type} Settlement",
+            'amount': t.settlement_amount,
+            'category': 'Transaction',
+            'status': 'Completed',
+            'description': f"{t.remarks} ({t.salary_month}/{t.salary_year})",
+            'raw_obj': t
+        })
+    
+    # Sort by date descending
+    history.sort(key=lambda x: x['date'], reverse=True)
     
     # Combine for display (you can update template to show both)
     form = EmployeeAdjustmentForm()  # Keep form for now for template compatibility
     return render(request, 'emp/adjustments_form.html', {
         'form': form, 
         'employee': employee, 
-        'adjustments': old_adjustments,  # Old for backward compatibility
-        'new_adjustments': new_adjustments,  # New masters
+        # 'adjustments': old_adjustments,  # Removed old
+        'history': history,  # New unified history
         'view_name': request.resolver_match.view_name
     })
 
@@ -922,7 +1104,7 @@ def salary_master_list(request):
     # Employees with latest active salary
     with_salary_employees = Employee.objects.filter(status='Active').annotate(
         latest_salary=Max('salary_masters__effective_from')
-    ).filter(salary_masters__effective_from=F('latest_salary'), salary_masters__status='Active').prefetch_related('salary_masters')
+    ).filter(salary_masters__effective_from=F('latest_salary'), salary_masters__status='Active').prefetch_related('salary_masters').distinct()
     return render(request, 'emp/salary_master_list.html', {
         'no_salary_employees': no_salary_employees,
         'with_salary_employees': with_salary_employees,
@@ -944,7 +1126,16 @@ def salary_master_detail(request, emp_id):
             salary.employee = employee
             salary.created_by = request.user
             salary.save()
-            return redirect('apps.emp:salary_master_detail', emp_id=emp_id)
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Salary record saved successfully!'
+            })
+        else:
+            return JsonResponse({
+                'status': 'error', 
+                'errors': form.errors,
+                'message': 'Please correct the errors below.'
+            }, status=400)
     else:
         form = EmployeeSalaryMasterForm(instance=latest_salary) if latest_salary else EmployeeSalaryMasterForm()
     return render(request, 'emp/salary_master_detail.html', {
@@ -981,21 +1172,41 @@ def salary_preparation(request):
     selected_year = int(request.GET.get('year', prev_month_date.year))
     
     # Generate 4 months (current + past 3)
+    today = datetime.now()
+
+    # Get Active Employee Count for status calculation
+    # Only count employees active during that specific month ideally, but using current active as baseline is standard practice
+    active_emp_count = Employee.objects.filter(status='Active').count()
+
     months_list = []
     for i in range(4):
         m_date = today - relativedelta(months=i)
         
-        # Check if any salaries prepared for this month
-        has_transactions = EmployeeSalaryTransaction.objects.filter(
+        # Count transactions for this month
+        trans_qs = EmployeeSalaryTransaction.objects.filter(
             month=m_date.month,
             year=m_date.year
-        ).exists()
+        )
+        total_prepared = trans_qs.count()
+        total_processed = trans_qs.filter(status='Processed').count()
         
+        # Determine Status
+        status_code = 'Pending'
+        if total_prepared == 0:
+            status_code = 'Pending'
+        elif total_processed == active_emp_count and active_emp_count > 0:
+            status_code = 'Processed'
+        elif total_prepared < active_emp_count:
+            status_code = 'Partial'
+        elif total_prepared >= active_emp_count: # All prepared, but not all processed
+            status_code = 'Prepared'
+            
         months_list.append({
             'month': m_date.month,
             'year': m_date.year,
             'display': m_date.strftime('%b %Y'),
-            'prepared': has_transactions,
+            'status': status_code, # New field
+            'prepared': total_prepared > 0, # Keep for backward compatibility if needed
             'is_selected': (m_date.month == selected_month and m_date.year == selected_year)
         })
     
@@ -1482,6 +1693,37 @@ def prepare_salary(request, employee_id):
         transaction.save()
         return JsonResponse({'status': 'success', 'message': 'Salary prepared successfully'})
     
+    # GET Request: Fetch existing transaction context
+    existing_transaction = EmployeeSalaryTransaction.objects.filter(
+        employee=employee,
+        month=selected_month,
+        year=selected_year
+    ).first()
+    
+    show_salary_slip = False
+    salary_slip_data = {}
+    default_absent = 0
+    
+    if existing_transaction:
+        if existing_transaction.status == 'Processed':
+            show_salary_slip = True
+            # Fetch adjustments settled in THIS salary
+            adjustments_settled = EmployeeAdjustmentTransaction.objects.filter(
+                employee=employee,
+                salary_month=selected_month,
+                salary_year=selected_year
+            )
+            salary_slip_data = {
+                'transaction': existing_transaction,
+                'adjustments': adjustments_settled,
+                'earnings': latest_salary.salary_amount,
+                'deductions': existing_transaction.leave_deduction,
+                'net_pay': existing_transaction.net_salary
+            }
+        else:
+            # Prepared but not Processed - Edit Mode
+            default_absent = existing_transaction.leave_days
+            
     return render(request, 'emp/prepare_salary_modal.html', {
         'employee': employee,
         'latest_salary': latest_salary,
@@ -1492,7 +1734,10 @@ def prepare_salary(request, employee_id):
         'selected_year': selected_year,
         'selected_month_name': calendar.month_name[selected_month],
         'view_name': request.resolver_match.view_name,
-        'default_absent': 0
+        'default_absent': default_absent,
+        'existing_transaction': existing_transaction,
+        'show_salary_slip': show_salary_slip,
+        'salary_slip_data': salary_slip_data
     })
 
 
@@ -1607,10 +1852,12 @@ def get_employee_profile(request, employee_id):
             user = User.objects.get(username=employee.emp_code)
             has_user = True
             username = user.username
+            user_id = user.id
             user_role = user.groups.first().name if user.groups.exists() else 'Employee'
         except User.DoesNotExist:
             has_user = False
             username = None
+            user_id = None
             user_role = None
         
         data = {
@@ -1624,12 +1871,14 @@ def get_employee_profile(request, employee_id):
             'photo': employee.photo.url if employee.photo else '/static/dist/img/default-150x150.png',
             'has_user': has_user,
             'username': username,
+            'user_id': user_id,
             'user_role': user_role
         }
         
         return JsonResponse(data)
     except Employee.DoesNotExist:
         return JsonResponse({'error': 'Employee not found'}, status=404)
+
 
 @role_required('admin', 'hr')
 def get_employees_list(request):
@@ -1681,3 +1930,120 @@ def check_duplicate(request):
     exists = queryset.exists()
     
     return JsonResponse({'exists': exists})
+
+
+from django.core.paginator import Paginator
+from dateutil.relativedelta import relativedelta
+
+def employee_profile_popup(request, employee_id):
+    employee = get_object_or_404(Employee, id=employee_id)
+    
+    # Check User Login
+    try:
+        User.objects.get(username=employee.emp_code)
+        has_login = True
+    except User.DoesNotExist:
+        has_login = False
+        
+    # Check Salary Master
+    has_salary = EmployeeSalaryMaster.objects.filter(employee=employee, status='Active').exists()
+    
+    # Check Last Salary Processed
+    last_salary = EmployeeSalaryTransaction.objects.filter(employee=employee).order_by('-year', '-month').first()
+    payroll_processed = last_salary is not None
+    
+    # Duration Calculation
+    today = date.today()
+    if employee.joining_date:
+        duration = relativedelta(today, employee.joining_date)
+        duration_str = f"{duration.years}y {duration.months}m"
+    else:
+        duration_str = "N/A"
+
+    # Salaries History (Paginated)
+    salaries_list = EmployeeSalaryTransaction.objects.filter(employee=employee).order_by('-year', '-month')
+    paginator_sal = Paginator(salaries_list, 5)
+    page_sal = request.GET.get('page_sal')
+    salaries = paginator_sal.get_page(page_sal)
+    
+    # Adjustments (Paginated)
+    adj_list = EmployeeAdjustmentMaster.objects.filter(employee=employee).order_by('-created_at')
+    paginator_adj = Paginator(adj_list, 5)
+    page_adj = request.GET.get('page_adj')
+    adjustments = paginator_adj.get_page(page_adj)
+    
+    context = {
+        'employee': employee,
+        'has_login': has_login,
+        'has_salary': has_salary,
+        'payroll_processed': payroll_processed,
+        'salaries': salaries,
+        'adjustments': adjustments,
+        'duration_str': duration_str,
+    }
+    return render(request, 'emp/employee_profile_popup.html', context)
+
+@role_required('admin')
+def admin_role_assignment(request):
+    """
+    Admin page to manage user roles
+    """
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        new_role = request.POST.get('new_role')
+        
+        try:
+            target_user = User.objects.get(id=user_id)
+            # Don't allow changing superuser roles here safely
+            if target_user.is_superuser:
+                messages.error(request, "Cannot modify Superuser roles from this panel.")
+            else:
+                # Clear all existing groups
+                target_user.groups.clear()
+                
+                # Add new group
+                if new_role in ['admin', 'hr', 'manager', 'employee']:
+                    try:
+                        group = Group.objects.get(name=new_role)
+                        target_user.groups.add(group)
+                        messages.success(request, f"Role updated to '{new_role}' for {target_user.username}")
+                    except Group.DoesNotExist:
+                         messages.error(request, f"Role group '{new_role}' does not exist.")
+                else:
+                    messages.error(request, "Invalid role selected.")
+                    
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+            
+        return redirect('emp:admin_role_assignment')
+
+    # GET Request
+    # Fetch all users who are not superusers
+    users_qs = User.objects.filter(is_superuser=False).order_by('username')
+    
+    users_data = []
+    for u in users_qs:
+        # Get current role (first group found)
+        current_role = u.groups.first().name if u.groups.exists() else 'No Role'
+        
+        # Try to find employee details if username matches emp_code
+        emp_name = "N/A"
+        try:
+            emp = Employee.objects.get(emp_code=u.username)
+            emp_name = f"{emp.first_name} {emp.last_name}"
+        except Employee.DoesNotExist:
+            pass
+            
+        users_data.append({
+            'id': u.id,
+            'username': u.username,
+            'email': u.email,
+            'name': emp_name,
+            'role': current_role
+        })
+
+    context = {
+        'users': users_data,
+        'all_roles': ['admin', 'hr', 'manager', 'employee']
+    }
+    return render(request, 'emp/admin_role_assignment.html', context)

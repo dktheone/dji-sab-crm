@@ -120,7 +120,6 @@ EMPLOYEE VIEW
                                 <th>Employee Name</th>
                                 <th>Department/Designation</th>
                                 <th>Joining Date</th>
-                                <th>Payroll Status</th>
                                 <th>Login Status</th>
                                 <th>Salary Status</th>
                                 <th>Allowances & Dues</th>
@@ -129,22 +128,13 @@ EMPLOYEE VIEW
                         </thead>
                         <tbody>
                             {% for employee in employees %}
-                            <tr {% if employee.payroll_status=='Pending' or employee.login_status=='Not Created'
-                                %}class="table-warning">
+                            <tr {% if employee.login_status == 'Not Created' %}class="table-warning"{% endif %}>
                                 <td>{{ employee.first_name }} {{ employee.last_name }}
                                     <br><small>({{employee.emp_code}})</small>
                                 </td>
                                 <td>{{ employee.department.department_name }} /
                                     {{employee.designation.designation_name}}</td>
                                 <td>{{ employee.joining_date|date:"m/d/Y" }}</td>
-                                <td>
-                                    {% if employee.payroll_status == 'Processed' %}
-                                    <span class="badge badge-success"><i class="fas fa-check"></i> Processed</span>
-                                    {% else %}
-                                    <span class="badge badge-warning"><i class="fas fa-hourglass-half"></i>
-                                        Pending</span>
-                                    {% endif %}
-                                </td>
                                 <td>
                                     {% if employee.login_status == 'Active' %}
                                     <span class="badge badge-success"><i class="fas fa-user-check"></i> Active</span>
@@ -173,6 +163,9 @@ EMPLOYEE VIEW
                                     {% endif %}
                                 </td>
                                 <td>
+                                    <a href="{% url 'emp:adjustments_form' employee.id %}" class="btn btn-warning btn-sm mr-1">
+                                        <i class="fas fa-receipt"></i> Adjustments
+                                    </a>
                                     <button class="btn btn-primary btn-sm"
                                         onclick="viewEmployeeProfile({{ employee.id }})">
                                         <i class="fas fa-user"></i> View Details

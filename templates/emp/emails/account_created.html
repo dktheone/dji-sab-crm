@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to SAB Hospitality</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f4f6f9; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { background-color: #ffffff; padding: 20px; text-align: center; border-bottom: 3px solid #007bff; }
+        .logo { max-width: 150px; height: auto; }
+        .content { padding: 30px; color: #333333; line-height: 1.6; }
+        .greeting { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 20px; }
+        .details-box { background-color: #f8f9fa; border: 1px solid #e9ecef; border-left: 4px solid #007bff; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .detail-item { margin-bottom: 10px; font-size: 16px; }
+        .label { font-weight: bold; color: #555; }
+        .value { color: #000; font-weight: bold; }
+        .btn-box { text-align: center; margin-top: 30px; }
+        .btn { display: inline-block; padding: 12px 30px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; transition: background 0.3s; }
+        .btn:hover { background-color: #0056b3; }
+        .footer { background-color: #343a40; color: #adb5bd; padding: 20px; text-align: center; font-size: 12px; }
+        .footer a { color: #adb5bd; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://sabhospitality.com/wp-content/uploads/2023/06/SAB_New_Logo_2025-transparent.png" alt="SAB Hospitality" class="logo">
+        </div>
+        <div class="content">
+            <div class="greeting">Welcome Aboard, {{ employee_name }}!</div>
+            <p>We are delighted to have you on the SAB Hospitality team. Your employee account has been successfully created.</p>
+            <p>You can now access the <strong>SAB Staff CRM</strong> to manage your profile, view salary slips, and more.</p>
+            
+            <div class="details-box">
+                <div class="detail-item">
+                    <span class="label">Login ID:</span> <span class="value" style="color: #007bff;">{{ username }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Password:</span> <span class="value">{{ password }}</span>
+                </div>
+                <div style="margin-top: 10px; font-size: 13px; color: #666;">
+                    *Please change your password upon first login.
+                </div>
+            </div>
+
+            <div class="btn-box">
+                <a href="https://crm.sabhospitality.com/" class="btn">Login to Staff CRM</a>
+            </div>
+            
+            <p style="margin-top: 30px; font-size: 14px; color: #777;">
+                If you have any trouble logging in, please contact the HR department.
+            </p>
+        </div>
+        <div class="footer">
+            &copy; {% now "Y" %} SAB Hospitality. All rights reserved.<br>
+            <a href="https://sabhospitality.com/" target="_blank">www.sabhospitality.com</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,71 +1,544 @@
-<!-- emp/salary_master_list.html -->
 {% extends 'layouts/base.html' %}
-{% block title %}Salary Master List{% endblock %}
-{% load crispy_forms_tags %}
+{% load static crispy_forms_tags %}
+
+{% block title %}Salary Management - {{ employee.first_name }} {{ employee.last_name }}{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+    /* Consistent Professional Layout */
+    .salary-container {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 1.5rem 0;
+    }
+
+    /* Consistent spacing for all cards */
+    .card-modern {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        border: 1px solid #e3e6f0;
+    }
+
+    /* Header Section */
+    .page-header {
+        background: white;
+        border-radius: 8px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e3e6f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .employee-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #4e73df;
+    }
+
+    .employee-details h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2e3a59;
+    }
+
+    .employee-details p {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .salary-badge {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    /* Card Headers - Consistent styling */
+    .card-header-modern {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: none;
+    }
+
+    /* Card Bodies - Consistent padding */
+    .card-body-modern {
+        padding: 1.5rem;
+    }
+
+    /* Form styling */
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #2e3a59;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        border: 1px solid #d1d3e2;
+        border-radius: 0.35rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .form-control:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .helptext {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+        display: block;
+    }
+
+    /* Buttons - Consistent styling */
+    .btn-compact {
+        padding: 0.5rem 1.5rem;
+        border-radius: 0.35rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border: none;
+        transition: all 0.15s;
+    }
+
+    .btn-primary-gradient {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        color: white;
+    }
+
+    .btn-primary-gradient:hover {
+        background: linear-gradient(135deg, #2e59d9 0%, #1a3a9e 100%);
+        box-shadow: 0 2px 8px rgba(78, 115, 223, 0.3);
+    }
+
+    .btn-secondary-outline {
+        background: white;
+        border: 1px solid #d1d3e2;
+        color: #6c757d;
+    }
+
+    .btn-secondary-outline:hover {
+        background: #f8f9fa;
+        border-color: #b7b9cc;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e3e6f0;
+    }
+
+    /* Table styling - Consistent with form */
+    table.table-compact {
+        font-size: 0.875rem;
+        margin-bottom: 0;
+    }
+
+    table.table-compact thead th {
+        background: #f8f9fc;
+        color: #2e3a59;
+        font-weight: 600;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e3e6f0;
+        border-top: none;
+    }
+
+    table.table-compact tbody td {
+        padding: 0.75rem;
+        vertical-align: middle;
+        border-top: 1px solid #e3e6f0;
+    }
+
+    table.table-compact tbody tr:hover {
+        background: #f8f9fc;
+    }
+
+    table.table-compact tbody tr.active-row {
+        background: #d1ecf1;
+        border-left: 3px solid #0c5460;
+    }
+
+    /* Status badges */
+    .badge-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-inactive {
+        background: #f8f9fa;
+        color: #6c757d;
+    }
+
+    /* Action buttons in table */
+    .btn-action-compact {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        margin-right: 0.25rem;
+    }
+
+    .btn-edit-compact {
+        background: #cfe2ff;
+        color: #084298;
+    }
+
+    .btn-edit-compact:hover {
+        background: #b6d4fe;
+    }
+
+    .btn-delete-compact {
+        background: #f8d7da;
+        color: #842029;
+    }
+
+    .btn-delete-compact:hover {
+        background: #f5c2c7;
+    }
+
+    /* Amount display */
+    .amount-compact {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1cc88a;
+    }
+
+    /* Footer */
+    .page-footer {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e3e6f0;
+        text-align: center;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    /* DataTables customization */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        font-size: 0.875rem;
+        padding: 0.75rem;
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .loading-spinner {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .salary-page {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="content-wrapper">
     <div class="content-header">
-        <h1>Salary Management for {{ employee.first_name }} {{ employee.last_name }}</h1>
-    </div>
-    <section class="content">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Salary History</h3>
-            </div>
-            <div class="card-body">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Amount</th>
-                            <th>Effective From</th>
-                            <th>Status</th>
-                            <th>Remarks</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for salary in salaries %}
-                        <tr>
-                            <td>{{ salary.salary_amount }}</td>
-                            <td>{{ salary.effective_from }}</td>
-                            <td>{{ salary.status }}</td>
-                            <td>{{ salary.remarks }}</td>
-                            <td>
-                                {% if forloop.first %}
-                                    <button class="btn btn-primary" data-toggle="modal" data-target="#editSalaryModal">Edit</button>
-                                {% else %}
-                                    Disabled
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="5">No salaries yet.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Edit Modal for Latest -->
-        <div class="modal fade" id="editSalaryModal">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4>Edit Latest Salary</h4>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-12">
+                    <!-- Page Header -->
+                    <div class="page-header">
+                <div class="page-header-left">
+                    <img src="{% if employee.photo %}{{ employee.photo.url }}{% else %}{% static 'dist/img/default-150x150.png' %}{% endif %}" 
+                         alt="{{ employee.first_name }}" 
+                         class="employee-avatar">
+                    <div class="employee-details">
+                        <h1>{{ employee.first_name }} {{ employee.last_name }}</h1>
+                        <p>
+                            <i class="fas fa-id-badge"></i> {{ employee.emp_code }} • 
+                            <i class="fas fa-building"></i> {{ employee.department.department_name }} • 
+                            <i class="fas fa-briefcase"></i> {{ employee.designation.designation_name }}
+                        </p>
                     </div>
-                    <div class="modal-body">
-                        <form method="post">
-                            {% csrf_token %}
-                            {{ form|crispy }}
-                            <input type="hidden" name="edit" value="true">
-                            <button type="submit" class="btn btn-primary">Save</button>
-                        </form>
+                </div>
+                {% if latest_salary %}
+                <div class="salary-badge">
+                    <i class="fas fa-rupee-sign"></i> {{ latest_salary.salary_amount|floatformat:0 }} /month
+                </div>
+                {% endif %}
+            </div>
+
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid salary-container">
+
+            <div class="row">
+                <!-- Add Salary Form Card (Left Side - 40%) -->
+                <div class="col-md-5">
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <i class="fas fa-plus-circle"></i>
+                            Add New Salary Record
+                        </div>
+                        <div class="card-body-modern">
+                            <form id="salaryForm" method="post">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        {{ form.salary_amount|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-12">
+                                        {{ form.effective_from|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-12">
+                                        {{ form.status|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        {{ form.remarks|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="btn-compact btn-secondary-outline" onclick="$('#salaryForm')[0].reset();">
+                                        <i class="fas fa-times"></i> Clear Form
+                                    </button>
+                                    <button type="submit" class="btn-compact btn-primary-gradient">
+                                        <i class="fas fa-save"></i> Save Salary Record
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Salary History Grid Card (Right Side - 60%) -->
+                <div class="col-md-7">
+                    <div class="card-modern">
+                        <div class="card-header-modern">
+                            <i class="fas fa-history"></i>
+                            Salary History
+                        </div>
+                        <div class="card-body-modern" style="padding: 0;">
+                            <table id="salaryHistoryTable" class="table table-compact table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Salary Amount</th>
+                                        <th>Effective From</th>
+                                        <th>Status</th>
+                                        <th>Remarks</th>
+                                        <th>Created By</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for salary in salaries %}
+                                    <tr class="{% if salary.status == 'Active' %}active-row{% endif %}">
+                                        <td>
+                                            <span class="amount-compact">₹{{ salary.salary_amount|floatformat:0 }}</span>
+                                        </td>
+                                        <td>{{ salary.effective_from|date:"d M, Y" }}</td>
+                                        <td>
+                                            <span class="badge-status badge-{{ salary.status|lower }}">
+                                                {{ salary.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ salary.remarks|default:"-"|truncatewords:8 }}</td>
+                                        <td>{{ salary.created_by.get_full_name|default:salary.created_by.username }}</td>
+                                        <td>
+                                            {% if salary.status == 'Active' %}
+                                            <button class="btn-action-compact btn-edit-compact" onclick="editSalary({{ salary.id }})">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            {% if salaries|length > 1 %}
+                                            <button class="btn-action-compact btn-delete-compact" onclick="deactivateSalary({{ salary.id }})">
+                                                <i class="fas fa-ban"></i> Deactivate
+                                            </button>
+                                            {% endif %}
+                                            {% else %}
+                                            <span class="text-muted" style="font-size: 0.75rem;">—</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Footer -->
+            <div class="page-footer">
+                <i class="fas fa-shield-alt"></i> Salary records are confidential and accessible only to authorized personnel
+            </div>
+
         </div>
     </section>
 </div>
 
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 mb-0">Processing...</p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable
+        $('#salaryHistoryTable').DataTable({
+            "order": [[1, "desc"]],
+            "pageLength": 10,
+            "lengthMenu": [[5, 10, 25, 50], [5, 10, 25, 50]],
+            "responsive": true,
+            "language": {
+                "lengthMenu": "Show _MENU_ records",
+                "info": "Showing _START_ to _END_ of _TOTAL_ records",
+                "emptyTable": "No salary records available"
+            }
+        });
+
+        // Form submission
+        $('#salaryForm').submit(function(e) {
+            e.preventDefault();
+            $('#loadingOverlay').css('display', 'flex');
+            
+            $.ajax({
+                url: '',
+                type: 'POST',
+                data: new FormData(this),
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    $('#loadingOverlay').hide();
+                    if (response.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: response.message,
+                            confirmButtonColor: '#4e73df',
+                            timer: 1500
+                        }).then(() => location.reload());
+                    }
+                },
+                error: function(xhr) {
+                    $('#loadingOverlay').hide();
+                    let errorMsg = 'An error occurred.';
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        errorMsg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        html: errorMsg,
+                        confirmButtonColor: '#e74a3b'
+                    });
+                }
+            });
+        });
+    });
+
+    function editSalary(id) {
+        Swal.fire({
+            title: 'Edit Salary',
+            text: 'Feature coming soon!',
+            icon: 'info',
+            confirmButtonColor: '#4e73df'
+        });
+    }
+
+    function deactivateSalary(id) {
+        Swal.fire({
+            title: 'Deactivate Salary?',
+            text: 'This will mark the salary record as inactive.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e74a3b',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, deactivate'
+        });
+    }
+</script>
 {% endblock %}

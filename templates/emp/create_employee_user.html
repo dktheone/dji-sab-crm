@@ -485,6 +485,9 @@
                             <i class="fas fa-info-circle mr-2"></i>Username: <strong>${data.username}</strong> | 
                             Role: <strong>${data.user_role || 'Employee'}</strong>
                         </p>
+                        <a href="/password-change/${employeeId}/" class="btn-create-user" style="display: inline-block; text-decoration: none; margin-top: 1rem;">
+                            <i class="fas fa-key mr-2"></i>Change Password
+                        </a>
                     `);
                         $('#createUserBtn').hide();
                     } else {

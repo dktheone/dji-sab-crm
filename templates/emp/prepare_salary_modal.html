@@ -1,256 +1,336 @@
-<div class="modal-header bg-primary text-white">
-    <h4 class="mb-0">
-        <i class="fas fa-calculator"></i> Prepare Salary - {{ employee.first_name }} {{ employee.last_name }}
-        <br>
-        <small class="badge badge-warning text-dark mt-1">
-            <i class="fas fa-calendar-alt"></i> {{ selected_month_name }} {{ selected_year }}
-        </small>
-    </h4>
-    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
-</div>
-<div class="modal-body">
-    <!-- Profile Card -->
-    <div class="card shadow-sm mb-3 rounded overflow-hidden" style="max-width: 100%; border: none;">
-        <!-- Header: Photo + Basic Details (Compact Flex Row) -->
-        <div class="card-header bg-white border-0 p-3 d-flex align-items-center">
-
-            <div class="flex me-3">
-                <img src="{{ employee.photo.url|default:'/static/img/nopic.jpg' }}"
-                    alt="{{ employee.first_name }} {{ employee.last_name }} - Employee Photo" class="rounded-circle"
-                    style="width: 60px; height: 60px; object-fit: cover;">
+<div class="modal-header header-gradient text-white">
+    <div class="d-flex align-items-center justify-content-between w-100">
+        <div>
+            <h5 class="modal-title font-weight-bold">
+                {% if show_salary_slip %}
+                <i class="fas fa-file-invoice mr-2"></i>Salary Slip
+                {% else %}
+                <i class="fas fa-file-invoice-dollar mr-2"></i>Prepare Salary
+                {% endif %}
+            </h5>
+            <div class="small opacity-75">
+                {{ employee.first_name }} {{ employee.last_name }} • {{ selected_month_name }} {{ selected_year }}
             </div>
-            <div class="flex-grow-1">
-                <div class="">
-                    <h6 class="mb-1 fw-bold text-truncate">{{ employee.first_name }}
-                        {{employee.middle_name|default:''}}
-                        {{ employee.last_name }}</h6>
-                    <div class="d-flex flex-wrap small text-muted">
-                        <span class="me-2"><i class="fas fa-building nav-icon"></i>
-                            {{employee.department.department_name}}</span>
-                        <span class="me-2"><i class="fas fa-briefcase nav-icon"></i>
-                            {{employee.designation.designation_name}}</span>
+        </div>
+        <button type="button" class="close text-white opacity-100" data-dismiss="modal" style="text-shadow: none; font-size: 1.5rem;">&times;</button>
+    </div>
+</div>
+
+<div class="modal-body bg-light p-3">
+    {% if show_salary_slip %}
+    <!-- Salary Slip View (Printable) -->
+    <div id="salarySlipPrint">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <h4 class="font-weight-bold mb-1">SAB CRM</h4>
+                    <p class="text-muted small mb-0">Salary Slip for {{ selected_month_name }} {{ selected_year }}</p>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <small class="text-muted text-uppercase font-weight-bold">Employee Details</small>
+                        <div class="mt-2">
+                            <h6 class="font-weight-bold mb-0">{{ employee.first_name }} {{ employee.last_name }}</h6>
+                            <div class="small text-muted">{{ employee.designation.designation_name }}</div>
+                            <div class="small text-muted">{{ employee.department.department_name }}</div>
+                            <div class="small text-muted">Join Date: {{ employee.joining_date|date:"M d, Y" }}</div>
+                        </div>
                     </div>
-                    <div class="d-flex flex-wrap small text-muted">
-                        <span class="me-2"><i class="fas fa-map-marker-alt nav-icon"></i>
-                            {{employee.site.site_name}}</span>
-                        <span><i class="fas fa-calendar-alt nav-icon"></i>
-                            {{ employee.joining_date|date:"M d,Y"}}</span>
+                    <div class="col-6 text-right">
+                        <small class="text-muted text-uppercase font-weight-bold">Pay Period</small>
+                        <div class="mt-2">
+                            <h6 class="font-weight-bold mb-0">{{ selected_month_name }} {{ selected_year }}</h6>
+                            <div class="small text-muted">Processed on: {{ salary_slip_data.transaction.created_at|date:"M d, Y" }}</div>
+                            <div class="small text-muted">Status: <span class="badge badge-success">Processed</span></div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="flex-grow-1">
-                <div class="">
-                    <div class="mb-3 pb-2 border-bottom">
-                        <h6 class="mb-2 fw-semibold text-muted small text-uppercase">Recent Adjustments</h6>
-                        {% if last_3_adjustments %}
-                        <ul class="list-unstyled mb-0 small">
-                            {% for adj in last_3_adjustments %}
-                            <li class="d-flex justify-content-between text-muted mb-1">
-                                <span class="text-truncate" style="max-width: 70%;">{{ adj.adjustment_type }}
-                                    ({{adj.date|date:"M d" }})</span>
-                                <span class="fw-bold text-primary">₹{{ adj.amount }}</span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% else %}
-                        <p class="small text-muted mb-0">No adjustments yet.</p>
+                
+                <table class="table table-bordered table-sm mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="w-50">Earnings / Input</th>
+                            <th class="w-50">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Basic Salary</td>
+                            <td class="text-right">₹{{ salary_slip_data.earnings|floatformat:2 }}</td>
+                        </tr>
+                        {% for adj in salary_slip_data.adjustments %}
+                        {% if adj.transaction_type == 'Partial' or adj.transaction_type == 'Full' %}
+                            <!-- Logic check: Adjustment implies addition or deduction? Usually handled in Net calculation -->
+                            <!-- Model: Adjustments are ALREADY settled amounts. -->
+                            <!-- We can list them here. -->
+                             <tr>
+                                <td>
+                                    {{ adj.adjustment_master.adjustment_type }} 
+                                    <small class="text-muted">({{ adj.transaction_type }})</small>
+                                </td>
+                                <td class="text-right">
+                                    {% if adj.adjustment_master.adjustment_type == 'Bonus' or adj.adjustment_master.adjustment_type == 'Reward' %}
+                                    <span class="text-success">+ ₹{{ adj.settlement_amount|floatformat:2 }}</span>
+                                    {% else %}
+                                    <span class="text-danger">- ₹{{ adj.settlement_amount|floatformat:2 }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
                         {% endif %}
-                    </div>
-
-                    <!-- Salaries Section -->
-                    <div class="pb-2">
-                        <h6 class="mb-2 fw-semibold text-muted small text-uppercase">Recent Salaries</h6>
-                        {% if last_3_salaries %}
-                        <ul class="list-unstyled mb-0 small">
-                            {% for sal in last_3_salaries %}
-                            <li class="d-flex justify-content-between text-muted mb-1">
-                                <span class="text-truncate" style="max-width: 70%;">{{sal.month}}/{{sal.year}}</span>
-                                <span class="fw-bold text-success">₹{{sal.net_salary}}</span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% else %}
-                        <p class="small text-muted mb-0">No salary records yet.</p>
-                        {% endif %}
-                    </div>
+                        {% endfor %}
+                        
+                         <tr class="bg-light">
+                             <th class="text-uppercase small text-muted">Deductions</th>
+                             <th></th>
+                         </tr>
+                        <tr>
+                            <td>Leave Deduction ({{ salary_slip_data.transaction.leave_days }} Days Absent)</td>
+                            <td class="text-right text-danger">- ₹{{ salary_slip_data.deductions|floatformat:2 }}</td>
+                        </tr>
+                        
+                        <tr class="bg-light font-weight-bold">
+                            <td class="text-uppercase">Net Payable</td>
+                            <td class="text-right h5 mb-0">₹{{ salary_slip_data.net_pay|floatformat:2 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="mt-4 pt-4 border-top text-center text-muted small">
+                    <p>This is a computer-generated document and does not require a signature.</p>
                 </div>
             </div>
         </div>
-
-        <!-- Body: Compact Sections for Adjustments & Salaries -->
-        <div class="card-body p-3 pt-0">
-            <!-- Adjustments Section -->
-
+    </div>
+    
+    <div class="text-right mt-3">
+        <button type="button" class="btn btn-secondary mr-2" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="printSalarySlip()">
+            <i class="fas fa-print mr-2"></i> Print Slip
+        </button>
+    </div>
+    
+    <script>
+    function printSalarySlip() {
+        const printContent = document.getElementById('salarySlipPrint').innerHTML;
+        const w = window.open();
+        w.document.write(`
+            <html>
+                <head>
+                    <title>Salary Slip - {{ employee.first_name }}</title>
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+                    <style>
+                        body { font-family: sans-serif; padding: 20px; }
+                        .table th, .table td { vertical-align: middle; }
+                        @media print { .no-print { display: none; } }
+                    </style>
+                </head>
+                <body>${printContent}</body>
+            </html>
+        `);
+        w.document.close();
+        w.focus();
+        setTimeout(() => { w.print(); w.close(); }, 500);
+    }
+    </script>
+    {% else %}
+    <!-- Employee Summary Card -->
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center">
+                <img src="{{ employee.photo.url|default:'/static/img/nopic.jpg' }}"
+                     class="rounded-circle border shadow-sm mr-3"
+                     style="width: 50px; height: 50px; object-fit: cover;">
+                <div class="flex-grow-1">
+                    <h6 class="font-weight-bold mb-1 text-dark">{{ employee.first_name }} {{ employee.last_name }}</h6>
+                    <div class="small text-muted">
+                        <i class="fas fa-briefcase mr-1"></i> {{employee.designation.designation_name}} • 
+                        <i class="fas fa-building mr-1"></i> {{employee.department.department_name}}
+                    </div>
+                </div>
+                <div class="text-right d-none d-sm-block">
+                    <div class="small text-muted">Joining Date</div>
+                    <div class="font-weight-600 text-dark">{{ employee.joining_date|date:"M d, Y"}}</div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Form -->
     <form id="prepareSalaryForm" method="post">
         {% csrf_token %}
-        <div class="form-group">
-            <label>Days Absent</label>
-            <input type="number" id="days_absent" name="days_absent" value="0" class="form-control">
-        </div>
         <input type="hidden" id="salary_amount" value="{{ latest_salary.salary_amount }}">
         <input type="hidden" id="days_in_month" value="{{ days_in_month }}">
         <input type="hidden" id="employee_id" value="{{ employee.id }}">
         <input type="hidden" name="month" value="{{ selected_month }}">
         <input type="hidden" name="year" value="{{ selected_year }}">
 
-        <h6 class="mt-3">Active Adjustments & Settlement History</h6>
-        {% if pending_adjustments %}
-        <table class="table table-sm table-bordered">
-            <thead class="thead-light">
-                <tr>
-                    <th>Type</th>
-                    <th>Date</th>
-                    <th>Total</th>
-                    <th>Cleared</th>
-                    <th>Outstanding</th>
-                    <th>Settlement Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for adj in pending_adjustments %}
-                <!-- Master Adjustment Row -->
-                <tr class="font-weight-bold">
-                    <td>
-                        <span
-                            class="badge badge-{% if adj.adjustment_type == 'Bonus' or adj.adjustment_type == 'Reward' %}success{% else %}warning{% endif %}">
-                            {{ adj.adjustment_type }}
-                        </span>
-                        <small class="text-muted">#{{ adj.id }}</small>
-                    </td>
-                    <td class="small">{{ adj.date_issued|date:"M d, Y" }}</td>
-                    <td class="font-weight-bold">₹{{ adj.total_amount }}</td>
-                    <td class="text-success">₹{{ adj.cleared_amount }}</td>
-                    <td class="text-danger font-weight-bold">₹{{ adj.outstanding_amount }}</td>
-                    <td>
-                        <!-- Full Settlement Option -->
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input settle-full-{{ adj.id }}"
-                                id="full_{{ adj.id }}" name="settle_full_{{ adj.id }}" value="1"
-                                onchange="handleFullCheckbox({{ adj.id }}, {{ adj.outstanding_amount }})">
-                            <label class="form-check-label" for="full_{{ adj.id }}">
-                                Settle Full (₹{{ adj.outstanding_amount }})
-                            </label>
+        <!-- Salary Calculation Card -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-0">
+                <h6 class="font-weight-bold text-primary mb-0"><i class="fas fa-calculator mr-2"></i>Attendance & Input</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="small font-weight-bold text-muted text-uppercase mb-1">Days Absent</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-white border-right-0"><i class="fas fa-user-minus text-danger"></i></span>
+                            </div>
+                            <input type="number" id="days_absent" name="days_absent" value="0" min="0" max="31" class="form-control border-left-0 font-weight-bold" placeholder="0">
+                            <div class="input-group-append">
+                                <span class="input-group-text bg-light text-muted small">/ {{ days_in_month }} Days</span>
+                            </div>
                         </div>
-                        <!-- Partial Settlement Option -->
-                        <div class="form-check mt-2">
-                            <input type="checkbox" class="form-check-input settle-partial-{{ adj.id }}"
-                                id="partial_check_{{ adj.id }}" onchange="handlePartialCheckbox({{ adj.id }})">
-                            <label class="form-check-label" for="partial_check_{{ adj.id }}">
-                                Partial:
-                            </label>
-                            <input type="number" class="form-control form-control-sm d-inline-block ml-2 partial-input"
-                                style="width: 100px;" id="partial_input_{{ adj.id }}" name="partial_{{ adj.id }}"
-                                min="0" max="{{ adj.outstanding_amount }}"
-                                data-sign="{% if adj.adjustment_type == 'Bonus' or adj.adjustment_type == 'Reward' %}1{% else %}-1{% endif %}"
-                                data-adj-id="{{ adj.id }}" placeholder="Amount" disabled>
+                    </div>
+                    <div class="col-md-6">
+                         <div class="p-2 rounded bg-light border d-flex justify-content-between align-items-center">
+                            <span class="small text-muted">Est. Deduction</span>
+                            <span class="font-weight-bold text-danger" id="deduction_preview">₹0.00</span>
                         </div>
-                        <small class="text-muted d-block mt-1">
-                            <em>Skip to leave unchanged</em>
-                        </small>
-                    </td>
-                </tr>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                <!-- Transaction History (if any) -->
-                {% if adj.adjustment_transactions.all %}
-                <tr>
-                    <td colspan="6" class="p-0">
-                        <div class="bg-light p-2">
-                            <small class="text-muted font-weight-bold"><i class="fas fa-history"></i> Settlement
-                                History:</small>
-                            <table class="table table-sm table-borderless mb-0 mt-1">
-                                <thead>
-                                    <tr class="small text-muted">
-                                        <th style="width: 110px;">Date</th>
-                                        <th style="width: 90px;">Month/Year</th>
-                                        <th style="width: 100px;">Amount</th>
-                                        <th style="width: 80px;">Type</th>
-                                        <th>Remarks</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for trans in adj.adjustment_transactions.all %}
-                                    <tr class="small">
-                                        <td>{{ trans.settlement_date|date:"M d, Y" }}</td>
-                                        <td>{{ trans.salary_month }}/{{ trans.salary_year }}</td>
-                                        <td
-                                            class="font-weight-bold text-{% if adj.adjustment_type == 'Bonus' or adj.adjustment_type == 'Reward' %}success{% else %}danger{% endif %}">
-                                            {{adj.adjustment_type}} - ₹{{ trans.settlement_amount }}
-                                        </td>
-                                        <td>
-                                            <span
-                                                class="badge badge-{% if trans.transaction_type == 'Full' %}success{% else %}info{% endif %} badge-sm">
-                                                {{ trans.transaction_type }}
-                                            </span>
-                                        </td>
-                                        <td class="text-muted">{{ trans.remarks|truncatewords:8 }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </td>
-                </tr>
+        <!-- Adjustments Card -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                <h6 class="font-weight-bold text-info mb-0"><i class="fas fa-sliders-h mr-2"></i>Adjustments</h6>
+                {% if pending_adjustments %}
+                <span class="badge badge-warning">{{ pending_adjustments|length }} Pending</span>
                 {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> No active adjustments for this employee.
+            </div>
+            <div class="card-body p-0">
+                {% if pending_adjustments %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light small text-muted text-uppercase">
+                            <tr>
+                                <th class="pl-4 border-0">Type</th>
+                                <th class="border-0">Outstanding</th>
+                                <th class="border-0" style="min-width: 200px;">Settlement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for adj in pending_adjustments %}
+                            <tr>
+                                <td class="pl-4 align-middle">
+                                    <div class="font-weight-bold text-dark">{{ adj.adjustment_type }}</div>
+                                    <div class="small text-muted">{{ adj.date_issued|date:"M d" }}</div>
+                                </td>
+                                <td class="align-middle">
+                                    <div class="font-weight-bold text-danger">₹{{ adj.outstanding_amount }}</div>
+                                    <div class="small text-muted">Total: ₹{{ adj.total_amount }}</div>
+                                </td>
+                                <td class="align-middle">
+                                    <div class="d-flex flex-column gap-2">
+                                        <!-- Full Settle Toggle -->
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input settle-full" id="full_{{ adj.id }}" 
+                                                   name="settle_full_{{ adj.id }}" value="1"
+                                                   onchange="handleFullCheckbox({{ adj.id }})">
+                                            <label class="custom-control-label small font-weight-600" for="full_{{ adj.id }}">Settle Full</label>
+                                        </div>
+                                        
+                                        <!-- Partial Input -->
+                                        <div class="input-group input-group-sm mt-1" style="max-width: 150px;">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">₹</span>
+                                            </div>
+                                            <input type="number" class="form-control partial-input" 
+                                                   id="partial_input_{{ adj.id }}" name="partial_{{ adj.id }}"
+                                                   min="0" max="{{ adj.outstanding_amount }}"
+                                                   data-sign="{% if adj.adjustment_type == 'Bonus' or adj.adjustment_type == 'Reward' %}1{% else %}-1{% endif %}"
+                                                   data-max="{{ adj.outstanding_amount }}"
+                                                   placeholder="Partial" disabled>
+                                        </div>
+                                        
+                                        <!-- Checkbox to enable partial (hidden logic, simplified UI) -->
+                                        <div class="custom-control custom-checkbox mt-1">
+                                            <input type="checkbox" class="custom-control-input settle-partial-trigger" 
+                                                   id="partial_check_{{ adj.id }}"
+                                                   onchange="handlePartialCheckbox({{ adj.id }})">
+                                            <label class="custom-control-label small text-muted" for="partial_check_{{ adj.id }}">Enter Partial Amount</label>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted">
+                    <i class="fas fa-check-circle fa-2x mb-2 text-success opacity-50"></i>
+                    <p class="mb-0 small">No active adjustments pending.</p>
+                </div>
+                {% endif %}
+            </div>
         </div>
-        {% endif %}
 
-        <hr>
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Final Payable Salary:</h5>
-            <h4 class="mb-0 text-success">₹<span id="net_salary">0.00</span></h4>
-        </div>
-
-        <div class="mt-3">
-            <button type="submit" class="btn btn-success btn-lg btn-block">
-                <i class="fas fa-check-circle"></i> Finalize & Save Salary
-            </button>
+        <!-- Sticky Footer Action -->
+        <div class="card border-0 shadow-lg bg-white overflow-hidden" style="position: sticky; bottom: 0; z-index: 10;">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between bg-primary-gradient-subtle">
+                <div>
+                    <div class="small text-uppercase font-weight-bold text-muted">Net Payable</div>
+                    <div class="h3 mb-0 font-weight-bold text-success">₹<span id="net_salary">{{ latest_salary.salary_amount }}</span></div>
+                </div>
+                <button type="submit" class="btn btn-success btn-lg shadow-sm px-4 rounded-pill font-weight-bold">
+                    <i class="fas fa-check mr-2"></i> Finalize <span class="d-none d-sm-inline">Salary</span>
+                </button>
+            </div>
         </div>
     </form>
+    {% endif %}
 </div>
 
+<style>
+    .header-gradient { background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); }
+    .bg-primary-gradient-subtle { background: linear-gradient(to right, #f8f9fc, #fff); border-top: 1px solid #e3e6f0; }
+    .font-weight-600 { font-weight: 600; }
+    .opacity-75 { opacity: 0.75; }
+    .table-hover tbody tr:hover { background-color: #f8f9fc; }
+    .form-control:focus { box-shadow: none; border-color: #4e73df; }
+    
+    /* Input Group Tweak */
+    .input-group-text { font-size: 0.85rem; }
+</style>
+
+<!-- Load SweetAlert2 manually to ensure it's available in the modal context -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{% if not show_salary_slip %}
 <script>
     // Handle Full Settlement checkbox
-    function handleFullCheckbox(adjId, remainingAmount) {
+    function handleFullCheckbox(adjId) {
         const fullCheck = $(`#full_${adjId}`);
-        const partialCheck = $(`.settle-partial-${adjId}`);
+        const partialCheck = $(`#partial_check_${adjId}`);
         const partialInput = $(`#partial_input_${adjId}`);
 
         if (fullCheck.is(':checked')) {
-            // Uncheck partial and disable input
+            // Uncheck partial trigger, clear and disable input
             partialCheck.prop('checked', false);
             partialInput.prop('disabled', true).val('');
         }
-
-        // Recalculate salary
         calculateNetSalary();
     }
 
     // Handle Partial Settlement checkbox
     function handlePartialCheckbox(adjId) {
-        const partialCheck = $(`.settle-partial-${adjId}`);
+        const partialCheck = $(`#partial_check_${adjId}`);
         const partialInput = $(`#partial_input_${adjId}`);
         const fullCheck = $(`#full_${adjId}`);
 
         if (partialCheck.is(':checked')) {
-            // Enable input and uncheck full
-            partialInput.prop('disabled', false);
+            // Enable input, uncheck full
+            partialInput.prop('disabled', false).focus();
             fullCheck.prop('checked', false);
         } else {
             // Disable input
             partialInput.prop('disabled', true).val('');
         }
-
-        // Recalculate salary
         calculateNetSalary();
     }
 
@@ -259,26 +339,31 @@
         let salary = parseFloat($('#salary_amount').val()) || 0;
         let daysInMonth = parseInt($('#days_in_month').val());
         let absent = parseInt($('#days_absent').val()) || 0;
+        
+        // Deduction
         let leaveDed = (salary / daysInMonth) * absent;
+        $('#deduction_preview').text('₹' + leaveDed.toFixed(2));
+        
         let adjNet = 0;
 
         // Calculate adjustments
         $('.partial-input').each(function () {
-            const adjId = $(this).data('adj-id');
+            // Logic: either full (from switch) or partial (from input)
+            // But we need to check the switch ID related to this input
+            const inputId = $(this).attr('id'); // partial_input_{id}
+            const adjId = inputId.replace('partial_input_', '');
+            
             const fullCheck = $(`#full_${adjId}`);
-            const partialCheck = $(`.settle-partial-${adjId}`);
+            const partialCheck = $(`#partial_check_${adjId}`);
             const sign = parseInt($(this).data('sign'));
+            const maxVal = parseFloat($(this).data('max'));
 
             if (fullCheck.is(':checked')) {
-                // Full settlement - use max value
-                const fullAmount = parseFloat($(this).attr('max')) || 0;
-                adjNet += sign * fullAmount;
+                adjNet += sign * maxVal;
             } else if (partialCheck.is(':checked')) {
-                // Partial settlement - use entered value
                 const partial = parseFloat($(this).val()) || 0;
                 adjNet += sign * partial;
             }
-            // If neither checked, skip (no adjustment)
         });
 
         let net = salary + adjNet - leaveDed;
@@ -301,11 +386,18 @@
             data: formData,
             success: function (response) {
                 if (response.status === 'success') {
-                    alert('Salary prepared successfully!');
-                    $('#prepareModal').modal('hide');
-                    location.reload(); // Refresh the list
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Salary Prepared!',
+                        text: 'Salary record has been saved successfully.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                         $('#prepareModal').modal('hide');
+                         location.reload(); 
+                    });
                 } else {
-                    alert('Error: ' + (response.message || 'Unknown error'));
+                    Swal.fire('Error', response.message || 'Unknown error', 'error');
                 }
             },
             error: function (xhr) {
@@ -313,7 +405,7 @@
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMsg = xhr.responseJSON.message;
                 }
-                alert('Error: ' + errorMsg);
+                Swal.fire('Error', errorMsg, 'error');
             }
         });
     });
@@ -323,3 +415,4 @@
         calculateNetSalary();
     });
 </script>
+{% endif %}

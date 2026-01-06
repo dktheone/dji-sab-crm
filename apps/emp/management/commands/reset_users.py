@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
         # Create a new superuser
         username = "SAB0001"
-        email = "sab0001@example.com"
+        email = "info@sabhospitality.com"
         password = "ChangeMe123!"  # ⚠️ update after creation
 
         if not User.objects.filter(username=username).exists():

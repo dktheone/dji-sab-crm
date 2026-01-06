@@ -1,0 +1,118 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block title %}User Role Assignment{% endblock %}
+
+{% block content %}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">User Role Assignment</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+                        <li class="breadcrumb-item active">Role Assignment</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            
+            <!-- Messages -->
+            {% if messages %}
+            <div class="row">
+                <div class="col-12">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card card-primary card-outline">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-users-cog"></i> Manage User Roles</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover projects">
+                            <thead>
+                                <tr>
+                                    <th>Emp Code / Username</th>
+                                    <th>Employee Name</th>
+                                    <th>Email</th>
+                                    <th>Current Role</th>
+                                    <th style="width: 30%">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td class="font-weight-bold">{{ user.username }}</td>
+                                    <td>
+                                        {% if user.name != 'N/A' %}
+                                        {{ user.name }}
+                                        {% else %}
+                                        <span class="text-muted font-italic">No linked employee</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.role == 'admin' %}
+                                            <span class="badge badge-danger">Admin</span>
+                                        {% elif user.role == 'hr' %}
+                                            <span class="badge badge-purple" style="background-color: #6f42c1; color: white;">HR</span>
+                                        {% elif user.role == 'manager' %}
+                                            <span class="badge badge-info">Manager</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">Employee</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="post" class="form-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                                            <div class="input-group input-group-sm">
+                                                <select name="new_role" class="form-control custom-select">
+                                                    {% for role in all_roles %}
+                                                    <option value="{{ role }}" {% if user.role == role %}selected{% endif %}>
+                                                        {{ role|title }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <div class="input-group-append">
+                                                    <button type="submit" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-save"></i> Update
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No users found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<!-- /.content-wrapper -->
+{% endblock %}

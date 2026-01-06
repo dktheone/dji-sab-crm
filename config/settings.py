@@ -34,7 +34,7 @@ DEBUG = str2bool(os.environ.get('DEBUG'))
 ALLOWED_HOSTS = ['*']
 
 # Add here your deployment HOSTS
-CSRF_TRUSTED_ORIGINS = ['http://crm.ibloomsolutions.com', 'http://18.222.186.28', 'http://localhost:8000', 'http://localhost:5085', 'http://127.0.0.1:8000', 'http://127.0.0.1:5085']
+CSRF_TRUSTED_ORIGINS = ['http://crm.sabhospitality.com', 'http://18.222.186.28', 'http://localhost:8000', 'http://localhost:5085', 'http://127.0.0.1:8000', 'http://127.0.0.1:5085']
 
 #Render Context
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -243,7 +243,18 @@ LOGGING = {
     },
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email Configuration for Hostinger SMTP
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.hostinger.com'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'info@sabhospitality.com'
+EMAIL_HOST_PASSWORD = 'Thakur@#$4447'
+DEFAULT_FROM_EMAIL = 'info@sabhospitality.com'
+SERVER_EMAIL = 'info@sabhospitality.com'
+
+# Password reset timeout (24 hours)
+PASSWORD_RESET_TIMEOUT = 86400  # in seconds
 
 # ### DYNAMIC_DATATB Settings ###
 DYNAMIC_DATATB = {
@@ -264,4 +275,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
+########################################
+
+# PROJECT VERSION
+VERSION = '1.0.1'
 ########################################

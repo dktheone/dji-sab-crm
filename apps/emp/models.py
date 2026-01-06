@@ -663,6 +663,22 @@ class EmployeeSalaryTransaction(models.Model):
     prepared_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     remarks = models.TextField(blank=True, null=True)
 
+    @property
+    def month_name(self):
+        import calendar
+        return calendar.month_name[self.month]
+    
+    @property
+    def total_days(self):
+        import calendar
+        return calendar.monthrange(self.year, self.month)[1]
+    
+    @property
+    def present_days(self):
+        # Taking default 0 for leave_days if None
+        leaves = self.leave_days if self.leave_days else 0
+        return self.total_days - leaves
+
     class Meta:
         db_table = 'employee_salary_transactions'
         unique_together = ['employee', 'month', 'year']

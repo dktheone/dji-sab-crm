@@ -293,6 +293,39 @@
         }
     }
 
+    /* Select2 Uniformity Fix - Match height with other inputs */
+    .select2-container--default .select2-selection--single {
+        height: 38px !important;
+        padding: 6px 12px !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.375rem !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 24px !important;
+        padding-left: 0 !important;
+        padding-right: 20px !important;
+        color: #6b7280;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+        top: 1px !important;
+        right: 1px !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: #9ca3af !important;
+    }
+
+    /* Ensure Select2 container matches parent width */
+    .select2-container {
+        width: 100% !important;
+    }
+
+
     /* Responsive */
     @media (max-width: 768px) {
         .wizard-header {
@@ -805,6 +838,35 @@
         // Variables to store pending city selections for edit mode
         let pendingCorCity = null;
         let pendingPerCity = null;
+        
+        // Variable to store pending copied city when using "Same as Correspondence" checkbox
+        let pendingCopiedCity = null;
+
+        // Initialize Select2 for state fields with placeholders
+        $('select[name="cor_state"]').select2({
+            placeholder: 'Select State',
+            allowClear: true,
+            width: '100%'
+        });
+
+        $('select[name="per_state"]').select2({
+            placeholder: 'Select State',
+            allowClear: true,
+            width: '100%'
+        });
+        
+        // Initialize city fields with placeholders (they will be re-initialized when states change)
+        $('select[name="cor_city"]').select2({
+            placeholder: 'Select City',
+            allowClear: true,
+            width: '100%'
+        });
+
+        $('select[name="per_city"]').select2({
+            placeholder: 'Select City',
+            allowClear: true,
+            width: '100%'
+        });
 
         // State/City Cascading - Correspondence
         $('select[name="cor_state"]').on('change', function () {
@@ -901,6 +963,12 @@
                             citySelect.val(pendingPerCity).trigger('change');
                             pendingPerCity = null; // Clear it
                         }
+                        // Check if there's a pending copied city (from "Same as Correspondence")
+                        else if (pendingCopiedCity) {
+                            console.log('Setting pending copied city:', pendingCopiedCity);
+                            citySelect.val(pendingCopiedCity).trigger('change');
+                            pendingCopiedCity = null; // Clear it
+                        }
                     },
                     error: function (xhr, status, error) {
                         console.error('Error loading cities:', error);
@@ -951,50 +1019,41 @@
         }, 500);
         {% endif %}
 
-        // Initialize Select2 for state/city fields after initial values are set (if any)
-        // This ensures they are styled correctly even if no initial value is present
-        setTimeout(function () {
-            $('select[name="cor_state"], select[name="cor_city"], select[name="per_state"], select[name="per_city"]').each(function () {
-                if (!$(this).data('select2')) { // Only initialize if not already initialized
-                    $(this).select2({
-                        placeholder: 'Select...',
-                        allowClear: true,
-                        width: '100%'
-                    });
-                }
-            });
-        }, 1500); // A bit longer to ensure all initial loads are done
-
         // Copy Correspondence to Permanent Address
         $('#sameAsCorrespondence').on('change', function () {
             console.log('Checkbox changed:', this.checked);
             if (this.checked) {
-                // Copy address text
-                const corAddress = $('textarea[name="cor_address"]').val();
+                // Copy address text - try both name and ID selectors
+                const corAddress = $('textarea[name="cor_address"]').val() || $('#id_cor_address').val() || '';
                 console.log('Copying address:', corAddress);
                 $('textarea[name="per_address"]').val(corAddress);
+                $('#id_per_address').val(corAddress); // Also set by ID
 
                 // Copy pincode
-                const corPincode = $('input[name="cor_pincode"]').val();
+                const corPincode = $('input[name="cor_pincode"]').val() || $('#id_cor_pincode').val() || '';
                 console.log('Copying pincode:', corPincode);
                 $('input[name="per_pincode"]').val(corPincode);
+                $('#id_per_pincode').val(corPincode); // Also set by ID
+
+                // Get the city value to be copied BEFORE changing state
+                const corCity = $('select[name="cor_city"]').val() || $('#id_cor_city').val();
+                console.log('Storing city to be copied:', corCity);
+                
+                // Store the city in pending variable
+                if (corCity) {
+                    pendingCopiedCity = corCity;
+                }
 
                 // Copy state and trigger city load
-                const corState = $('select[name="cor_state"]').val();
+                const corState = $('select[name="cor_state"]').val() || $('#id_cor_state').val();
                 console.log('Copying state:', corState);
 
                 if (corState) {
+                    // Set the state - this will trigger the change event
+                    // which will load cities and check for pendingCopiedCity
                     $('select[name="per_state"]').val(corState).trigger('change');
-
-                    // Wait for cities to load, then copy city
-                    setTimeout(function () {
-                        const corCity = $('select[name="cor_city"]').val();
-                        console.log('Copying city:', corCity);
-                        if (corCity) {
-                            $('select[name="per_city"]').val(corCity).trigger('change');
-                            console.log('City copied successfully');
-                        }
-                    }, 1500); // Increased timeout to ensure cities are loaded
+                    $('#id_per_state').val(corState).trigger('change');
+                    console.log('State copied, city will be set after cities load');
                 }
 
                 console.log('Address copy completed');
@@ -1002,9 +1061,13 @@
                 // Clear permanent address fields if unchecked
                 console.log('Clearing permanent address fields');
                 $('textarea[name="per_address"]').val('');
+                $('#id_per_address').val('');
                 $('select[name="per_state"]').val('').trigger('change');
                 $('select[name="per_city"]').val('').trigger('change');
                 $('input[name="per_pincode"]').val('');
+                $('#id_per_pincode').val('');
+                // Clear pending copied city if checkbox is unchecked
+                pendingCopiedCity = null;
             }
         });
 
