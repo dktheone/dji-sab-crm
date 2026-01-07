@@ -235,7 +235,7 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
 @role_required('admin', 'hr')
 def department_crud(request):
     if request.method == 'POST':
-        if 'edit_id' in request.POST:
+        if request.POST.get('edit_id'):
             # Handle edit form submission
             department = get_object_or_404(Department, id=request.POST['edit_id'])
             form = DepartmentForm(request.POST, instance=department)
@@ -281,7 +281,7 @@ def delete_department(request, department_id):
 @role_required('admin', 'hr')
 def designation_crud(request):
     if request.method == 'POST':
-        if 'edit_id' in request.POST:
+        if request.POST.get('edit_id'):
             # Handle edit form submission
             designation = get_object_or_404(Designation, id=request.POST['edit_id'])
             print('designation', designation)

@@ -86,7 +86,6 @@ class Command(BaseCommand):
 
         if full_reset:
             master_models.extend([
-                TransactionLikeLogOrConfig, 
                 Department, 
                 Designation,
                 LeaveType
