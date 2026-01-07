@@ -706,7 +706,7 @@ def create_employee_user(request):
                 # Assign Role based on Designation
                 role_name = 'employee'
                 if employee.designation:
-                    d_name = employee.designation.name.lower()
+                    d_name = employee.designation.designation_name.lower()
                     if 'hr' in d_name or 'human resource' in d_name:
                         role_name = 'hr'
                     elif 'manager' in d_name:
