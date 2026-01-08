@@ -79,51 +79,130 @@ def custom_logout(request):
 #     return render(request, "emp/dashboard.html")
 
 def dashboard(request):
-    """Employee dashboard view - includes upcoming follow-ups"""
+    """Employee dashboard view - includes upcoming follow-ups and role-based stats"""
     from datetime import date, timedelta
-    from apps.leads.models import Lead, LeadStatus
+    from django.db.models import Count, Q
+    from apps.leads.models import Lead, LeadStatus, FollowUp
+    from apps.emp.models import Employee, Site
+    from apps.vendors.models import Vendor, VendorStatus
     
     employee_id = request.user
-    # print(employee_id, request.user)
-    # print(request.user.is_authenticated, request.user.username)
     
     if request.user.is_authenticated:
-        employee = get_object_or_404(Employee, emp_code=request.user.username) if employee_id else None
-        # print('$'* 20, 'employee', employee)
-        
+        employee = get_object_or_404(Employee, emp_code=request.user.username) if isinstance(request.user, User) and not request.user.is_superuser else None
+        # Handle superuser falling back to an employee profile if linked, or just proceed
+        if not employee and not request.user.is_superuser:
+             # Try to find employee by email if username match fails, or handle gracefully
+             pass
+
         # Get user role
-        user_role = request.user.groups.first().name if request.user.groups.exists() else None
+        user_groups = list(request.user.groups.values_list('name', flat=True))
+        is_admin = 'admin' in user_groups or request.user.is_superuser
+        is_hr = 'hr' in user_groups
+        is_manager = 'manager' in user_groups
         
-        # Get upcoming follow-ups (next 7 days)
+        # --- Common Context: Upcoming Follow-ups (Personal) ---
         today = date.today()
         next_week = today + timedelta(days=7)
         
-        followups = Lead.objects.filter(
-            next_follow_up__isnull=False,
-            next_follow_up__lte=next_week,
-            lead_status__in=[LeadStatus.NEW, LeadStatus.IN_PROGRESS, LeadStatus.QUOTED]
-        ).select_related('created_by').order_by('next_follow_up')
-        
-        # Role-based filtering for follow-ups
-        if user_role not in ['admin', 'hr']:
+        if is_admin or is_hr or is_manager:
+            # Show ALL records
+            upcoming_leads = Lead.objects.filter(
+                next_follow_up__gte=today,
+                lead_status__in=[LeadStatus.NEW, LeadStatus.IN_PROGRESS, LeadStatus.QUOTED]
+            ).select_related('created_by').order_by('next_follow_up')
+
+            recent_followups = FollowUp.objects.all().select_related('lead', 'created_by').order_by('-follow_up_date', '-created_at')[:15]
+            
+            # For admin/hr visuals, we still want to separate overdue
+            overdue_leads = Lead.objects.filter(
+                next_follow_up__lt=today,
+                lead_status__in=[LeadStatus.NEW, LeadStatus.IN_PROGRESS, LeadStatus.QUOTED]
+            ).order_by('next_follow_up')
+        else:
+            # Regular employees only see their own
             if employee:
-                followups = followups.filter(created_by=employee)
+                upcoming_leads = Lead.objects.filter(
+                    created_by=employee,
+                    next_follow_up__gte=today,
+                    lead_status__in=[LeadStatus.NEW, LeadStatus.IN_PROGRESS, LeadStatus.QUOTED]
+                ).select_related('created_by').order_by('next_follow_up')
+                
+                recent_followups = FollowUp.objects.filter(created_by=employee).select_related('lead', 'created_by').order_by('-follow_up_date', '-created_at')[:15]
+                
+                overdue_leads = Lead.objects.filter(
+                    created_by=employee,
+                    next_follow_up__lt=today,
+                    lead_status__in=[LeadStatus.NEW, LeadStatus.IN_PROGRESS, LeadStatus.QUOTED]
+                ).order_by('next_follow_up')
             else:
-                followups = Lead.objects.none()
+                upcoming_leads = Lead.objects.none()
+                recent_followups = FollowUp.objects.none()
+                overdue_leads = Lead.objects.none()
+
+        # Separate lists for clearer UI (Optional refinement of upcoming vs today can be done in template or here)
+        # For the Grid requirement, we pass the main QuerySets
         
-        # Mark overdue and today's follow-ups
-        for followup in followups:
-            followup.is_overdue = followup.next_follow_up < today
-            followup.is_today = followup.next_follow_up == today
+        # --- Personal Financial Details (For all users if employee linked) ---
+        current_salary = None
+        active_adjustments = None
         
-        return render(request, 'emp/dashboard.html', {
+        if employee:
+            from apps.emp.models import EmployeeSalaryMaster, EmployeeAdjustmentMaster
+            current_salary = EmployeeSalaryMaster.objects.filter(employee=employee, status='Active').first()
+            active_adjustments = EmployeeAdjustmentMaster.objects.filter(
+                employee=employee, 
+                status='Active'
+            ).order_by('-date_issued')
+
+        context = {
             'employee': employee,
+            'is_admin': is_admin,
+            'is_hr': is_hr,
+            'is_manager': is_manager,
             'view_name': request.resolver_match.view_name,
-            'followups': followups[:10],  # Limit to 10 for dashboard widget
-            'total_followups': followups.count(),
-            'overdue_count': sum(1 for f in followups if f.is_overdue),
-            'today_count': sum(1 for f in followups if f.is_today),
-        })
+            'overdue_leads': overdue_leads,
+            'upcoming_leads': upcoming_leads, # Now includes Today+
+            'recent_followups': recent_followups,
+            'total_my_tasks': overdue_leads.count() + upcoming_leads.count(),
+            'current_salary': current_salary,
+            'active_adjustments': active_adjustments,
+        }
+
+        # --- Admin/HR Context: Overall Statistics ---
+        if is_admin or is_hr:
+            # Employee Stats
+            total_employees = Employee.objects.count()
+            active_employees = Employee.objects.filter(status='Active').count()
+            
+            # Site Stats
+            total_sites = Site.objects.count()
+            active_sites = Site.objects.filter(status='Active').count()
+            
+            # Vendor Stats
+            total_vendors = Vendor.objects.count()
+            active_vendors = Vendor.objects.filter(status=VendorStatus.ACTIVE).count()
+            
+            # Lead Stats (Aggregated)
+            lead_stats = Lead.objects.aggregate(
+                total=Count('lead_id'),
+                new=Count('lead_id', filter=Q(lead_status=LeadStatus.NEW)),
+                converted=Count('lead_id', filter=Q(lead_status=LeadStatus.CONVERTED)),
+            )
+
+            context.update({
+                'stats_total_employees': total_employees,
+                'stats_active_employees': active_employees,
+                'stats_total_sites': total_sites,
+                'stats_active_sites': active_sites,
+                'stats_total_vendors': total_vendors,
+                'stats_active_vendors': active_vendors,
+                'stats_leads_total': lead_stats['total'],
+                'stats_leads_new': lead_stats['new'],
+                'stats_leads_converted': lead_stats['converted'],
+            })
+        
+        return render(request, 'emp/dashboard.html', context)
     else:
         return custom_logout(request)
     

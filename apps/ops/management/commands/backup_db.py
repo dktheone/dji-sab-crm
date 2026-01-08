@@ -57,6 +57,7 @@ class Command(BaseCommand):
         # 3. Google Drive Backup
         gdrive_folder_id = os.environ.get('GDRIVE_FOLDER_ID')
         token_file = settings.BASE_DIR / 'token.json'
+        print("token_file", token_file, token_file.exists())
         
         if gdrive_folder_id and token_file.exists():
             self.stdout.write("Uploading to Google Drive...")

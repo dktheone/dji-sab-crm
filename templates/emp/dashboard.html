@@ -1,269 +1,613 @@
 {% extends 'layouts/base.html' %}
 {% load static %}
 
+{% block title %} Dashboard | {{ employee.first_name }} {% endblock title %}
 
-{% block title %} {{ employee.first_name }} | Dashboard {% endblock title %}
-
-{% block bodyclass %} hold-transition sidebar-mini {% endblock bodyclass %}
+{% block bodyclass %} hold-transition sidebar-mini layout-fixed {% endblock bodyclass %}
 
 {% block content %}
+<style>
+  /* Scoped Material 3 Styles */
+  .md3-dashboard-wrapper {
+    /* Local CSS Variables */
+    --md-sys-color-surface: #b7aec9;
+    --md-sys-color-surface-container: #f0f4f8;
+    --md-sys-color-primary: #006c5b;
+    --md-sys-color-primary-container: #8bf2db;
+    --md-sys-color-on-primary-container: #00201a;
+    --md-sys-color-secondary-container: #dce8e0;
+    --md-sys-color-tertiary-container: #ffd8e4;
+    --md-sys-color-error: #ba1a1a;
+    
+    --md-sys-shape-corner-large: 24px;
+    --md-sys-shape-corner-medium: 16px;
+    
+    font-family: 'Roboto', 'Segoe UI', sans-serif;
+    background-color: var(--md-sys-color-surface-container);
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
 
-<!-- Content Wrapper. Contains page content -->
-<div class="content-wrapper">
-  <!-- Content Header (Page header) -->
-  <div class="content-header">
-    <div class="container-fluid">
-      <div class="row mb-2">
-        <div class="col-sm-6">
-          <h1 class="m-0">CRM Dashboard</h1>
-        </div><!-- /.col -->
-        <div class="col-sm-6">
-          <ol class="breadcrumb float-sm-right">
-            <li class="breadcrumb-item"><a href="#">Home</a></li>
-            <li class="breadcrumb-item active">CRM Dashboard</li>
-          </ol>
-        </div><!-- /.col -->
-      </div><!-- /.row -->
-    </div><!-- /.container-fluid -->
-  </div>
-  <!-- /.content-header -->
+  /* Header Section */
+  .md3-header {
+    background-color: var(--md-sys-color-surface);
+    border-bottom-left-radius: 32px;
+    border-bottom-right-radius: 32px;
+    padding: 24px 32px 48px; /* Extra bottom padding for overlap */
+    box-shadow: 0 4px 20px -10px rgba(0,0,0,0.05);
+    margin-bottom: 0;
+    position: relative;
+    z-index: 1; 
+  }
 
-  <!-- Main content -->
-  <div class="content">
-    <div class="container-fluid">
+  .md3-greeting h1 {
+    font-size: 28px;
+    font-weight: 500;
+    color: #1a1c1e;
+    margin: 0;
+  }
+  
+  .md3-greeting p {
+    color: #43474e;
+    font-size: 15px;
+    margin-top: 4px;
+    margin-bottom: 0;
+  }
 
-      <!-- =========================================================== -->
-      <h5 class="mb-2">Custom Shadows Variations <small><i>Using Bootstrap's Shadow Utility</i></small></h5>
-      <div class="row">
-        <!-- /.col -->
-        <div class="col-md-3">
-          <!-- Widget: user widget style 1 -->
-          <div class="card card-widget widget-user shadow">
-            <!-- Add the bg color to the header using any of the bg-* classes -->
-            <div class="widget-user-header bg-info">
-              <h1 class="fw-bold"><strong>{{ employee.first_name }} {{ employee.last_name }}</strong></h1>
-            </div>
-            <div class="widget-user-image">
-              <img class=" elevation-2" src="{{ employee.photo.url }}" alt="{{ employee.first_name }}" width="100"
-                height="100" style="width: 100px!important;height: 100px!important;">
-            </div>
-            <div class="card-footer">
-              <div class="row">
-                <div class="col-sm-4 border-right">
-                  <div class="description-block">
-                    <span class="description-text text-muted">SITE</span>
-                    <h3 class="description-header">{{ employee.site }}</h3>
-                  </div>
-                  <!-- /.description-block -->
-                </div>
-                <!-- /.col -->
-                <div class="col-sm-8 border-right">
-                  <div class="description-block">
-                    <span class="description-text text-muted">Dept. ( Designation )</span>
-                    <h5 class="description-header">{{ employee.department }} ({{ employee.designation }})</h5>
-                  </div>
-                  <!-- /.description-block -->
-                </div>
-                <!-- /.col -->
-              </div>
-              <!-- /.row -->
-              <div class="">
-                <hr />
-                <ul class="nav flex-column">
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      Projects <span class="float-right badge bg-primary">31</span>
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a href="#" class="nav-link">
-                      Tasks <span class="float-right badge bg-info">5</span>
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <!-- /.widget-user -->
+  /* Grid Layout for Main Content */
+  .md3-main-grid {
+    display: flow;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 0 24px;
+    margin-top: -32px; /* Pull up into header */
+    position: relative;
+    z-index: 2;
+  }
+
+  @media (min-width: 992px) {
+    .md3-main-grid {
+      grid-template-columns: 350px 1fr; /* Sidebar-like profile column + Main Content */
+      align-items: start;
+    }
+  }
+
+  /* Profile Card */
+  .md3-profile-card {
+    background: #fff;
+    border-radius: var(--md-sys-shape-corner-large);
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .md3-profile-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--md-sys-color-surface-container);
+    margin-bottom: 16px;
+    background-color: #e0e2e5;
+  }
+
+  .md3-profile-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1c1e;
+    margin-bottom: 4px;
+  }
+  .md3-profile-role {
+    font-size: 14px;
+    color: #43474e;
+    background-color: var(--md-sys-color-secondary-container);
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+  
+  .md3-profile-stats {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 8px;
+  }
+  .md3-p-stat-item {
+    display: flex;
+    flex-direction: column;
+  }
+  .md3-p-stat-val { font-weight: 600; font-size: 14px; color: #1a1c1e; }
+  .md3-p-stat-lbl { font-size: 11px; color: #74777f; text-transform: uppercase; }
+
+  /* Collapsible Financial Section */
+  .md3-collapse-card {
+    background: #fff;
+    border-radius: var(--md-sys-shape-corner-medium);
+    margin-top: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .md3-collapse-header {
+    background-color: #fff;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid transparent;
+    transition: background-color 0.2s;
+  }
+  .md3-collapse-header:hover { background-color: #f8f9fa; }
+  .md3-collapse-header[aria-expanded="true"] { border-bottom-color: #f0f0f0; }
+
+  .md3-collapse-title { font-size: 15px; font-weight: 500; color: #1a1c1e; display: flex; align-items: center; }
+  .md3-collapse-icon { margin-right: 12px; color: #555; width: 24px; text-align: center;}
+  
+  .md3-collapse-body {
+    padding: 20px;
+    background-color: #fafbfc;
+    font-size: 14px;
+  }
+
+  /* Key-Value Rows */
+  .md3-kv-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e0e0e0;
+  }
+  .md3-kv-row:last-child { border-bottom: none; }
+  .md3-kv-key { color: #555; }
+  .md3-kv-val { font-weight: 500; color: #1a1c1e; }
+
+  /* Admin Quick Stats Row (Horizontal Scroll) */
+  .md3-stats-wrapper {
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  .md3-stats-row {
+    display: flex;
+    gap: 16px;
+    min-width: min-content;
+  }
+  
+  .md3-mini-stat {
+    background: #fff;
+    min-width: 140px;
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: transform 0.2s;
+  }
+  .md3-mini-stat:hover { transform: translateY(-2px); }
+  
+  .md3-ms-icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .md3-ms-val { font-size: 20px; font-weight: 700; color: #1a1c1e; }
+  .md3-ms-lbl { font-size: 12px; color: #757575; }
+
+  /* Task Items */
+  .md3-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .md3-task-item {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    border-left: 4px solid #ccc;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  
+  .md3-ti-overdue { border-left-color: var(--md-sys-color-error); background-color: #fffbfb; }
+  .md3-ti-today { border-left-color: #ffb700; }
+  .md3-ti-upcoming { border-left-color: var(--md-sys-color-primary); }
+
+  .md3-ti-header { display: flex; justify-content: space-between; font-size: 12px; color: #666; margin-bottom: 6px; }
+  .md3-ti-title { font-size: 16px; font-weight: 500; color: #222; margin-bottom: 2px; }
+  .md3-ti-sub { font-size: 13px; color: #555; }
+  
+  .md3-ti-actions {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .md3-act-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #f1f3f4;
+    display: flex; align-items: center; justify-content: center;
+    color: #444;
+    transition: 0.2s;
+  }
+  .md3-act-btn:hover { background-color: #e0e0e0; }
+
+</style>
+
+<div class="content-wrapper p-0 border-0" style="background-color: transparent;">
+  <div class="md3-dashboard-wrapper">
+    
+    <!-- Hero Header -->
+    <div class="md3-header">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="md3-greeting">
+            {% now "H" as current_hour %}
+          <p style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+            {% if current_hour < 12 %}Good Morning,
+            {% elif current_hour < 18 %}Good Afternoon,
+            {% else %}Good Evening,
+            {% endif %}
+          </p>
+          <h1>{{ employee.first_name }}</h1>
         </div>
+        <!-- Mobile Profile Toggle or additional header action could go here -->
+      </div>
+    </div>
 
-        <div class="col-md-3">
-          <div class="info-box shadow">
-            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-cog"></i></span>
+    <!-- Main Grid Layout -->
+    <div class="md3-main-grid">
+        
+        <!-- LEFT COLUMN: Profile & Financials -->
+        <div class="md3-left-col">
+            
+            <!-- Profile Card -->
+            <div class="md3-profile-card">
+                 {% if employee.photo %}
+                 <img src="{{ employee.photo.url }}" class="md3-profile-img" alt="Profile">
+                 {% else %}
+                 <div class="md3-profile-img d-flex align-items-center justify-content-center bg-secondary text-white" style="font-size: 32px;">
+                    {{ employee.first_name|first }}
+                 </div>
+                 {% endif %}
+                 
+                 <div class="md3-profile-name">{{ employee.first_name }} {{ employee.last_name }}</div>
+                 <div class="md3-profile-role">{{ employee.designation.designation|default:"Employee" }}</div>
+                 
+                 <div class="w-100 mt-2 px-3">
+                     <div class="md3-kv-row">
+                         <span class="md3-kv-key small">Department</span>
+                         <span class="md3-kv-val small">{{ employee.department.department }}</span>
+                     </div>
+                     <div class="md3-kv-row">
+                         <span class="md3-kv-key small">Emp Code</span>
+                         <span class="md3-kv-val small">{{ employee.emp_code }}</span>
+                     </div>
+                     <div class="md3-kv-row">
+                         <span class="md3-kv-key small">Site</span>
+                         <span class="md3-kv-val small text-truncate" style="max-width: 120px;">{{ employee.site.name }}</span>
+                     </div>
+                 </div>
 
-            <div class="info-box-content">
-              <span class="info-box-text">CPU Traffic</span>
-              <span class="info-box-number">
-                10
-                <small>%</small>
-              </span>
+                 <!-- Simple stats below profile usually -->
+                 <div class="md3-profile-stats">
+                     <!-- Can put 'Leaves Balance' here if available, or just My Tasks count -->
+                     <div class="md3-p-stat-item">
+                         <span class="md3-p-stat-val">{{ total_my_tasks }}</span>
+                         <span class="md3-p-stat-lbl">Tasks</span>
+                     </div>
+                     <div class="md3-p-stat-item">
+                         <span class="md3-p-stat-val text-success">Active</span>
+                         <span class="md3-p-stat-lbl">Status</span>
+                     </div>
+                 </div>
             </div>
-            <!-- /.info-box-content -->
-          </div>
-          <div class="info-box shadow">
-            <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-thumbs-up"></i></span>
 
-            <div class="info-box-content">
-              <span class="info-box-text">Likes</span>
-              <span class="info-box-number">41,410</span>
-            </div>
-            <!-- /.info-box-content -->
-          </div>
-          <!-- /.info-box -->
-          <div class="info-box shadow">
-            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-shopping-cart"></i></span>
-
-            <div class="info-box-content">
-              <span class="info-box-text">Sales</span>
-              <span class="info-box-number">760</span>
-            </div>
-            <!-- /.info-box-content -->
-          </div>
-          <!-- /.info-box -->
-          <div class="info-box shadow">
-            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-users"></i></span>
-
-            <div class="info-box-content">
-              <span class="info-box-text">New Members</span>
-              <span class="info-box-number">2,000</span>
-            </div>
-            <!-- /.info-box-content -->
-          </div>
-          <!-- /.info-box -->
-        </div>
-
-        <div class="col-md-6">
-          <!-- Upcoming Follow-ups Widget -->
-          <div class="card shadow">
-            <div class="card-header bg-gradient-primary border-0">
-              <h3 class="card-title text-white">
-                <i class="fas fa-calendar-check mr-2"></i>Upcoming Follow-ups (Next 7 Days)
-              </h3>
-              <div class="card-tools">
-                <span class="badge badge-light">{{ total_followups }} Total</span>
-                <a href="{% url 'leads:upcoming_followups' %}" class="btn btn-tool btn-sm text-white">
-                  <i class="fas fa-external-link-alt"></i>
-                </a>
-              </div>
-            </div>
-            <div class="card-body p-0">
-              {% if followups %}
-              <div class="table-responsive" style="max-height: 400px;">
-                <table class="table table-hover table-sm mb-0">
-                  <thead class="bg-light sticky-top">
-                    <tr>
-                      <th style="width: 10px">#</th>
-                      <th>Date</th>
-                      <th>Client</th>
-                      <th>Contact</th>
-                      <th>Status</th>
-                      <th style="width: 60px">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for lead in followups %}
-                    <tr class="{% if lead.is_overdue %}table-danger{% elif lead.is_today %}table-warning{% endif %}">
-                      <td>
-                        {% if lead.is_overdue %}
-                        <i class="fas fa-exclamation-circle text-danger" title="Overdue!"></i>
-                        {% elif lead.is_today %}
-                        <i class="fas fa-clock text-warning" title="Today"></i>
+            <!-- Financial Details Accordion (Collapsible) -->
+            <div class="md3-collapse-card">
+                <div class="md3-collapse-header" data-toggle="collapse" data-target="#financialCollapse" aria-expanded="false">
+                    <div class="md3-collapse-title">
+                        <i class="fas fa-wallet md3-collapse-icon"></i> Salary & Compensation
+                    </div>
+                    <i class="fas fa-chevron-down text-muted"></i>
+                </div>
+                
+                <div id="financialCollapse" class="collapse">
+                    <div class="md3-collapse-body">
+                        {% if current_salary %}
+                            <h6 class="font-weight-bold mb-3 text-primary" style="font-size: 13px;">MONTHLY BREAKDOWN</h6>
+                            <div class="md3-kv-row">
+                                <span class="md3-kv-key">Basic Salary</span>
+                                <span class="md3-kv-val">₹{{ current_salary.basic_salary }}</span>
+                            </div>
+                            <div class="md3-kv-row">
+                                <span class="md3-kv-key">HRA</span>
+                                <span class="md3-kv-val">₹{{ current_salary.hra }}</span>
+                            </div>
+                            <div class="md3-kv-row">
+                                <span class="md3-kv-key">Allowances</span>
+                                <span class="md3-kv-val">₹{{ current_salary.other_allowances }}</span>
+                            </div>
+                            <div class="md3-kv-row border-top border-dark mt-2 pt-2">
+                                <span class="md3-kv-key text-dark font-weight-bold">Total Gross</span>
+                                <span class="md3-kv-val text-success">₹{{ current_salary.gross_salary }}</span>
+                            </div>
                         {% else %}
-                        <i class="far fa-calendar text-info"></i>
+                            <p class="text-muted text-center m-0">No active salary structure found.</p>
                         {% endif %}
-                      </td>
-                      <td>
-                        <small
-                          class="{% if lead.is_overdue %}text-danger font-weight-bold{% elif lead.is_today %}text-warning font-weight-bold{% endif %}">
-                          {{ lead.next_follow_up|date:"d M" }}
-                          {% if lead.is_overdue %}<br><span class="badge badge-danger badge-sm">Overdue</span>
-                          {% endif%}
-                          {% if lead.is_today %}<br><span class="badge badge-warning badge-sm">Today</span>{% endif %}
-                        </small>
-                      </td>
-                      <td><small>{{ lead.client_name|truncatechars:25 }}</small></td>
-                      <td><small>{{ lead.contact_person|truncatechars:20 }}</small></td>
-                      <td>
-                        <span class="badge badge-sm badge-{% if lead.lead_status == 'NEW' %}primary
-                                                               {% elif lead.lead_status == 'CONTACTED' %}info
-                                                               {% elif lead.lead_status == 'INTERESTED' %}warning
-                                                               {% else %}secondary{% endif %}">
-                          {{ lead.get_lead_status_display|truncatechars:10 }}
-                        </span>
-                      </td>
-                      <td>
-                        <div class="btn-group btn-group-sm">
-                          <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}" class="btn btn-xs btn-info"
-                            title="Follow-up">
-                            <i class="fas fa-plus"></i>
-                          </a>
-                          <a href="{% url 'leads:lead_form' lead.lead_id %}" class="btn btn-xs btn-primary"
-                            title="View">
-                            <i class="fas fa-eye"></i>
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-              {% else %}
-              <div class="p-4 text-center text-muted">
-                <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
-                <p class="mb-0">No upcoming follow-ups</p>
-                <small>All follow-ups completed!</small>
-              </div>
-              {% endif %}
+                    </div>
+                </div>
             </div>
-            {% if followups %}
-            <div class="card-footer bg-light">
-              <div class="row text-center">
-                <div class="col-4">
-                  <div class="description-block">
-                    <h5 class="description-header text-danger">{{ overdue_count }}</h5>
-                    <span class="description-text">Overdue</span>
-                  </div>
+
+             <!-- Adjustments Accordion (Collapsible) -->
+             <div class="md3-collapse-card">
+                <div class="md3-collapse-header" data-toggle="collapse" data-target="#adjustmentCollapse" aria-expanded="false">
+                    <div class="md3-collapse-title">
+                        <i class="fas fa-file-invoice-dollar md3-collapse-icon"></i> Active Adjustments
+                    </div>
+                    <i class="fas fa-chevron-down text-muted"></i>
                 </div>
-                <div class="col-4">
-                  <div class="description-block">
-                    <h5 class="description-header text-warning">{{ today_count }}</h5>
-                    <span class="description-text">Today</span>
-                  </div>
+                
+                <div id="adjustmentCollapse" class="collapse">
+                    <div class="md3-collapse-body p-0">
+                        {% if active_adjustments %}
+                            <ul class="list-group list-group-flush bg-transparent">
+                            {% for adj in active_adjustments %}
+                                <li class="list-group-item bg-transparent">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="badge badge-light border">{{ adj.adjustment_type }}</span>
+                                        <span class="font-weight-bold text-danger">-₹{{ adj.amount }}</span>
+                                    </div>
+                                    <small class="text-muted d-block">{{ adj.reason }}</small>
+                                    <small class="text-muted">{{ adj.date_issued|date:"d M, Y" }}</small>
+                                </li>
+                            {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="p-3 text-center text-muted">No active adjustments.</div>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="col-4">
-                  <div class="description-block">
-                    <h5 class="description-header text-info">{{ total_followups }}</h5>
-                    <span class="description-text">Total</span>
-                  </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Stats & Activities -->
+        <div class="md3-right-col">
+            
+            <!-- CSS for Tables -->
+            <style>
+                .md3-table-card {
+                    background: #fff;
+                    border-radius: var(--md-sys-shape-corner-medium);
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    overflow: hidden;
+                    margin-bottom: 24px;
+                    width: 100%; /* Ensure it doesn't exceed container */
+                }
+                .md3-table-header {
+                    padding: 16px 20px;
+                    border-bottom: 1px solid #f0f0f0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .md3-table-title { font-size: 16px; font-weight: 500; color: #1a1c1e; }
+                
+                .md3-table-responsive {
+                    width: 100%;
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                }
+                .md3-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 14px;
+                    white-space: nowrap; /* Keep rows single line if possible, scroll if not */
+                }
+                .md3-table th {
+                    text-align: left;
+                    padding: 12px 16px;
+                    color: #444746;
+                    font-weight: 500;
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    background-color: #fcfcfc;
+                    border-bottom: 1px solid #efefef;
+                }
+                .md3-table td {
+                    padding: 12px 16px;
+                    color: #1a1c1e;
+                    border-bottom: 1px solid #f9f9f9;
+                    vertical-align: middle;
+                }
+                .md3-table tr:last-child td { border-bottom: none; }
+                .md3-table tr:hover { background-color: #fafbfc; }
+                
+                /* Mobile Optimizations for Table */
+                @media (max-width: 768px) {
+                    .md3-col-hidden-sm { display: none; }
+                    .md3-table th, .md3-table td { padding: 12px; }
+                }
+
+                .badge-soft-danger { background-color: #ffdad6; color: #410002; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 500;}
+                .badge-soft-warning { background-color: #ffe088; color: #251a00; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 500;}
+                .badge-soft-success { background-color: #bbfabb; color: #002105; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 500;}
+                .badge-soft-info { background-color: #c2e7ff; color: #001d35; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 500;}
+            </style>
+
+            <!-- Admin Stats Row -->
+            {% if is_admin or is_hr %}
+            <!-- <h6 class="text-muted mb-3" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Organization Overview</h6> -->
+            <div class="md3-stats-wrapper">
+                <div class="md3-stats-row">
+                    <a href="{% url 'emp:employee_list' %}" class="md3-mini-stat">
+                        <div class="md3-ms-icon" style="background:#eaddff; color:#21005d;"><i class="fas fa-users"></i></div>
+                        <div class="md3-ms-val">{{ stats_active_employees }}</div>
+                        <div class="md3-ms-lbl">Staff</div>
+                    </a>
+                    <a href="{% url 'vendors:vendor_list' %}" class="md3-mini-stat">
+                        <div class="md3-ms-icon" style="background:#ffdad6; color:#410002;"><i class="fas fa-truck"></i></div>
+                        <div class="md3-ms-val">{{ stats_active_vendors }}</div>
+                        <div class="md3-ms-lbl">Vendors</div>
+                    </a>
+                     <div class="md3-mini-stat">
+                        <div class="md3-ms-icon" style="background:#e6e1e5; color:#1d1b20;"><i class="fas fa-chart-line"></i></div>
+                        <div class="md3-ms-val">{{ stats_leads_new }}</div>
+                        <div class="md3-ms-lbl">New Leads</div>
+                    </div>
+                     <div class="md3-mini-stat">
+                        <div class="md3-ms-icon" style="background:#d0e4ff; color:#001d35;"><i class="fas fa-building"></i></div>
+                        <div class="md3-ms-val">{{ stats_active_sites }}</div>
+                        <div class="md3-ms-lbl">Active Sites</div>
+                    </div>
                 </div>
-              </div>
             </div>
             {% endif %}
-          </div>
-          <!-- /.card -->
+
+            <!-- Grid 1: Scheduled Follow-ups (Actionable) -->
+            <div class="md3-table-card">
+                <div class="md3-table-header">
+                    <span class="md3-table-title">Scheduled Follow-ups</span>
+                    {% if overdue_leads %}
+                    <span class="badge badge-danger rounded-pill">{{ overdue_leads.count }} Overdue</span>
+                    {% endif %}
+                </div>
+                <!-- Added overflow-hidden to parent to force scroll bar inside if needed -->
+                <div style="width: 100%; overflow: hidden;">
+                    <div class="md3-table-responsive">
+                        <table class="md3-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;"></th> <!-- Icon -->
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th class="md3-col-hidden-sm">Contact</th>
+                                    {% if is_admin or is_hr or is_manager %}<th class="md3-col-hidden-sm">Assigned</th>{% endif %}
+                                    <th style="text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% comment %} Show overdue first {% endcomment %}
+                                {% for lead in overdue_leads %}
+                                <tr>
+                                    <td><i class="fas fa-exclamation-circle text-danger" title="Overdue"></i></td>
+                                    <td>
+                                        <span class="text-danger font-weight-bold">{{ lead.next_follow_up|date:"d M" }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="font-weight-bold text-truncate" style="max-width: 150px;">{{ lead.client_name }}</div>
+                                        <small class="text-muted d-block d-md-none">{{ lead.contact_person }}</small>
+                                    </td>
+                                    <td class="md3-col-hidden-sm">{{ lead.contact_person }}</td>
+                                    {% if is_admin or is_hr or is_manager %}
+                                    <td class="md3-col-hidden-sm">
+                                        <small>{{ lead.created_by.first_name }}</small>
+                                    </td>
+                                    {% endif %}
+                                    <td align="right">
+                                        <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}" class="md3-act-btn text-primary"><i class="fas fa-edit"></i></a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+    
+                                {% comment %} Show upcoming {% endcomment %}
+                                {% for lead in upcoming_leads %}
+                                <tr>
+                                    <td>
+                                        {% if lead.lead_status == 'New' %}<i class="fas fa-star text-warning"></i>
+                                        {% elif lead.lead_status == 'In Progress' %}<i class="fas fa-spinner text-info"></i>
+                                        {% else %}<i class="far fa-circle text-secondary"></i>{% endif %}
+                                    </td>
+                                    <td>{{ lead.next_follow_up|date:"d M" }}</td>
+                                    <td>
+                                        <div class="font-weight-bold text-truncate" style="max-width: 150px;">{{ lead.client_name }}</div>
+                                        <small class="text-muted">{{ lead.lead_status }}</small>
+                                    </td>
+                                    <td class="md3-col-hidden-sm">{{ lead.contact_person }}</td>
+                                    {% if is_admin or is_hr or is_manager %}
+                                    <td class="md3-col-hidden-sm">
+                                        <small class="text-muted">{{ lead.created_by.first_name }}</small>
+                                    </td>
+                                    {% endif %}
+                                    <td align="right">
+                                        <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}" class="md3-act-btn text-dark"><i class="fas fa-eye"></i></a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                    {% if not overdue_leads %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">No scheduled follow-ups.</td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid 2: Recent Activity (History) -->
+            <div class="md3-table-card">
+                <div class="md3-table-header">
+                    <span class="md3-table-title"><i class="fas fa-history mr-2 text-muted"></i>Recent Activity</span>
+                </div>
+                <div style="width: 100%; overflow: hidden;">
+                    <div class="md3-table-responsive">
+                        <table class="md3-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th>Feedback</th>
+                                    <th class="md3-col-hidden-sm">Remarks</th>
+                                    {% if is_admin or is_hr or is_manager %}<th class="md3-col-hidden-sm">By</th>{% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for fu in recent_followups %}
+                                <tr>
+                                    <td style="white-space: nowrap;">{{ fu.follow_up_date|date:"d M" }}</td>
+                                    <td><a href="{% url 'leads:lead_follow_ups' fu.lead.lead_id %}" class="text-dark font-weight-bold text-truncate d-block" style="max-width: 120px;">{{ fu.lead.client_name }}</a></td>
+                                    <td>
+                                        {% if fu.feedback == 'Positive' %}<span class="badge-soft-success">Positive</span>
+                                        {% elif fu.feedback == 'Negative' %}<span class="badge-soft-danger">Negative</span>
+                                        {% else %}<span class="badge-soft-warning">{{ fu.feedback }}</span>{% endif %}
+                                    </td>
+                                    <td class="md3-col-hidden-sm"><span class="d-inline-block text-truncate" style="max-width: 150px;" title="{{ fu.remarks }}">{{ fu.remarks|default:"-" }}</span></td>
+                                    {% if is_admin or is_hr or is_manager %}
+                                    <td class="md3-col-hidden-sm"><small>{{ fu.created_by.first_name }}</small></td>
+                                    {% endif %}
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No recent activity found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
-      </div>
-      <!-- /.row -->
-
-
-
-
 
     </div>
-    <!-- /.container-fluid -->
-  </div>
-  <!-- /.content -->
-</div>
-<!-- /.content-wrapper -->
 
+  </div>
+</div>
 {% endblock content %}
 
 {% block extra_scripts %}
-
-<!-- OPTIONAL SCRIPTS -->
-<script src="{% static 'plugins/chart.js/Chart.min.js' %}"></script>
-<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-<script src="{% static 'dist/js/pages/dashboard3.js' %}"></script>
-
+<script>
+    console.log("MD3 Dashboard v3 - Financials Loaded");
+</script>
 {% endblock extra_scripts %}
