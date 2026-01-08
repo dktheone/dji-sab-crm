@@ -11,3 +11,6 @@ def index(request):
 
 class PrivacyPolicyView(TemplateView):
     template_name = 'pages/privacy_policy.html'
+
+class TermsOfServiceView(TemplateView):
+    template_name = 'pages/terms_of_service.html'
