@@ -303,6 +303,8 @@ class EmployeeForm(forms.ModelForm):
         
         self.fields['per_pincode'].label = "Permanent Pincode"
         self.fields['per_pincode'].help_text = "6-digit pincode"
+        
+        self.fields['father_name'].label = "Father/Husband Name"
 
         self.helper.layout = Layout(
 

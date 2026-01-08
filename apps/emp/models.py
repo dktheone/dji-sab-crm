@@ -277,8 +277,8 @@ class Employee(models.Model):
         if self.nationality == 'Indian':
             if not self.aadhaar_no:
                 raise ValidationError({'aadhaar_no': 'Aadhaar number is mandatory for Indian nationality.'})
-            if not self.pan_card:
-                raise ValidationError({'pan_card': 'PAN card is mandatory for Indian nationality.'})
+            # if not self.pan_card:
+            #     raise ValidationError({'pan_card': 'PAN card is mandatory for Indian nationality.'})
         # Validate uniqueness for non-empty aadhaar_no and pan_card
         if self.aadhaar_no and Employee.objects.filter(aadhaar_no=self.aadhaar_no).exclude(id=self.id).exists():
             raise ValidationError({'aadhaar_no': 'An employee with this Aadhaar number already exists.'})
