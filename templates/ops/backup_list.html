@@ -1,70 +1,66 @@
-{% extends 'base.html' %}
+{% extends 'layouts/base.html' %}
 {% load static %}
 
 {% block title %}Backup List{% endblock %}
 
 {% block content %}
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <h1 class="m-0">Database Backups</h1>
-            </div>
-            <div class="col-sm-6">
-                <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
-                    <li class="breadcrumb-item active">Backups</li>
-                </ol>
+<div class="content-wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Database Backups</h1>
+                </div>
+                <!-- <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+                        <li class="breadcrumb-item active">Backups</li>
+                    </ol>
+                </div> -->
             </div>
         </div>
     </div>
-</div>
 
-<section class="content">
-    <div class="container-fluid">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Local Backups (Last 7 Days)</h3>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-striped projects">
-                    <thead>
-                        <tr>
-                            <th style="width: 5%">#</th>
-                            <th style="width: 40%">Filename</th>
-                            <th style="width: 25%">Created At</th>
-                            <th style="width: 15%">Size</th>
-                            <!-- <th style="width: 15%">Actions</th> -->
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for backup in backups %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>
-                                <a>{{ backup.name }}</a>
-                                <br/>
-                                <small>Stored locally</small>
-                            </td>
-                            <td>
-                                {{ backup.created_at|date:"d M Y, h:i A" }}
-                            </td>
-                            <td>{{ backup.size }}</td>
-                            <!-- <td>
-                                <a class="btn btn-info btn-sm" href="#">
-                                    <i class="fas fa-download"></i> Download
-                                </a>
-                            </td> -->
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center">No backups found.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Local Backups (Last 7 Days)</h3>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-striped projects">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%">#</th>
+                                <th style="width: 40%">Filename</th>
+                                <th style="width: 25%">Created At</th>
+                                <th style="width: 15%">Size</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for backup in backups %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <a>{{ backup.name }}</a>
+                                    <br/>
+                                    <small>Stored locally</small>
+                                </td>
+                                <td>
+                                    {{ backup.created_at|date:"d M Y, h:i A" }}
+                                </td>
+                                <td>{{ backup.size }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No backups found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+</div>
 {% endblock %}
