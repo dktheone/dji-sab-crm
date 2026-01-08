@@ -32,4 +32,11 @@ django-dbbackup==4.2.1
 country_state_city==0.1.0
 django-select2==8.4.1
 django-crispy-forms
+django-crispy-forms
 Pillow==11.3.0
+
+# Backup Dependencies
+py7zr
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib

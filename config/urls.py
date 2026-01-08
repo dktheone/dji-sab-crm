@@ -49,6 +49,8 @@ urlpatterns = [
     path('emp/', include('apps.emp.urls', namespace='emp')),
     path('leads/', include('apps.leads.urls')),
     path('vendors/', include('apps.vendors.urls', namespace='vendors')),
+    path('ops/', include('apps.ops.urls', namespace='ops')),
+    path('', include('apps.pages.urls')), # Public Pages (Privacy Policy, terms, etc)
     # path('', include('apps.dyn_dt.urls')),
     # path('', include('apps.dyn_api.urls')),
     path('charts/', include('apps.charts.urls')),

@@ -1,0 +1,63 @@
+{% extends 'base.html' %} 
+<!-- Adapting to base.html if it exists, otherwise will fall back to simple HTML structure if base is admin-only. 
+     Usually public pages might need a different base or 'base_public.html'.
+     For now assuming base.html works or is acceptable. If base.html requires login (sidebar etc), this might look weird.
+     I'll use a simple clean layout if extending base fails or looks bad, but standard Django extending is safest first choice.
+     Actually, base.html often has sidebar. Let's make a standalone look just in case, or extend a 'layouts/base_simple.html' if it existed.
+     I will stick to 'base.html' but override blocks to hide sidebar if possible, or just accept the CRM look.
+-->
+
+{% block title %}Privacy Policy - SAB Hospitality{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5" style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center mb-4">Privacy Policy</h1>
+            <p class="text-muted text-center">Last Updated: January 8, 2026</p>
+            <hr>
+
+            <h3>1. Introduction</h3>
+            <p>Welcome to <strong>SAB Hospitality</strong> ("Company", "we", "our", "us"). We operate the website 
+            <a href="https://sabhospitality.com/">https://sabhospitality.com/</a> and the CRM application 
+            <a href="https://crm.sabhospitality.com/">https://crm.sabhospitality.com/</a> (collectively, the "Service").</p>
+            <p>We are committed to protecting your personal information and your right to privacy. If you have any questions or concerns about our policy, or our practices with regards to your personal information, please contact us.</p>
+
+            <h3>2. Information We Collect</h3>
+            <p>We collect information that you provide securely to us when you use our CRM application, including:</p>
+            <ul>
+                <li><strong>Personal Data:</strong> Name, email address, phone number, and employment details managed within the CRM.</li>
+                <li><strong>Usage Data:</strong> Information on how the Service is accessed and used (e.g., login times, pages visited).</li>
+                <li><strong>Google User Data:</strong> If you use our Google Drive integration for backups, we access your Google Drive solely to upload and manage backup files created by this application. We do not access, read, or delete any other files in your Google Drive.</li>
+            </ul>
+
+            <h3>3. How We Use Your Information</h3>
+            <p>We use the information we collect to:</p>
+            <ul>
+                <li>Provide, operate, and maintain our CRM services.</li>
+                <li>Improve, personalize, and expand our Service.</li>
+                <li>Perform automated database backups (via Google Drive integration).</li>
+                <li>Communicate with you regarding updates, security alerts, and support.</li>
+            </ul>
+
+            <h3>4. Google User Data Policy</h3>
+            <p>Our application's use of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+            <p><strong>Backup Feature:</strong> The "CRM Backup" feature requires access to your Google Drive to store database backups. This access is strictly limited to:</p>
+            <ul>
+                <li>Uploading encrypted/compressed backup files.</li>
+                <li>Listing and managing files created by our application.</li>
+            </ul>
+            <p>We do not share your Google User Data with any third parties.</p>
+
+            <h3>5. Data Security</h3>
+            <p>We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.</p>
+
+            <h3>6. Contact Us</h3>
+            <p>If you have any questions about this Privacy Policy, please contact us:</p>
+            <ul>
+                <li>By website: <a href="https://sabhospitality.com/">https://sabhospitality.com/</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

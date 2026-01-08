@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     'apps.vendors',
     
     # Tooling API-GEN
+    'apps.ops',                  # Ops App for Backups
     'rest_framework',            # Include DRF           # <-- NEW 
     'rest_framework.authtoken',  # Include DRF Auth      # <-- NEW   
 ]

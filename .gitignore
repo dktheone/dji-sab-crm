@@ -38,3 +38,9 @@ known_issues.md
 # Duplicate/backup files
 requirements copy.txt
 db.sqlite3
+
+# Backups and Credentials
+backups/
+token.json
+credentials.json
+service_account.json

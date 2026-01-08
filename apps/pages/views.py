@@ -3,7 +3,11 @@ from django.http import HttpResponse
 
 # Create your views here.
 
-def index(request):
+from django.views.generic import TemplateView
 
+def index(request):
     # Page from the theme 
     return render(request, 'pages/index.html')
+
+class PrivacyPolicyView(TemplateView):
+    template_name = 'pages/privacy_policy.html'
