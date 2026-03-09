@@ -30,100 +30,157 @@
 
   /* Header Section */
   .md3-header {
-    background-color: var(--md-sys-color-surface);
+    background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, #004d40 100%);
     border-bottom-left-radius: 32px;
     border-bottom-right-radius: 32px;
-    padding: 24px 32px 48px; /* Extra bottom padding for overlap */
-    box-shadow: 0 4px 20px -10px rgba(0,0,0,0.05);
+    padding: 36px 32px 64px; /* Extra bottom padding for overlap */
+    box-shadow: 0 10px 30px -10px rgba(0, 108, 91, 0.4);
     margin-bottom: 0;
     position: relative;
     z-index: 1; 
+    overflow: hidden;
+  }
+
+  /* Decorative header element */
+  .md3-header::before {
+      content: '';
+      position: absolute;
+      top: -50px; right: -50px;
+      width: 250px; height: 250px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
+  }
+
+  .md3-greeting {
+      position: relative;
+      z-index: 1;
   }
 
   .md3-greeting h1 {
-    font-size: 28px;
-    font-weight: 500;
-    color: #1a1c1e;
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
     margin: 0;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.15);
   }
   
   .md3-greeting p {
-    color: #43474e;
-    font-size: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
     margin-top: 4px;
     margin-bottom: 0;
   }
 
   /* Grid Layout for Main Content */
   .md3-main-grid {
-    display: flow;
+    display: grid;
     grid-template-columns: 1fr;
     gap: 24px;
     padding: 0 24px;
-    margin-top: -32px; /* Pull up into header */
+    margin-top: -36px; /* Pull up into header */
     position: relative;
     z-index: 2;
   }
 
   @media (min-width: 992px) {
     .md3-main-grid {
-      grid-template-columns: 350px 1fr; /* Sidebar-like profile column + Main Content */
+      grid-template-columns: 360px 1fr; /* Sidebar-like profile column + Main Content */
       align-items: start;
     }
   }
 
-  /* Profile Card */
+  /* Profile Card Refined */
   .md3-profile-card {
-    background: #fff;
+    background: #ffffff;
     border-radius: var(--md-sys-shape-corner-large);
-    padding: 24px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    padding: 32px 24px;
+    box-shadow: 0 12px 36px rgba(0, 108, 91, 0.08), 0 2px 8px rgba(0,0,0,0.04);
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .md3-profile-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0, 108, 91, 0.12), 0 4px 12px rgba(0,0,0,0.06);
+  }
+
+  /* Top Accent Banner for Card */
+  .md3-profile-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 110px;
+      background: linear-gradient(135deg, #f0f4f8, var(--md-sys-color-secondary-container));
+      z-index: 0;
+      border-radius: var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-large) 0 0;
   }
 
   .md3-profile-img {
-    width: 100px;
-    height: 100px;
+    width: 116px;
+    height: 116px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid var(--md-sys-color-surface-container);
-    margin-bottom: 16px;
+    border: 5px solid #fff;
+    margin-bottom: 18px;
     background-color: #e0e2e5;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+  }
+  
+  .md3-profile-card:hover .md3-profile-img {
+      transform: scale(1.03);
+  }
+
+  .md3-profile-info-wrapper {
+      position: relative;
+      z-index: 1;
+      width: 100%;
   }
 
   .md3-profile-name {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: #1a1c1e;
     margin-bottom: 4px;
+    letter-spacing: -0.3px;
   }
+  
   .md3-profile-role {
-    font-size: 14px;
-    color: #43474e;
-    background-color: var(--md-sys-color-secondary-container);
-    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--md-sys-color-primary);
+    background-color: var(--md-sys-color-primary-container);
+    padding: 6px 14px;
     border-radius: 20px;
     display: inline-block;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
   }
   
   .md3-profile-stats {
     width: 100%;
     display: flex;
     justify-content: space-around;
-    padding-top: 16px;
-    border-top: 1px solid #f0f0f0;
-    margin-top: 8px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    margin-top: 12px;
   }
   .md3-p-stat-item {
     display: flex;
     flex-direction: column;
+    align-items: center;
   }
-  .md3-p-stat-val { font-weight: 600; font-size: 14px; color: #1a1c1e; }
-  .md3-p-stat-lbl { font-size: 11px; color: #74777f; text-transform: uppercase; }
+  .md3-p-stat-val { font-weight: 700; font-size: 18px; color: #1a1c1e; line-height: 1.2; }
+  .md3-p-stat-lbl { font-size: 11px; font-weight: 600; color: #74777f; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;}
 
   /* Collapsible Financial Section */
   .md3-collapse-card {
@@ -131,8 +188,11 @@
     border-radius: var(--md-sys-shape-corner-medium);
     margin-top: 16px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s;
   }
+  .md3-collapse-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  
   .md3-collapse-header {
     background-color: #fff;
     padding: 16px 20px;
@@ -159,12 +219,15 @@
   .md3-kv-row {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px dashed #e0e0e0;
+    padding: 10px 14px;
+    border-bottom: 1px dashed rgba(0,0,0,0.06);
+    border-radius: 6px;
+    transition: background-color 0.2s;
   }
+  .md3-profile-card .md3-kv-row:hover { background-color: rgba(0,0,0,0.02); }
   .md3-kv-row:last-child { border-bottom: none; }
-  .md3-kv-key { color: #555; }
-  .md3-kv-val { font-weight: 500; color: #1a1c1e; }
+  .md3-kv-key { color: #555; font-weight: 500; font-size: 13px;}
+  .md3-kv-val { font-weight: 600; color: #222; font-size: 13px;}
 
   /* Admin Quick Stats Row (Horizontal Scroll) */
   .md3-stats-wrapper {
@@ -269,44 +332,45 @@
         <!-- LEFT COLUMN: Profile & Financials -->
         <div class="md3-left-col">
             
-            <!-- Profile Card -->
+             <!-- Profile Card -->
             <div class="md3-profile-card">
                  {% if employee.photo %}
                  <img src="{{ employee.photo.url }}" class="md3-profile-img" alt="Profile">
                  {% else %}
-                 <div class="md3-profile-img d-flex align-items-center justify-content-center bg-secondary text-white" style="font-size: 32px;">
-                    {{ employee.first_name|first }}
+                 <div class="md3-profile-img d-flex align-items-center justify-content-center text-primary" style="font-size: 42px; background-color: #ffffff; border-color: var(--md-sys-color-secondary-container);">
+                    <i class="fas fa-user"></i>
                  </div>
                  {% endif %}
                  
-                 <div class="md3-profile-name">{{ employee.first_name }} {{ employee.last_name }}</div>
-                 <div class="md3-profile-role">{{ employee.designation.designation|default:"Employee" }}</div>
-                 
-                 <div class="w-100 mt-2 px-3">
-                     <div class="md3-kv-row">
-                         <span class="md3-kv-key small">Department</span>
-                         <span class="md3-kv-val small">{{ employee.department.department }}</span>
+                 <div class="md3-profile-info-wrapper">
+                     <div class="md3-profile-name">{{ employee.first_name }} {{ employee.last_name }}</div>
+                     <div class="md3-profile-role">{{ employee.designation.designation|default:"Employee" }}</div>
+                     
+                     <div class="w-100 px-2 mt-1">
+                         <div class="md3-kv-row">
+                             <span class="md3-kv-key">Department</span>
+                             <span class="md3-kv-val">{{ employee.department.department }}</span>
+                         </div>
+                         <div class="md3-kv-row">
+                             <span class="md3-kv-key">Emp Code</span>
+                             <span class="md3-kv-val">{{ employee.emp_code }}</span>
+                         </div>
+                         <div class="md3-kv-row">
+                             <span class="md3-kv-key">Site</span>
+                             <span class="md3-kv-val text-truncate" style="max-width: 140px;" title="{{ employee.site.name }}">{{ employee.site.name }}</span>
+                         </div>
                      </div>
-                     <div class="md3-kv-row">
-                         <span class="md3-kv-key small">Emp Code</span>
-                         <span class="md3-kv-val small">{{ employee.emp_code }}</span>
-                     </div>
-                     <div class="md3-kv-row">
-                         <span class="md3-kv-key small">Site</span>
-                         <span class="md3-kv-val small text-truncate" style="max-width: 120px;">{{ employee.site.name }}</span>
-                     </div>
-                 </div>
-
-                 <!-- Simple stats below profile usually -->
-                 <div class="md3-profile-stats">
-                     <!-- Can put 'Leaves Balance' here if available, or just My Tasks count -->
-                     <div class="md3-p-stat-item">
-                         <span class="md3-p-stat-val">{{ total_my_tasks }}</span>
-                         <span class="md3-p-stat-lbl">Tasks</span>
-                     </div>
-                     <div class="md3-p-stat-item">
-                         <span class="md3-p-stat-val text-success">Active</span>
-                         <span class="md3-p-stat-lbl">Status</span>
+    
+                     <!-- Simple stats below profile usually -->
+                     <div class="md3-profile-stats">
+                         <div class="md3-p-stat-item">
+                             <span class="md3-p-stat-val text-primary">{{ total_my_tasks }}</span>
+                             <span class="md3-p-stat-lbl">Tasks</span>
+                         </div>
+                         <div class="md3-p-stat-item border-left pl-4" style="border-color: rgba(0,0,0,0.06) !important;">
+                             <span class="md3-p-stat-val text-success">Active</span>
+                             <span class="md3-p-stat-lbl">Status</span>
+                         </div>
                      </div>
                  </div>
             </div>

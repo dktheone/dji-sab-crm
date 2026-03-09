@@ -33,6 +33,7 @@ urlpatterns = [
     path('upcoming-followups/', views.upcoming_followups, name='upcoming_followups'),
     
     # Lead Contacts CRUD
+    path('contacts/all/', views.all_lead_contacts, name='all_lead_contacts'),
     path('<int:lead_id>/contacts/', views.lead_contacts_list, name='lead_contacts_list'),
     path('<int:lead_id>/contacts/create/', views.lead_contact_create, name='lead_contact_create'),
     path('contacts/<int:contact_id>/update/', views.lead_contact_update, name='lead_contact_update'),

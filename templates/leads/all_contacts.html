@@ -1,0 +1,127 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Content Header (Breadcrumbs) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2 align-items-center">
+                <div class="col-sm-6">
+                    <h1><i class="fas fa-address-book text-info mr-2"></i> Lead Contacts Directory</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'leads:lead_list' %}">Leads</a></li>
+                        <li class="breadcrumb-item active">Contacts</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="content">
+        <div class="container-fluid">
+            
+            <!-- Messages -->
+            {% if messages %}
+                <div class="row">
+                    <div class="col-12">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-outline card-info shadow-sm">
+                        <div class="card-header">
+                            <h3 class="card-title">All Customer Contacts</h3>
+                        </div>
+                        
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="contactsTable" class="table table-bordered table-striped table-hover">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Contact Name</th>
+                                            <th>Designation</th>
+                                            <th>Phone (Mobile 1)</th>
+                                            <th>Email</th>
+                                            <th>Hospital / Client Name</th>
+                                            <th>Lead Status</th>
+                                            <th>Linked Employee</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for contact in contacts %}
+                                            <tr>
+                                                <td><strong class="text-dark">{{ contact.name }}</strong></td>
+                                                <td>{{ contact.designation }}</td>
+                                                <td>
+                                                    <a href="tel:{{ contact.mobile1 }}" class="text-primary"><i class="fas fa-phone-alt fa-sm mr-1"></i>{{ contact.mobile1 }}</a>
+                                                </td>
+                                                <td>
+                                                    {% if contact.email %}
+                                                        <a href="mailto:{{ contact.email }}" class="text-info"><i class="fas fa-envelope fa-sm mr-1"></i>{{ contact.email }}</a>
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'leads:lead_follow_ups' contact.lead.lead_id %}" class="font-weight-bold" title="View Lead Follow-ups">
+                                                        {{ contact.lead.client_name }}
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <span class="badge badge-{% if contact.lead.lead_status == 'New' %}info{% elif contact.lead.lead_status == 'Converted' %}success{% else %}warning{% endif %}">
+                                                        {{ contact.lead.get_lead_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        {{ contact.lead.created_by.first_name }} {{ contact.lead.created_by.last_name }}
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </section>
+</div>
+
+{% endblock content %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        // Initialize DataTables
+        $('#contactsTable').DataTable({
+            "responsive": true, 
+            "lengthChange": true, 
+            "autoWidth": false,
+            "pageLength": 25,
+            "order": [[ 4, "desc" ]], // Order by Client Name column by default
+            "language": {
+                "search": "_INPUT_",
+                "searchPlaceholder": "Search contacts..."
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -17,11 +17,11 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Leads Overview ({{ leads.count }})</h3>
+                    <div class="card card-outline card-primary shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="card-title"><i class="fas fa-list mr-2"></i> Leads Overview</h3>
                             <div class="card-tools">
-
+                                <span class="badge badge-light text-primary">{{ leads.count }}</span> Total Leads
                             </div>
                         </div>
                         <div class="card-body">
@@ -32,78 +32,111 @@
                                 next 7 days.
                             </div>
                             {% endif %}
+                            
                             <!-- Search/Filter Form (Bootstrap v4) -->
-                            <form method="get" class="mb-3">
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <input type="text" name="q" value="{{ query }}" class="form-control"
-                                            placeholder="Search by client/contact name...">
+                            <div class="bg-light p-3 rounded mb-4 border border-light shadow-sm">
+                                <form method="get" class="mb-0">
+                                    <div class="row align-items-end">
+                                        <div class="col-md-4">
+                                            <label class="text-muted small mb-1"><i class="fas fa-search mr-1"></i> Search</label>
+                                            <input type="text" name="q" value="{{ query }}" class="form-control"
+                                                placeholder="Search by client/contact name...">
+                                        </div>
+                                        <div class="col-md-3 mt-2 mt-md-0">
+                                            <label class="text-muted small mb-1"><i class="fas fa-tags mr-1"></i> Status</label>
+                                            <select name="status" class="form-control custom-select">
+                                                <option value="">All Statuses</option>
+                                                {% for value, label in LeadStatus.choices %}
+                                                <option value="{{ value }}">{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 mt-2 mt-md-0">
+                                            <label class="text-muted small mb-1"><i class="fas fa-user-circle mr-1"></i> Assigned To</label>
+                                            <select name="employee" class="form-control custom-select">
+                                                <option value="">All Employees</option>
+                                                <option value="">Unassigned</option>
+                                                {% for emp in employees %}
+                                                <option value="{{ emp.id }}">{{ emp.first_name }} {{ emp.last_name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2 mt-3 mt-md-0">
+                                            <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-filter mr-1"></i> Filter</button>
+                                        </div>
                                     </div>
-                                    <div class="col-md-3">
-                                        <select name="status" class="form-control custom-select">
-                                            <option value="">All Statuses</option>
-                                            {% for value, label in LeadStatus.choices %}
-                                            <option value="{{ value }}">{{
-                                                label }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <select name="employee" class="form-control custom-select">
-                                            <option value="">All Employees</option>
-                                            <option value="">Unassigned</option>
-                                            {% for emp in employees %}
-                                            <option value="{{ emp.id }}">{{ emp.first_name }} {{ emp.last_name }}
-                                            </option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <button type="submit" class="btn btn-primary btn-block">Filter</button>
-                                    </div>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
+
                             <!-- Leads Table -->
                             <div class="table-responsive">
-                                <table class="table table-bordered table-striped">
-                                    <thead class="thead-dark">
+                                <table id="leadsTable" class="table table-bordered table-striped table-hover mt-3">
+                                    <thead class="bg-primary text-white">
                                         <tr>
-                                            <th>S.No.</th>
-                                            <th>Client Name</th>
-                                            <th>Status</th>
-                                            <th>Next Follow-up</th>
-                                            <th>Created By</th>
-                                            <th>Actions</th>
+                                            <th style="width: 5%" class="text-center">S.No.</th>
+                                            <th style="width: 30%">Client Name</th>
+                                            <th style="width: 10%" class="text-center">Status</th>
+                                            <th style="width: 15%">Next Follow-up</th>
+                                            <th style="width: 20%">Created By</th>
+                                            <th style="width: 20%" class="text-center">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for lead in leads %}
                                         <tr>
-                                            <td>{{ lead.lead_id }}</td>
-                                            <td>{{ lead.client_name|truncatechars:30 }}</td>
+                                            <td class="text-center font-weight-bold">{{ forloop.counter }}</td>
                                             <td>
+                                                <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}" class="font-weight-bold text-dark" title="View Follow-ups">
+                                                    {{ lead.client_name|truncatechars:40 }}
+                                                </a>
+                                            </td>
+                                            <td class="text-center">
                                                 <span
-                                                    class="badge badge-{% if lead.lead_status == 'New' %}info elif lead.lead_status == 'Converted' %}success else warning {% endif %}">
+                                                    class="badge badge-{% if lead.lead_status == 'New' %}info{% elif lead.lead_status == 'Converted' %}success{% else %}warning{% endif %} px-2 py-1">
                                                     {{ lead.get_lead_status_display }}
                                                 </span>
                                             </td>
-                                            <td>{{ lead.next_follow_up|date:"Y-m-d"|default:"N/A" }}</td>
-                                            <td>{{ lead.created_by.first_name|default:"Unassigned" }} {{lead.created_by.last_name|default:""}}</td>
                                             <td>
-                                                {% if lead.pk %}
-                                                <a href="{% url 'leads:lead_form' lead.lead_id %}"
-                                                    class="btn btn-sm btn-info">Edit</a>
-                                                <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}"
-                                                    class="btn btn-sm btn-secondary">Follow-ups</a>
-                                                {% if lead.lead_status != 'Converted' %}
-                                                <a href="{% url 'leads:convert_to_site' lead.lead_id %}"
-                                                    class="btn btn-sm btn-success">Convert to Site</a>
-                                                {% endif %}
-                                                <a href="{% url 'leads:employee_activity' lead.created_by_id %}"
-                                                    class="btn btn-sm btn-default">View Activity</a>
+                                                {% if lead.next_follow_up %}
+                                                    <span class="text-muted"><i class="far fa-calendar-alt mr-1"></i> {{ lead.next_follow_up|date:"M d, Y" }}</span>
                                                 {% else %}
-                                                <span class="text-muted">Invalid Lead</span>
+                                                    <span class="text-muted">-</span>
                                                 {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-light rounded-circle text-secondary d-flex justify-content-center align-items-center mr-2" style="width: 28px; height: 28px;">
+                                                        <i class="fas fa-user fa-xs"></i>
+                                                    </div>
+                                                    <span class="text-truncate">{{ lead.created_by.first_name|default:"Unassigned" }} {{lead.created_by.last_name|default:""}}</span>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    {% if lead.pk %}
+                                                    <a href="{% url 'leads:lead_form' lead.lead_id %}"
+                                                        class="btn btn-sm btn-outline-info mx-1" data-toggle="tooltip" title="Edit Lead">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}"
+                                                        class="btn btn-sm btn-outline-secondary mx-1" data-toggle="tooltip" title="Follow-up History">
+                                                        <i class="fas fa-history"></i>
+                                                    </a>
+                                                    {% if lead.lead_status != 'Converted' %}
+                                                    <a href="{% url 'leads:convert_to_site' lead.lead_id %}"
+                                                        class="btn btn-sm btn-outline-success mx-1" data-toggle="tooltip" title="Convert to Site">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </a>
+                                                    {% endif %}
+                                                    <a href="{% url 'leads:employee_activity' lead.created_by_id %}"
+                                                        class="btn btn-sm btn-outline-dark mx-1" data-toggle="tooltip" title="Employee Activity">
+                                                        <i class="fas fa-chart-line"></i>
+                                                    </a>
+                                                    {% else %}
+                                                    <span class="text-muted small">Invalid</span>
+                                                    {% endif %}
+                                                </div>
                                             </td>
                                         </tr>
                                         {% empty %}
@@ -133,5 +166,34 @@
     </section>
 </div>
 
+{% endblock %}
 
+{% block extra_scripts %}
+<script>
+    $(document).ready(function () {
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+        
+        // Initialize DataTables
+        $('#leadsTable').DataTable({
+            "responsive": true, 
+            "lengthChange": true, 
+            "autoWidth": false,
+            "pageLength": 25,
+            "order": [[ 0, "desc" ]], // Order by S.No (ID) descending
+            "language": {
+                "search": "_INPUT_",
+                "searchPlaceholder": "Search within table..."
+            },
+            "columnDefs": [
+                { "orderable": false, "targets": 5 }, // specific columns like actions not sortable
+                { "className": "align-middle", "targets": "_all" } // Vertically center all cells
+            ],
+            // Add custom DOM structure to position components nicely
+            "dom": "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                   "<'row'<'col-sm-12'tr>>" +
+                   "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        });
+    });
+</script>
 {% endblock %}

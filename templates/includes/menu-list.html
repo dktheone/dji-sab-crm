@@ -140,6 +140,13 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a href="{% url 'leads:all_lead_contacts' %}"
+                    class="nav-link {% if view_name == 'leads:all_lead_contacts' %}active{% endif %}">
+                    <i class="fas fa-address-book nav-icon"></i>
+                    <p>Lead Contacts</p>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="{% url 'leads:my_activity' %}"
                     class="nav-link {% if view_name == 'leads:employee_activity' %}active{% endif %}">
                     <i class="fas fa-chart-line nav-icon"></i>
@@ -222,6 +229,14 @@
                     class="nav-link {% if view_name == 'leads:lead_form_add' %}active{% endif %}">
                     <i class="fas fa-plus-circle nav-icon"></i>
                     <p>Add New Lead</p>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a href="{% url 'leads:all_lead_contacts' %}"
+                    class="nav-link {% if view_name == 'leads:all_lead_contacts' %}active{% endif %}">
+                    <i class="fas fa-address-book nav-icon"></i>
+                    <p>Lead Contacts</p>
                 </a>
             </li>
 

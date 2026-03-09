@@ -101,19 +101,46 @@ class FollowUpForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'font-weight-bold'
         self.helper.layout = Layout(
-            HTML("<h4 class='mt-3 mb-2'>📞 Follow-up Details</h4><hr>"),
             Row(
                 Column(Field('follow_up_date'), css_class='col-md-4'),
                 Column(Field('feedback'), css_class='col-md-4'),
-                Column(Field('quotation_sent'), css_class='col-md-4'),
-            ),
-            Row(
-                Column(Field('quotation_date'), css_class='col-md-4'),
-                Column(Field('closing_date'), css_class='col-md-4'),
                 Column(Field('next_follow_up_date'), css_class='col-md-4'),
             ),
+            Row(
+                Column(
+                    Field('quotation_sent'), 
+                    css_class='col-md-4 d-flex align-items-center mt-4'
+                ),
+                Column(Field('quotation_date', css_class='quotation-details'), css_class='col-md-4 quotation-details'),
+                Column(Field('closing_date'), css_class='col-md-4'),
+            ),
             Field('remarks'),
+            HTML("""
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const quoteCheckbox = document.getElementById('id_quotation_sent');
+                    const quoteDateField = document.getElementById('div_id_quotation_date'); // Crispy forms wrap in div_id_FIELDNAME
+                    
+                    function toggleQuoteDate() {
+                        if(quoteCheckbox && quoteDateField) {
+                            if(quoteCheckbox.checked) {
+                                quoteDateField.style.display = 'block';
+                            } else {
+                                quoteDateField.style.display = 'none';
+                                document.getElementById('id_quotation_date').value = '';
+                            }
+                        }
+                    }
+                    
+                    if(quoteCheckbox) {
+                        quoteCheckbox.addEventListener('change', toggleQuoteDate);
+                        toggleQuoteDate(); // Initial
+                    }
+                });
+            </script>
+            """)
         )
 
 

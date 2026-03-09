@@ -121,6 +121,18 @@ def lead_follow_ups(request, lead_id):
         messages.error(request, 'Invalid lead.')
         return redirect('leads:lead_list')
 
+    # SECURITY FIX: Ensure the user owns the lead or is admin/hr
+    user_role = request.user.groups.first().name if request.user.groups.exists() else None
+    if user_role not in ['admin', 'hr']:
+        try:
+            current_employee = Employee.objects.get(emp_code=request.user.username, status='Active')
+            if lead.created_by != current_employee:
+                messages.error(request, 'You do not have permission to view or edit follow-ups for this lead.')
+                return redirect('leads:lead_list')
+        except Employee.DoesNotExist:
+             messages.error(request, 'You must be linked to an Employee record.')
+             return redirect('leads:lead_list')
+
     follow_ups = FollowUp.objects.filter(lead=lead).order_by('-follow_up_date')
     if request.method == 'POST':
         form = FollowUpForm(request.POST)
@@ -154,6 +166,18 @@ def convert_to_site(request, lead_id):
         messages.error(request, 'Cannot convert this lead.')
         return redirect('leads:lead_list')
 
+    # SECURITY FIX: Ensure the user owns the lead or is admin/hr
+    user_role = request.user.groups.first().name if request.user.groups.exists() else None
+    if user_role not in ['admin', 'hr']:
+        try:
+            current_employee = Employee.objects.get(emp_code=request.user.username, status='Active')
+            if lead.created_by != current_employee:
+                messages.error(request, 'You do not have permission to convert this lead.')
+                return redirect('leads:lead_list')
+        except Employee.DoesNotExist:
+            messages.error(request, 'You must be linked to an Employee record.')
+            return redirect('leads:lead_list')
+
     if request.method == 'POST':
         form = SiteConversionForm(request.POST, lead=lead)
         if form.is_valid():
@@ -166,17 +190,21 @@ def convert_to_site(request, lead_id):
                 lead.converted_site = site
                 lead.save()
 
-                # BUG FIX #4: Proper employee for conversion log
+                # BUG FIX #5: Proper employee for conversion log
+                employee = None
                 try:
                     employee = Employee.objects.get(emp_code=request.user.username, status='Active')
                 except Employee.DoesNotExist:
-                    employee = Employee.objects.filter(status='Active').first()
+                    # Let it be None, we should adjust the model if necessary or log it differently.
+                    # As a fallback, we get the admin employee if one exists, but properly logged.
+                    if user_role in ['admin', 'hr']:
+                        employee = Employee.objects.filter(emp_code='admin').first() or Employee.objects.filter(status='Active').first()
                     logger.warning(f"User {request.user.username} has no Employee link, using fallback for conversion log")
 
                 LeadConversionLog.objects.create(
                     lead=lead,
                     site=site,
-                    converted_by=employee,
+                    converted_by=employee if employee else lead.created_by, # Fallback to lead creator if no employee found for current user
                     remarks=request.POST.get('conversion_remarks', f'Converted from Lead #{lead.lead_id}')
                 )
 
@@ -341,6 +369,28 @@ def lead_contacts_list(request, lead_id):
     } for c in contacts]
     return JsonResponse({'contacts': data})
 
+
+@role_required('sales', 'admin', 'hr', 'manager', 'employee')
+def all_lead_contacts(request):
+    """Global view of all lead contacts with role-based filtering"""
+    user_role = request.user.groups.first().name if request.user.groups.exists() else None
+    
+    if user_role in ['admin', 'hr']:
+        # Admin and HR see everything
+        contacts = LeadContact.objects.select_related('lead').all().order_by('-created_at')
+    else:
+        # Sales folks only see contacts for leads they own
+        try:
+            employee = Employee.objects.get(emp_code=request.user.username, status='Active')
+            contacts = LeadContact.objects.select_related('lead').filter(lead__created_by=employee).order_by('-created_at')
+        except Employee.DoesNotExist:
+            messages.error(request, 'You must be linked to an active Employee record.')
+            return redirect('core:dashboard')
+            
+    return render(request, 'leads/all_contacts.html', {
+        'contacts': contacts,
+        'view_name': request.resolver_match.view_name
+    })
 
 @role_required('sales', 'admin', 'hr', 'manager', 'employee')
 def lead_contact_create(request, lead_id):

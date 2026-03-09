@@ -73,7 +73,7 @@ class Lead(models.Model):
 
 class FollowUp(models.Model):
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='follow_ups')
-    follow_up_date = models.DateField(verbose_name="Last Follow-Up Date")
+    follow_up_date = models.DateField(verbose_name="Date of Contact")
     feedback = models.CharField(max_length=20, choices=FeedbackType.choices, verbose_name="Feedback")
     quotation_sent = models.BooleanField(default=False, verbose_name="Quotation Sent")
     quotation_date = models.DateField(blank=True, null=True, verbose_name="Quotation Date")
@@ -98,7 +98,7 @@ class FollowUp(models.Model):
             self.quotation_date = date.today()
         
         # BUG FIX #2: Update lead status to QUOTED when quotation is sent
-        if self.quotation_sent and self.lead.lead_status == LeadStatus.IN_PROGRESS:
+        if self.quotation_sent and self.lead.lead_status in [LeadStatus.NEW, LeadStatus.IN_PROGRESS]:
             self.lead.lead_status = LeadStatus.QUOTED
             self.lead.save(update_fields=['lead_status'])
         

@@ -4,33 +4,35 @@
 
 {% block content %}
 <div class="content-wrapper">
-    <!-- Content Header (Breadcrumbs) -->
-    <section class="content-header">
+    <!-- Hero Header -->
+    <div class="bg-primary text-white pt-4 pb-5">
         <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1>Follow-Ups for Lead #{{ lead.lead_id }}: {{ lead.client_name|title }}</h1>
+            <div class="row mb-2 align-items-center">
+                <div class="col-sm-9">
+                    <h1 class="m-0 font-weight-bold">
+                        <i class="fas fa-building mr-2"></i> {{ lead.client_name|title }}
+                    </h1>
+                    <p class="mb-0 mt-1 text-light">Lead #{{ lead.lead_id }} | Follow-Up Dashboard</p>
                 </div>
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="{% url 'leads:lead_list' %}">Leads</a></li>
-                        
-                        <li class="breadcrumb-item active">Follow-Ups</li>
+                <div class="col-sm-3">
+                    <ol class="breadcrumb float-sm-right bg-transparent p-0 m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'leads:lead_list' %}" class="text-light">Leads</a></li>
+                        <li class="breadcrumb-item active text-white">Follow-Ups</li>
                     </ol>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- Main Content -->
-    <section class="content">
+    <section class="content" style="margin-top: -30px;">
         <div class="container-fluid">
             <!-- Messages -->
             {% if messages %}
                 <div class="row">
                     <div class="col-12">
                         {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
                                 {{ message }}
                                 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
                             </div>
@@ -39,126 +41,202 @@
                 </div>
             {% endif %}
 
+            <!-- TOP ROW: Summary & Contacts -->
             <div class="row">
-                <!-- Lead Summary Card -->
-                <div class="col-md-12">
-                    <div class="card card-info">
-                        <div class="card-header">
-                            <h3 class="card-title">Lead Details</h3>
-                        </div>
-                        <div class="card-body">
+                <!-- Lead Summary Card (Left 70% ~ col-lg-8) -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card shadow-sm border-0 rounded h-100">
+                        <div class="card-body p-4">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <dl class="row">
-                                        <dt class="col-sm-4">Client Name:</dt>
-                                        <dd class="col-sm-8">{{ lead.client_name }}</dd>
-                                        <dt class="col-sm-4">Contact:</dt>
-                                        <dd class="col-sm-8">{{ lead.contact_person }} ({{ lead.designation }})</dd>
-                                        <dt class="col-sm-4">Mobile:</dt>
-                                        <dd class="col-sm-8">{{ lead.mobile_no }}</dd>
-                                        <dt class="col-sm-4">Status:</dt>
-                                        <dd class="col-sm-8">
-                                            <span class="badge badge-{% if lead.lead_status == 'New' %}info elif lead.lead_status == 'Converted' %}success else warning {% endif %}">
-                                                {{ lead.get_lead_status_display }}
-                                            </span>
-                                        </dd>
-                                    </dl>
+                                <!-- Status & Core Info -->
+                                <div class="col-md-4 mb-3">
+                                    <h6 class="text-muted text-uppercase mb-3"><i class="fas fa-info-circle mr-1"></i> Core Details</h6>
+                                    <div class="mb-3">
+                                        <label class="mb-0 text-muted small">Current Status</label><br>
+                                        <span class="badge badge-{% if lead.lead_status == 'New' %}info{% elif lead.lead_status == 'Converted' %}success{% else %}warning{% endif %} px-3 py-2 text-sm rounded-pill mt-1">
+                                            {{ lead.get_lead_status_display }}
+                                        </span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="mb-0 text-muted small">Service Requirement</label>
+                                        <p class="font-weight-bold mb-0">{{ lead.get_service_requirement_display }}</p>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <dl class="row">
-                                        <dt class="col-sm-4">Service Req:</dt>
-                                        <dd class="col-sm-8">{{ lead.get_service_requirement_display }}</dd>
-                                        <dt class="col-sm-4">Next Follow-Up:</dt>
-                                        <dd class="col-sm-8">{{ lead.next_follow_up|date:"Y-m-d"|default:"N/A" }}</dd>
-                                        <dt class="col-sm-4">Created By:</dt>
-                                        <dd class="col-sm-8">{{ lead.created_by.first_name|default:"Unassigned" }} {{ lead.created_by.last_name|default:"" }}</dd>
-                                        <dt class="col-sm-4">Entry Date:</dt>
-                                        <dd class="col-sm-8">{{ lead.entry_date|date:"Y-m-d" }}</dd>
-                                    </dl>
+                                
+                                <!-- Contact Info -->
+                                <div class="col-md-4 mb-3 border-left border-right">
+                                    <div class="pl-md-2">
+                                        <h6 class="text-muted text-uppercase mb-3"><i class="fas fa-address-card mr-1"></i> Primary Contact</h6>
+                                        <div class="mb-3">
+                                            <p class="font-weight-bold mx-0 mb-0">{{ lead.contact_person }}</p>
+                                            <p class="text-muted small mb-1">{{ lead.designation }}</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="mb-0 text-muted small"><i class="fas fa-phone mr-1"></i> Mobile</label>
+                                            <p class="mb-0"><a href="tel:{{ lead.mobile_no }}">{{ lead.mobile_no }}</a></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Metadata -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="pl-md-2">
+                                        <h6 class="text-muted text-uppercase mb-3"><i class="fas fa-clock mr-1"></i> Timeline / Docs</h6>
+                                        <div class="mb-3">
+                                            <label class="mb-0 text-muted small">Next Follow-Up Due</label>
+                                            <p class="font-weight-bold text-danger mb-0">{{ lead.next_follow_up|date:"M d, Y"|default:"Not Scheduled" }}</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="mb-0 text-muted small">Created By</label>
+                                            <p class="mb-0">{{ lead.created_by.first_name|default:"Unassigned" }} {{ lead.created_by.last_name|default:"" }}</p>
+                                            <p class="text-muted small mb-0">On {{ lead.entry_date|date:"M d, Y" }}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                            
                             {% if lead.remarks %}
-                                <hr>
-                                <h6 class="text-muted">Remarks:</h6>
-                                <p class="mb-0">{{ lead.remarks }}</p>
+                                <hr class="my-3">
+                                <div class="bg-light p-3 rounded">
+                                    <h6 class="text-muted mb-2"><i class="fas fa-comment-alt mr-1"></i> General Remarks</h6>
+                                    <p class="mb-0 text-dark">{{ lead.remarks }}</p>
+                                </div>
                             {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lead Contacts Section (Right 30% ~ col-lg-4) -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card shadow-sm border-0 rounded h-100">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                            <h4 class="card-title font-weight-bold text-dark"><i class="fas fa-address-book text-info mr-2"></i> Linked Contacts</h4>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="contact-list" style="max-height: 380px; overflow-y: auto; padding-right: 5px;">
+                                {% for contact in lead.contacts.all %}
+                                <div class="card border rounded mb-3 shadow-none bg-light">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="bg-white border text-primary d-flex justify-content-center align-items-center rounded-circle mr-3 shadow-sm" style="width: 38px; height: 38px; flex-shrink: 0;">
+                                                <strong>{{ contact.name|make_list|first|upper }}</strong>
+                                            </div>
+                                            <div style="line-height: 1.2;">
+                                                <strong class="text-dark d-block">{{ contact.name }}</strong>
+                                                <small class="text-muted">{{ contact.designation }}</small>
+                                            </div>
+                                            <div class="ml-auto pl-2">
+                                                <span class="badge badge-{% if contact.status == 'Active' %}success{% else %}secondary{% endif %} badge-pill px-2 py-1" style="font-size: 0.65rem;">
+                                                    {{ contact.status }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="small pl-1">
+                                            <div class="mb-1"><i class="fas fa-phone-alt text-muted fa-fw mr-1"></i> <a href="tel:{{ contact.mobile1 }}" class="text-primary">{{ contact.mobile1 }}</a></div>
+                                            {% if contact.email %}<div><i class="fas fa-envelope text-muted fa-fw mr-1"></i> <a href="mailto:{{ contact.email }}" class="text-primary">{{ contact.email }}</a></div>{% endif %}
+                                        </div>
+                                        {% if contact.remarks %}
+                                        <div class="small text-muted mt-2 pt-2 border-top border-light">
+                                            {{ contact.remarks }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="text-center text-muted py-5">
+                                    <div class="mb-3"><i class="far fa-address-card fa-3x text-light"></i></div>
+                                    <p class="mb-0">No contacts found.</p>
+                                    <small>Edit the lead to add contacts.</small>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- BOTTOM ROW: History & Form -->
             <div class="row">
-                <!-- Existing Follow-Ups Table -->
-                <div class="col-md-6">
-                    <div class="card card-secondary">
-                        <div class="card-header">
-                            <h3 class="card-title">Existing Follow-Ups ({{ follow_ups.count }})</h3>
-                        </div>
-                        <div class="card-body table-responsive p-0">
-                            {% if follow_ups %}
-                                <table class="table table-hover text-nowrap">
-                                    <thead class="thead-dark">
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Feedback</th>
-                                            <th>Quotation Sent</th>
-                                            <th>Closing Date</th>
-                                            <th>Remarks</th>
-                                            <th>By</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for fu in follow_ups %}
-                                            <tr>
-                                                <td>{{ fu.follow_up_date|date:"Y-m-d" }}</td>
-                                                <td>
-                                                    <span class="badge badge-{% if fu.feedback == 'Positive' %}success elif fu.feedback == 'Negative' %}danger else info {% endif %}">
-                                                        {{ fu.get_feedback_display }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    {% if fu.quotation_sent %}
-                                                        <i class="fas fa-check text-success"></i> {{ fu.quotation_date|date:"Y-m-d"|default:"Today" }}
-                                                    {% else %}
-                                                        <i class="fas fa-times text-danger"></i> No
-                                                    {% endif %}
-                                                </td>
-                                                <td>{{ fu.closing_date|date:"Y-m-d"|default:"N/A" }}</td>
-                                                <td>{{ fu.remarks|truncatechars:50|default:"N/A" }}</td>
-                                                <td>{{ fu.created_by.first_name|default:"Unassigned" }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            {% else %}
-                                <div class="text-center py-4 text-muted">
-                                    <i class="fas fa-comments fa-3x mb-3"></i>
-                                    <p>No follow-ups yet. Add your first one below!</p>
+                <!-- Existing Follow-Ups Timeline (Left Scrollable) -->
+                <div class="col-lg-7 mb-4">
+                    <h4 class="mb-3 font-weight-bold text-dark">Follow-Up History</h4>
+                    <div style="max-height: 600px; overflow-y: auto; overflow-x: hidden; padding-right: 15px;">
+                        {% if follow_ups %}
+                            <div class="timeline">
+                                {% for fu in follow_ups %}
+                                    <!-- timeline time label -->
+                                    <div class="time-label">
+                                        <span class="bg-{% if fu.feedback == 'Positive' %}success{% elif fu.feedback == 'Negative' %}danger{% else %}info{% endif %} text-white px-3 py-1 rounded-pill shadow-sm text-sm">
+                                            {{ fu.follow_up_date|date:"d M. Y" }}
+                                        </span>
+                                    </div>
+                                    <!-- /.timeline-label -->
+                                    <!-- timeline item -->
+                                    <div>
+                                        <i class="fas fa-{% if fu.feedback == 'Positive' %}thumbs-up bg-success{% elif fu.feedback == 'Negative' %}thumbs-down bg-danger{% else %}comments bg-info{% endif %}"></i>
+                                        <div class="timeline-item shadow-sm border-0 rounded">
+                                            <span class="time"><i class="fas fa-user mr-1"></i> {{ fu.created_by.first_name|default:"Auto" }}</span>
+                                            <h3 class="timeline-header font-weight-bold border-bottom-0 pb-0 text-md">
+                                                Feedback: <span class="text-{% if fu.feedback == 'Positive' %}success{% elif fu.feedback == 'Negative' %}danger{% else %}info{% endif %}">{{ fu.get_feedback_display }}</span>
+                                            </h3>
+
+                                            <div class="timeline-body pt-2 text-dark">
+                                                {{ fu.remarks|default:"No remarks provided." }}
+                                                
+                                                {% if fu.quotation_sent or fu.closing_date %}
+                                                <div class="mt-3 bg-light p-2 rounded">
+                                                    <div class="row text-sm">
+                                                        {% if fu.quotation_sent %}
+                                                        <div class="col-6">
+                                                            <i class="fas fa-file-invoice-dollar text-success mr-1"></i> <strong>Quotation Sent:</strong> {{ fu.quotation_date|date:"M d, Y"|default:"Yes" }}
+                                                        </div>
+                                                        {% endif %}
+                                                        {% if fu.closing_date %}
+                                                        <div class="col-6">
+                                                            <i class="fas fa-calendar-check text-warning mr-1"></i> <strong>Closing Date:</strong> {{ fu.closing_date|date:"M d, Y" }}
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END timeline item -->
+                                {% endfor %}
+                                <div>
+                                    <i class="fas fa-clock bg-gray"></i>
                                 </div>
-                            {% endif %}
-                        </div>
+                            </div>
+                        {% else %}
+                            <div class="card shadow-sm border-0 rounded text-center py-5">
+                                <div class="card-body">
+                                    <i class="fas fa-comments fa-3x text-light mb-3"></i>
+                                    <h5 class="text-muted font-weight-normal">No follow-ups recorded yet.</h5>
+                                    <p class="text-muted small">Log your first interaction using the form.</p>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
 
-                <!-- Add New Follow-Up Form -->
-                <div class="col-md-6">
-                    <div class="card card-success">
-                        <div class="card-header">
-                            <h3 class="card-title">Add New Follow-Up</h3>
+                <!-- Add New Follow-Up Form (Right Sticky) -->
+                <div class="col-lg-5">
+                    <div class="card shadow border-0 rounded" style="position: sticky; top: 20px;">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-2">
+                            <h4 class="card-title font-weight-bold text-dark"><i class="fas fa-plus-circle text-success mr-2"></i> Log Interaction</h4>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body bg-light rounded-bottom pb-4 p-4">
                             <form method="post">
                                 {% csrf_token %}
                                 {% crispy form %}
-                                <div class="form-group">
-                                    <label for="id_next_follow_up">Next Follow-Up Date (Optional)</label>
-                                    <input type="date" name="next_follow_up" id="id_next_follow_up" class="form-control" value="{{ lead.next_follow_up|date:'Y-m-d' }}">
-                                    <small class="form-text text-muted">Schedule the next contact.</small>
-                                </div>
-                                <button type="submit" class="btn btn-success btn-block">Add Follow-Up</button>
+                                <button type="submit" class="btn btn-success btn-lg btn-block shadow-sm rounded-pill mt-4 font-weight-bold">
+                                    <i class="fas fa-save mr-1"></i> Submit Follow-Up
+                                </button>
                             </form>
-                            <hr>
-                            <a href="{% url 'leads:lead_list' %}" class="btn btn-secondary btn-block">Back to Leads</a>
+                            <div class="text-center mt-4 pt-3 border-top border-secondary">
+                                <a href="{% url 'leads:lead_list' %}" class="text-muted"><i class="fas fa-arrow-left mr-1"></i> Back to Leads List</a>
+                            </div>
                         </div>
                     </div>
                 </div>
