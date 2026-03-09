@@ -31,7 +31,7 @@ django-dbbackup==4.2.1
 # Additional Libraries
 country_state_city==0.1.0
 django-select2==8.4.1
-django-crispy-forms
+django-select2-forms
 django-crispy-forms
 Pillow==11.3.0
 
