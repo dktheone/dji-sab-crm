@@ -11,7 +11,10 @@ build/
 env
 env_sab
 /staticfiles/
-
+/config/settings.py.backup
+/logs/
+/media/Uploads/
+/venv/
 #src
 *.sqlite*
 .env_sab
