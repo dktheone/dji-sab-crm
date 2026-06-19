@@ -9,27 +9,6 @@ EMPLOYEE VIEW
         .sidebar, .navbar, .content-header { display: none; }
         .content-wrapper { margin-left: 0; }
     }
-    </style>
-    <style>
-        /* Wizard step indicator styles */
-        .wizard-steps {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .step {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            background: #eee;
-            border: 1px solid #ddd;
-        }
-        .step.active {
-            background: #007bff;
-            color: white;
-        }
-    </style>
-    <style>
         /* body {
             font-family: Arial, sans-serif;
             font-size: 10pt;
@@ -51,6 +30,15 @@ EMPLOYEE VIEW
             font-weight: bold;
             border-left: 4px solid #007bff;
             page-break-after: avoid;
+        }
+        .pdf-section {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin-bottom: 20px;
+        }
+        tr, table {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
         }
         .cv-header {
             text-align: left;
@@ -172,26 +160,7 @@ EMPLOYEE VIEW
 {% block content %}
 
 <div class="content-wrapper">
-    <div class="content-header">
-
-
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0">Employee Profile: {{ employee.first_name }} {{ employee.last_name }}</h1>
-                </div>
-                
-            </div>
-        </div>
-    </div>
-    
-    <!-- Wizard Step Indicator -->
-    <div class="wizard-steps">
-        <div class="step"><a href="{% url 'emp:employee_edit' employee.id %}">1. Registration</a></div>
-        <div class="step"><a href="{% url 'emp:employee_details' employee.id %}">2. Education/Experience/Family</a></div>
-        <div class="step"><a href="{% url 'emp:employee_uploads' employee.id %}">3. Uploads</a></div>
-        <div class="step active">4. Print Profile</div>
-    </div>
+    {% include 'includes/employee_wizard_steps.html' with active_step=5 %}
     
     <div class="container-fluid bg-dark">
         <div class="row">
@@ -235,285 +204,338 @@ EMPLOYEE VIEW
             
         </div>
         <!-- Personal Information -->
-        <div class="section-title">Personal Information</div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Employee Code:</div>
-                    <div class="col-7 value">{{ employee.emp_code|default:"-" }}</div>
+        <div class="pdf-section">
+            <div class="section-title">Personal Information</div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Employee Code:</div>
+                        <div class="col-7 value">{{ employee.emp_code|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Date of Birth:</div>
+                        <div class="col-7 value">{{ employee.dob|date:"d/m/Y"|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Gender:</div>
+                        <div class="col-7 value">{{ employee.gender|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Marital Status:</div>
+                        <div class="col-7 value">{{ employee.marital_status|default:"-" }}</div>
+                    </div>
                 </div>
-                <div class="row">
-                    <div class="col-5 label">Date of Birth:</div>
-                    <div class="col-7 value">{{ employee.dob|date:"d/m/Y"|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">Gender:</div>
-                    <div class="col-7 value">{{ employee.gender|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">Marital Status:</div>
-                    <div class="col-7 value">{{ employee.marital_status|default:"-" }}</div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Father/Husband Name:</div>
-                    <div class="col-7 value">{{ employee.father_name|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">Mother's Name:</div>
-                    <div class="col-7 value">{{ employee.mother_name|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">Nationality:</div>
-                    <div class="col-7 value">{{ employee.nationality|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">Blood Group:</div>
-                    <div class="col-7 value">{{ employee.blood_group|default:"-" }}</div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Father/Husband Name:</div>
+                        <div class="col-7 value">{{ employee.father_name|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Mother's Name:</div>
+                        <div class="col-7 value">{{ employee.mother_name|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Nationality:</div>
+                        <div class="col-7 value">{{ employee.nationality|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Blood Group:</div>
+                        <div class="col-7 value">{{ employee.blood_group|default:"-" }}</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Contact Information -->
-        <div class="section-title">Contact Information</div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Correspondence Address:</div>
-                    <div class="col-7 value">{{ employee.cor_address|default:"-" }}</div>
+        <div class="pdf-section">
+            <div class="section-title">Contact Information</div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Correspondence Address:</div>
+                        <div class="col-7 value">{{ employee.cor_address|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">City/State:</div>
+                        <div class="col-7 value">{{ employee.cor_city|default:"-" }} / {{ employee.cor_state|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Pincode:</div>
+                        <div class="col-7 value">{{ employee.cor_pincode|default:"-" }}</div>
+                    </div>
                 </div>
-                <div class="row">
-                    <div class="col-5 label">City/State:</div>
-                    <div class="col-7 value">{{ employee.cor_city|default:"-" }} / {{ employee.cor_state|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">Pincode:</div>
-                    <div class="col-7 value">{{ employee.cor_pincode|default:"-" }}</div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Permanent Address:</div>
-                    <div class="col-7 value">{{ employee.per_address|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">City/State:</div>
-                    <div class="col-7 value">{{ employee.per_city|default:"-" }} / {{ employee.per_state|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">Pincode:</div>
-                    <div class="col-7 value">{{ employee.per_pincode|default:"-" }}</div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Permanent Address:</div>
+                        <div class="col-7 value">{{ employee.per_address|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">City/State:</div>
+                        <div class="col-7 value">{{ employee.per_city|default:"-" }} / {{ employee.per_state|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Pincode:</div>
+                        <div class="col-7 value">{{ employee.per_pincode|default:"-" }}</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Identity Proofs -->
-        <div class="section-title">Identity Proofs</div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Aadhaar Number:</div>
-                    <div class="col-7 value">{{ employee.aadhaar_no|default:"-" }}</div>
+        <div class="pdf-section">
+            <div class="section-title">Identity Proofs</div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Aadhaar Number:</div>
+                        <div class="col-7 value">{{ employee.aadhaar_no|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">PAN Card:</div>
+                        <div class="col-7 value">{{ employee.pan_card|default:"-" }}</div>
+                    </div>
                 </div>
-                <div class="row">
-                    <div class="col-5 label">PAN Card:</div>
-                    <div class="col-7 value">{{ employee.pan_card|default:"-" }}</div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Passport Number:</div>
-                    <div class="col-7 value">{{ employee.passport_no|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">Other ID Proof:</div>
-                    <div class="col-7 value">{{ employee.other_id_proof_type|default:"-" }}: {{ employee.other_id_proof_no|default:"-" }}</div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Passport Number:</div>
+                        <div class="col-7 value">{{ employee.passport_no|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Other ID Proof:</div>
+                        <div class="col-7 value">{{ employee.other_id_proof_type|default:"-" }}: {{ employee.other_id_proof_no|default:"-" }}</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Job Information -->
-        <div class="section-title">Job Information</div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Site:</div>
-                    <div class="col-7 value">{{ employee.site|default:"-" }}</div>
+        <div class="pdf-section">
+            <div class="section-title">Job Information</div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Site:</div>
+                        <div class="col-7 value">{{ employee.site|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Designation:</div>
+                        <div class="col-7 value">{{ employee.designation|default:"-" }}</div>
+                    </div>
                 </div>
-                <div class="row">
-                    <div class="col-5 label">Designation:</div>
-                    <div class="col-7 value">{{ employee.designation|default:"-" }}</div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Joining Date:</div>
-                    <div class="col-7 value">{{ employee.joining_date|date:"d/m/Y"|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">Department:</div>
-                    <div class="col-7 value">{{ employee.department|default:"-" }}</div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Joining Date:</div>
+                        <div class="col-7 value">{{ employee.joining_date|date:"d/m/Y"|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Department:</div>
+                        <div class="col-7 value">{{ employee.department|default:"-" }}</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Statutory Details -->
-        <div class="section-title">Statutory Details</div>
-        <div class="row">
-            <div class="col-md-12">
-                <div class="row">
-                    <div class="col-2 label">UAN Number:</div>
-                    <div class="col-4 value">{{ employee.uan_no|default:"-" }}</div>
-                
-                    <div class="col-2 label">PF/ESIC Number:</div>
-                    <div class="col-4 value">{{ employee.pf_esic_no|default:"-" }}</div>
+        <div class="pdf-section">
+            <div class="section-title">Statutory Details</div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="row">
+                        <div class="col-2 label">UAN Number:</div>
+                        <div class="col-4 value">{{ employee.uan_no|default:"-" }}</div>
+                    
+                        <div class="col-2 label">PF/ESIC Number:</div>
+                        <div class="col-4 value">{{ employee.pf_esic_no|default:"-" }}</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-
-        
         <!-- Bank Details -->
-        <div class="section-title">Bank Details</div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Bank Name:</div>
-                    <div class="col-7 value">{{ employee.bank_name|default:"-" }}</div>
+        <div class="pdf-section">
+            <div class="section-title">Bank Details</div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Bank Name:</div>
+                        <div class="col-7 value">{{ employee.bank_name|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Account Number:</div>
+                        <div class="col-7 value">{{ employee.account_no|default:"-" }}</div>
+                    </div>
                 </div>
-                <div class="row">
-                    <div class="col-5 label">Account Number:</div>
-                    <div class="col-7 value">{{ employee.account_no|default:"-" }}</div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">IFSC Code:</div>
-                    <div class="col-7 value">{{ employee.ifsc_code|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">UPI ID:</div>
-                    <div class="col-7 value">{{ employee.upi_id|default:"-" }}</div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">IFSC Code:</div>
+                        <div class="col-7 value">{{ employee.ifsc_code|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">UPI ID:</div>
+                        <div class="col-7 value">{{ employee.upi_id|default:"-" }}</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Emergency Contact -->
-        <div class="section-title">Emergency Contact</div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Name:</div>
-                    <div class="col-7 value">{{ employee.emergency_person_name|default:"-" }}</div>
+        <div class="pdf-section">
+            <div class="section-title">Emergency Contact</div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Name:</div>
+                        <div class="col-7 value">{{ employee.emergency_person_name|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Relationship:</div>
+                        <div class="col-7 value">{{ employee.emergency_relation|default:"-" }}</div>
+                    </div>
                 </div>
-                <div class="row">
-                    <div class="col-5 label">Relationship:</div>
-                    <div class="col-7 value">{{ employee.emergency_relation|default:"-" }}</div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-5 label">Contact Number:</div>
-                    <div class="col-7 value">{{ employee.emergency_contact|default:"-" }}</div>
-                </div>
-                <div class="row">
-                    <div class="col-5 label">Alternative Number:</div>
-                    <div class="col-7 value">{{ employee.emergency_alternative_no|default:"-" }}</div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-5 label">Contact Number:</div>
+                        <div class="col-7 value">{{ employee.emergency_contact|default:"-" }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-5 label">Alternative Number:</div>
+                        <div class="col-7 value">{{ employee.emergency_alternative_no|default:"-" }}</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Education Details -->
-        <div class="section-title">Education Details</div>
-        {% if educations %}
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Degree</th>
-                    <th>Institution</th>
-                    <th>Passing Year</th>
-                    <th>Percentage</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for edu in educations %}
-                <tr>
-                    <td>{{ edu.degree|default:"-" }}</td>
-                    <td>{{ edu.institution|default:"-" }}</td>
-                    <td>{{ edu.passing_year|default:"-" }}</td>
-                    <td>{{ edu.percentage|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p>No education details available.</p>
-        {% endif %}
+        <div class="pdf-section">
+            <div class="section-title">Education Details</div>
+            {% if educations %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Degree</th>
+                        <th>Institution</th>
+                        <th>Passing Year</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for edu in educations %}
+                    <tr>
+                        <td>{{ edu.degree|default:"-" }}</td>
+                        <td>{{ edu.institution|default:"-" }}</td>
+                        <td>{{ edu.passing_year|default:"-" }}</td>
+                        <td>{{ edu.percentage|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No education details available.</p>
+            {% endif %}
+        </div>
 
         <!-- Experience Details -->
-        <div class="section-title">Work Experience</div>
-        {% if experiences %}
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Company</th>
-                    <th>Job Title</th>
-                    <th>Duration</th>
-                    <th>Responsibilities</th>
-                    <th>Gross Salary</th>
-                    <th>Reason for Leaving</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for exp in experiences %}
-                <tr>
-                    <td>{{ exp.company_name|default:"-" }}</td>
-                    <td>{{ exp.job_title|default:"-" }}</td>
-                    <td>{{ exp.start_date|date:"d/m/Y"|default:"-" }} - {{ exp.end_date|date:"d/m/Y"|default:"Present" }}</td>
-                    <td>{{ exp.responsibilities|default:"-"|truncatewords:20 }}</td>
-                    <td>{{ exp.gross_salary|default:"-" }}</td>
-                    <td>{{ exp.reason_for_leaving|default:"-"|truncatewords:20 }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p>No work experience details available.</p>
-        {% endif %}
+        <div class="pdf-section">
+            <div class="section-title">Work Experience</div>
+            {% if experiences %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Job Title</th>
+                        <th>Duration</th>
+                        <th>Responsibilities</th>
+                        <th>Gross Salary</th>
+                        <th>Reason for Leaving</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exp in experiences %}
+                    <tr>
+                        <td>{{ exp.company_name|default:"-" }}</td>
+                        <td>{{ exp.job_title|default:"-" }}</td>
+                        <td>{{ exp.start_date|date:"d/m/Y"|default:"-" }} - {{ exp.end_date|date:"d/m/Y"|default:"Present" }}</td>
+                        <td>{{ exp.responsibilities|default:"-"|truncatewords:20 }}</td>
+                        <td>{{ exp.gross_salary|default:"-" }}</td>
+                        <td>{{ exp.reason_for_leaving|default:"-"|truncatewords:20 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No work experience details available.</p>
+            {% endif %}
+        </div>
 
         <!-- Family Details -->
-        <div class="section-title">Family Details</div>
-        {% if families %}
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Relationship</th>
-                    <th>Date of Birth</th>
-                    <th>Occupation</th>
-                    <th>Contact Number</th>
-                    <th>Address</th>
-                    <th>Aadhaar Number</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for fam in families %}
-                <tr>
-                    <td>{{ fam.name|default:"-" }}</td>
-                    <td>{{ fam.relationship|default:"-" }}</td>
-                    <td>{{ fam.dob|date:"d/m/Y"|default:"-" }}</td>
-                    <td>{{ fam.occupation|default:"-" }}</td>
-                    <td>{{ fam.contact_no|default:"-" }}</td>
-                    <td>{{ fam.address|default:"-"|truncatewords:20 }}</td>
-                    <td>{{ fam.aadhaar_no|default:"-" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p>No family details available.</p>
-        {% endif %}
+        <div class="pdf-section">
+            <div class="section-title">Family Details</div>
+            {% if families %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Relationship</th>
+                        <th>Date of Birth</th>
+                        <th>Occupation</th>
+                        <th>Contact Number</th>
+                        <th>Address</th>
+                        <th>Aadhaar Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fam in families %}
+                    <tr>
+                        <td>{{ fam.name|default:"-" }}</td>
+                        <td>{{ fam.relationship|default:"-" }}</td>
+                        <td>{{ fam.dob|date:"d/m/Y"|default:"-" }}</td>
+                        <td>{{ fam.occupation|default:"-" }}</td>
+                        <td>{{ fam.contact_no|default:"-" }}</td>
+                        <td>{{ fam.address|default:"-"|truncatewords:20 }}</td>
+                        <td>{{ fam.aadhaar_no|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No family details available.</p>
+            {% endif %}
+        </div>
+
+        <!-- Employment History -->
+        <div class="pdf-section">
+            <div class="section-title">Employment History</div>
+            {% if emp_history %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Stint</th>
+                        <th>Joining Date</th>
+                        <th>Exit Date</th>
+                        <th>Department</th>
+                        <th>Designation</th>
+                        <th>Site</th>
+                        <th>Reason for Exit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hist in emp_history %}
+                    <tr{% if not hist.exit_date %} class="table-success"{% endif %}>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ hist.joining_date|date:"d/m/Y"|default:"-" }}</td>
+                        <td>{% if hist.exit_date %}{{ hist.exit_date|date:"d/m/Y" }}{% else %}<span class="badge badge-success">Active</span>{% endif %}</td>
+                        <td>{{ hist.department_snapshot|default:"-" }}</td>
+                        <td>{{ hist.designation_snapshot|default:"-" }}</td>
+                        <td>{{ hist.site_snapshot|default:"-" }}</td>
+                        <td>{{ hist.reason_for_exit|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No employment history recorded.</p>
+            {% endif %}
+        </div>
     </div>
     
 </div>
@@ -537,11 +559,12 @@ EMPLOYEE VIEW
         }
 
         const options = {
-            margin: 6,
+            margin: 10,
             filename: 'profile_{{ employee.emp_code }}.pdf', // Name of the downloaded PDF file
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 3, allowTaint: true, useCORS: true, logging: true, scrollY: 0, scale: 1, letterRendering: true, backgroundColor: '#ffffff',avoid: ['ul', '.letterhead'] }, // <-- Use 'avoid' here with an array of selectors
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            html2canvas: { scale: 2, allowTaint: true, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-section', 'tr', 'table'] }
         };
         // Generate and save the PDF
         html2pdf().set(options).from(element).save();

@@ -149,6 +149,269 @@
         animation: flashHighlight 2s ease-in-out 3;
         transition: all 0.3s ease;
     }
+
+    /* Flow timeline connector line */
+    .lead-flow-timeline {
+        position: relative;
+        padding-left: 2.5rem;
+    }
+    @media (max-width: 768px) {
+        .lead-flow-timeline {
+            padding-left: 0;
+        }
+        .lead-flow-timeline::before {
+            display: none;
+        }
+        .lead-flow-badge {
+            display: none !important;
+        }
+        .lead-flow-step .card {
+            margin-left: 0 !important;
+        }
+    }
+    .lead-flow-timeline::before {
+        content: '';
+        position: absolute;
+        top: 25px;
+        bottom: 25px;
+        left: 20px;
+        width: 3px;
+        background: linear-gradient(to bottom, #6366f1 0%, #06b6d4 50%, #10b981 100%);
+        border-radius: 4px;
+        z-index: 1;
+    }
+    .lead-flow-step {
+        position: relative;
+        margin-bottom: 2.5rem;
+        z-index: 2;
+    }
+    .lead-flow-step:focus-within {
+        z-index: 1055 !important;
+    }
+    .lead-flow-badge {
+        position: absolute;
+        left: -32px;
+        top: 15px;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        z-index: 2;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    
+    /* Better styling for inputs and selects to look premium */
+    .form-group label {
+        font-weight: 700 !important;
+        font-size: 0.8rem;
+        color: #4b5563 !important;
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .form-control, .custom-select {
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.375rem !important;
+        padding: 0.55rem 0.75rem !important;
+        height: auto !important;
+        font-size: 0.9rem !important;
+        color: #1f2937 !important;
+        background-color: #fff !important;
+        transition: all 0.2s ease-in-out !important;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.05) !important;
+    }
+    .form-control:focus, .custom-select:focus {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+        outline: none !important;
+    }
+    .card.section-card {
+        border: none !important;
+        border-radius: 0.6rem !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04) !important;
+    }
+    .card.section-card .card-header {
+        border-radius: 0.6rem 0.6rem 0 0 !important;
+    }
+    .card-header.bg-gradient-indigo {
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+    }
+    .card-header.bg-gradient-info {
+        background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%) !important;
+    }
+    .card-header.bg-gradient-success {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+    }
+
+    /* Autocomplete typeahead dropdown styles */
+    .typeahead-container {
+        position: relative;
+        width: 100%;
+    }
+    .typeahead-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 1050;
+        display: none;
+        float: left;
+        min-width: 100%;
+        padding: 0.5rem 0;
+        margin: 0.25rem 0 0;
+        font-size: 0.9rem;
+        color: #1f2937;
+        text-align: left;
+        list-style: none;
+        background-color: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        max-height: 280px;
+        overflow-y: auto;
+    }
+    .typeahead-item {
+        display: block;
+        width: 100%;
+        padding: 0.75rem 1.25rem;
+        clear: both;
+        font-weight: 400;
+        color: #1f2937;
+        text-align: inherit;
+        border: 0;
+        border-bottom: 1px solid rgba(243, 244, 246, 0.8);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .typeahead-item:last-child {
+        border-bottom: 0;
+    }
+    .typeahead-item:hover, .typeahead-item:focus {
+        color: #111827;
+        text-decoration: none;
+        background-color: rgba(99, 102, 241, 0.06);
+    }
+    .typeahead-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        margin-left: 0.5rem;
+    }
+
+    /* Segmented Customer Type Buttons */
+    .customer-type-btn {
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 2rem;
+        padding: 0.55rem 1.4rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4b5563;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+        outline: none !important;
+    }
+    .customer-type-btn:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+        color: #1f2937;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .customer-type-btn.active[data-value="Hospital"] {
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+        border-color: #4f46e5 !important;
+        color: #fff !important;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+    }
+    .customer-type-btn.active[data-value="Institute"] {
+        background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%) !important;
+        border-color: #0891b2 !important;
+        color: #fff !important;
+        box-shadow: 0 4px 14px rgba(8, 145, 178, 0.4);
+    }
+    .customer-type-btn.active[data-value="Hostel"] {
+        background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%) !important;
+        border-color: #0d9488 !important;
+        color: #fff !important;
+        box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
+    }
+    .customer-type-btn.active[data-value="Event"] {
+        background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%) !important;
+        border-color: #d97706 !important;
+        color: #fff !important;
+        box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+    }
+
+    /* Modern Prominent Search Bar */
+    .search-input-group {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        border: 1px solid #d1d5db;
+        transition: all 0.25s ease;
+        background: #fff;
+    }
+    .search-input-group:focus-within {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+    }
+    .search-input-field {
+        border: none !important;
+        font-size: 1.05rem !important;
+        padding: 0.8rem 1rem !important;
+        height: auto !important;
+        background: transparent !important;
+    }
+    .search-input-field:focus {
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    .search-icon-addon {
+        border: none !important;
+        padding-left: 1.25rem !important;
+        padding-right: 0.5rem !important;
+        background: transparent !important;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .search-icon-spin.searching {
+        animation: spin 1s linear infinite;
+        color: #6366f1 !important;
+    }
+    
+    /* Dynamic Capacity Fields Styling */
+    .capacity-input-group {
+        border-radius: 0.375rem;
+        overflow: hidden;
+        border: 1px solid #d1d5db;
+        transition: all 0.2s ease;
+        background: #fff;
+    }
+    .capacity-input-group:focus-within {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+    .capacity-input-field {
+        border: none !important;
+        font-size: 0.95rem !important;
+        padding: 0.6rem 0.8rem !important;
+        height: auto !important;
+    }
+    .capacity-input-field:focus {
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
 </style>
 
 <div class="content-wrapper">
@@ -183,52 +446,132 @@
             {% endfor %}
             {% endif %}
 
-            <form method="post" enctype="multipart/form-data" novalidate>
+            <form method="post" enctype="multipart/form-data" novalidate class="mb-5">
                 {% csrf_token %}
 
-                <div class="row">
-                    <!-- LEFT COLUMN -->
-                    <div class="col-lg-6">
+                <div class="lead-flow-timeline">
 
-                        <!-- Customer Details Card -->
-                        <div class="card section-card section-customer">
-                            <div class="card-header">
-                                <i class="fas fa-building section-icon"></i>
-                                <span>Customer Details</span>
+                    <!-- STEP 1: Customer Profile -->
+                    <div class="lead-flow-step">
+                        <div class="lead-flow-badge bg-gradient-indigo"><i class="fas fa-hospital"></i></div>
+                        <div class="card section-card ml-md-4">
+                            <div class="card-header bg-gradient-indigo text-white py-3">
+                                <h5 class="mb-0 font-weight-bold"><i class="fas fa-building mr-1"></i> Step 1: Customer Profile</h5>
+                                <div class="text-xs opacity-75 mt-1">Enter the institutional info, customer category, bed counts, and occupancy details.</div>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body p-4">
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        {{ form.customer_type|as_crispy_field }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        {{ form.client_name|as_crispy_field }}
+                                    <!-- Customer Type Segmented Control -->
+                                    <div class="col-12 mb-4">
+                                        <label class="form-label font-weight-bold text-uppercase text-xs text-muted tracking-wider mb-2">
+                                            <i class="fas fa-tags mr-1 text-indigo"></i> Customer Type <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="customer-type-selector d-flex flex-wrap align-items-center" style="gap: 12px;">
+                                            <button type="button" class="customer-type-btn" data-value="Hospital">
+                                                <i class="fas fa-hospital mr-2"></i> Hospital
+                                            </button>
+                                            <button type="button" class="customer-type-btn" data-value="Institute">
+                                                <i class="fas fa-university mr-2"></i> Institute
+                                            </button>
+                                            <button type="button" class="customer-type-btn" data-value="Hostel">
+                                                <i class="fas fa-hotel mr-2"></i> Hostel
+                                            </button>
+                                            <button type="button" class="customer-type-btn" data-value="Event">
+                                                <i class="fas fa-glass-cheers mr-2"></i> Event
+                                            </button>
+                                        </div>
+                                        <!-- Hidden select element for Django compatibility -->
+                                        <select name="customer_type" id="id_customer_type" class="d-none" required>
+                                            {% for value, label in form.fields.customer_type.choices %}
+                                                <option value="{{ value }}" {% if form.customer_type.value == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.customer_type.errors %}
+                                            <div class="text-danger text-xs mt-1">{{ form.customer_type.errors.0 }}</div>
+                                        {% endif %}
                                     </div>
                                 </div>
+
                                 <div class="row">
+                                    <!-- Hospital / Customer Name Wide Prominent Search Input -->
+                                    <div class="col-12 mb-4">
+                                        <div class="form-group mb-0">
+                                            <label for="id_client_name" class="form-label font-weight-bold text-uppercase text-xs text-muted tracking-wider mb-2">
+                                                <i class="fas fa-building mr-1 text-indigo"></i> Hospital / Customer Name <span class="text-danger">*</span>
+                                            </label>
+                                            <div class="typeahead-container">
+                                                <div class="input-group search-input-group shadow-sm">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text search-icon-addon">
+                                                            <i class="fas fa-search text-indigo search-icon-spin"></i>
+                                                        </span>
+                                                    </div>
+                                                    <input type="text" name="client_name" value="{{ form.client_name.value|default:'' }}" 
+                                                           class="form-control search-input-field" 
+                                                           required id="id_client_name" 
+                                                           placeholder="Type 3+ characters to search or enter a new name..." 
+                                                           autocomplete="off">
+                                                </div>
+                                            </div>
+                                            {% if form.client_name.errors %}
+                                                <div class="text-danger text-xs mt-1">{{ form.client_name.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic Capacity Row (Beds / Occupancy) -->
+                                <div class="row mt-2" id="capacity-details-row">
                                     <div class="col-md-6">
-                                        {{ form.total_beds|as_crispy_field }}
+                                        <div class="form-group">
+                                            <label for="id_total_beds" id="label_total_beds" class="form-label font-weight-bold text-uppercase text-xs text-muted tracking-wider mb-2">
+                                                <i class="fas fa-bed mr-1 text-indigo"></i> Total Beds
+                                            </label>
+                                            <div class="input-group capacity-input-group shadow-sm">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text bg-white border-0"><i class="fas fa-bed text-muted"></i></span>
+                                                </div>
+                                                <input type="number" name="total_beds" value="{{ form.total_beds.value|default:'' }}" 
+                                                       class="form-control capacity-input-field" 
+                                                       id="id_total_beds" placeholder="Number of beds...">
+                                            </div>
+                                            {% if form.total_beds.errors %}
+                                                <div class="text-danger text-xs mt-1">{{ form.total_beds.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
-                                        {{ form.current_occupancy|as_crispy_field }}
+                                        <div class="form-group">
+                                            <label for="id_current_occupancy" id="label_current_occupancy" class="form-label font-weight-bold text-uppercase text-xs text-muted tracking-wider mb-2">
+                                                <i class="fas fa-chart-pie mr-1 text-indigo"></i> Current Occupancy (%)
+                                            </label>
+                                            <div class="input-group capacity-input-group shadow-sm">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text bg-white border-0"><i class="fas fa-percentage text-muted"></i></span>
+                                                </div>
+                                                <input type="number" step="0.01" name="current_occupancy" value="{{ form.current_occupancy.value|default:'' }}" 
+                                                       class="form-control capacity-input-field" 
+                                                       id="id_current_occupancy" placeholder="e.g. 75.5">
+                                            </div>
+                                            {% if form.current_occupancy.errors %}
+                                                <div class="text-danger text-xs mt-1">{{ form.current_occupancy.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-
                     </div>
 
-                    <!-- RIGHT COLUMN -->
-                    <div class="col-lg-6">
-
-                        <!-- Service Requirements Card -->
-                        <div class="card section-card section-service">
-                            <div class="card-header">
-                                <i class="fas fa-concierge-bell section-icon"></i>
-                                <span>Service Requirements</span>
+                    <!-- STEP 2: Service & Vendor Requirements -->
+                    <div class="lead-flow-step">
+                        <div class="lead-flow-badge bg-gradient-info"><i class="fas fa-concierge-bell"></i></div>
+                        <div class="card section-card ml-md-4">
+                            <div class="card-header bg-gradient-info text-white py-3">
+                                <h5 class="mb-0 font-weight-bold"><i class="fas fa-concierge-bell mr-1"></i> Step 2: Service & Vendor Requirements</h5>
+                                <div class="text-xs opacity-75 mt-1">Specify service requirements and details of current caterers or providers.</div>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body p-4">
                                 <div class="row">
                                     <div class="col-md-6">
                                         {{ form.has_service_requirement|as_crispy_field }}
@@ -237,39 +580,35 @@
                                         {{ form.service_requirement|as_crispy_field }}
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row mt-2">
                                     <div class="col-12">
                                         {{ form.existing_vendor|as_crispy_field }}
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-
-
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-12">
-                        <!-- Lead Status & Assignment Card -->
-                        <div class="card section-card section-status">
-                            <div class="card-header">
-                                <i class="fas fa-tasks section-icon"></i>
-                                <span>Lead Status & Assignment</span>
-                            </div>
 
-                            <div class="card-body">
+                    <!-- STEP 3: Location, Timeline & Status -->
+                    <div class="lead-flow-step">
+                        <div class="lead-flow-badge bg-gradient-success"><i class="fas fa-tasks"></i></div>
+                        <div class="card section-card ml-md-4">
+                            <div class="card-header bg-gradient-success text-white py-3">
+                                <h5 class="mb-0 font-weight-bold"><i class="fas fa-tasks mr-1"></i> Step 3: Location, Timeline & Status</h5>
+                                <div class="text-xs opacity-75 mt-1">Provide full location details, internal follow-up timeline, and initial pipeline status.</div>
+                            </div>
+                            <div class="card-body p-4">
                                 <div class="row">
                                     <div class="col-12">
                                         {{ form.address|as_crispy_field }}
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row mt-2">
                                     <div class="col-12">
                                         {{ form.remarks|as_crispy_field }}
                                     </div>
                                 </div>
-                                <div class="row">
+                                <div class="row mt-2">
                                     <div class="col-md-6">
                                         {{ form.lead_status|as_crispy_field }}
                                     </div>
@@ -280,28 +619,27 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <!-- Lead Contacts Section (Only show when editing existing lead) -->
-                {% if lead %}
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="card shadow-sm" id="contactGridCard">
-                            <div class="card-header bg-gradient-info">
-                                <h3 class="card-title text-white">
-                                    <i class="fas fa-users mr-2"></i>Lead Contacts
-                                </h3>
-                                <div class="card-tools">
-                                    <button type="button" class="btn btn-sm btn-success" id="addContactBtn">
-                                        <i class="fas fa-plus mr-1"></i>Add Contact
+
+                    <!-- STEP 4: Lead Contacts (Only show when editing existing lead) -->
+                    {% if lead %}
+                    <div class="lead-flow-step">
+                        <div class="lead-flow-badge bg-gradient-teal" style="background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);"><i class="fas fa-users"></i></div>
+                        <div class="card section-card ml-md-4" id="contactGridCard">
+                            <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 font-weight-bold"><i class="fas fa-users mr-1"></i> Step 4: Manage Lead Contacts</h5>
+                                    <button type="button" class="btn btn-sm btn-light text-teal font-weight-bold shadow-sm" id="addContactBtn">
+                                        <i class="fas fa-plus mr-1"></i> Add Contact
                                     </button>
                                 </div>
+                                <div class="text-xs opacity-75 mt-1">Record key decision makers, medical directors, and contact personnel.</div>
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
-                                    <table class="table table-hover table-striped mb-0" id="contactsTable">
+                                    <table class="table table-striped table-hover mb-0">
                                         <thead class="bg-light">
                                             <tr>
-                                                <th style="width: 12%">Name</th>
+                                                <th style="width: 15%">Name</th>
                                                 <th style="width: 12%">Designation</th>
                                                 <th style="width: 10%">Mobile 1</th>
                                                 <th style="width: 10%">Mobile 2</th>
@@ -313,7 +651,7 @@
                                         </thead>
                                         <tbody id="contactsBody">
                                             <tr>
-                                                <td colspan="7" class="text-center py-4">
+                                                <td colspan="8" class="text-center py-4">
                                                     <i class="fas fa-spinner fa-spin mr-2"></i>Loading contacts...
                                                 </td>
                                             </tr>
@@ -323,22 +661,21 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                {% endif %}
+                    {% endif %}
 
-                <!-- Action Buttons -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-body text-center py-4">
-                                <button type="submit" class="btn btn-save btn-lg">
-                                    <i class="fas fa-save mr-2"></i>
-                                    {% if lead %}Update Lead{% else %}Save Lead{% endif %}
-                                </button>
-                                <a href="{% url 'leads:lead_list' %}" class="btn btn-secondary btn-cancel btn-lg ml-3">
-                                    <i class="fas fa-times mr-2"></i>
-                                    Cancel
+                </div>
+
+                <!-- Form Action Buttons -->
+                <div class="row mt-4">
+                    <div class="col-12 text-right">
+                        <div class="card border-0 shadow-sm p-3 bg-light">
+                            <div class="d-flex justify-content-end align-items-center">
+                                <a href="{% url 'leads:lead_list' %}" class="btn btn-secondary px-4 py-2 font-weight-bold mr-3" style="border-radius: 0.375rem;">
+                                    <i class="fas fa-times mr-1"></i> Cancel
                                 </a>
+                                <button type="submit" class="btn btn-save px-5 py-2 font-weight-bold bg-gradient-primary">
+                                    <i class="fas fa-save mr-1"></i> {% if lead %}Update Lead{% else %}Save Lead{% endif %}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -372,6 +709,78 @@
         if (checkbox) {
             checkbox.addEventListener('change', toggleServiceField);
             toggleServiceField(); // Initial state
+        }
+    });
+
+    // Customer Type Segmented Buttons logic and dynamic capacity fields
+    $(document).ready(function () {
+        const selectEl = $('#id_customer_type');
+        
+        // Handle button click
+        $(document).on('click', '.customer-type-btn', function (e) {
+            e.preventDefault();
+            const val = $(this).data('value');
+            
+            // Toggle active class
+            $('.customer-type-btn').removeClass('active');
+            $(this).addClass('active');
+            
+            // Update the hidden select field value
+            selectEl.val(val).trigger('change');
+        });
+        
+        // Initial state sync (from the default or loaded value)
+        const initialVal = selectEl.val();
+        if (initialVal) {
+            $(`.customer-type-btn[data-value="${initialVal}"]`).addClass('active');
+            updateCapacityFields(initialVal);
+        } else {
+            // Default to Hospital if none
+            $('.customer-type-btn[data-value="Hospital"]').addClass('active');
+            selectEl.val('Hospital').trigger('change');
+            updateCapacityFields('Hospital');
+        }
+        
+        // Listen to changes on the select to update dynamic fields
+        selectEl.on('change', function () {
+            updateCapacityFields($(this).val());
+        });
+        
+        function updateCapacityFields(type) {
+            const row = $('#capacity-details-row');
+            const totalBedsInput = $('#id_total_beds');
+            const currentOccupancyInput = $('#id_current_occupancy');
+            
+            if (type === 'Event') {
+                // Hide capacity details for Event
+                row.fadeOut(300);
+                // Clear fields
+                totalBedsInput.val('');
+                currentOccupancyInput.val('');
+            } else {
+                row.fadeIn(300);
+                
+                // Configure labels & placeholders dynamically
+                const bedsLabel = $('#label_total_beds');
+                const occupancyLabel = $('#label_current_occupancy');
+                
+                if (type === 'Hospital') {
+                    bedsLabel.html('<i class="fas fa-bed mr-1 text-indigo"></i> Total Beds');
+                    totalBedsInput.attr('placeholder', 'Number of beds...');
+                    occupancyLabel.html('<i class="fas fa-chart-pie mr-1 text-indigo"></i> Current Occupancy (%)');
+                    currentOccupancyInput.attr('placeholder', 'e.g. 75.5');
+                } else if (type === 'Institute') {
+                    bedsLabel.html('<i class="fas fa-users mr-1 text-indigo"></i> Total Student/Staff Strength');
+                    totalBedsInput.attr('placeholder', 'Total capacity (e.g. 1500)...');
+                    occupancyLabel.html('<i class="fas fa-percentage mr-1 text-indigo"></i> Current Occupancy (%)');
+                    currentOccupancyInput.attr('placeholder', 'e.g. 60');
+                } else if (type === 'Hostel') {
+                    bedsLabel.html('<i class="fas fa-door-open mr-1 text-indigo"></i> Total Rooms/Beds');
+                    totalBedsInput.attr('placeholder', 'Number of rooms or beds...');
+                    occupancyLabel.html('<i class="fas fa-percentage mr-1 text-indigo"></i> Occupancy Rate (%)');
+                    currentOccupancyInput.attr('placeholder', 'e.g. 80');
+                }
+            }
         }
     });
 </script>
@@ -602,6 +1011,41 @@
             $('#contactModal').modal('show');
         });
 
+        // Check for duplicate mobile numbers when adding/editing contacts
+        function checkMobileDuplicate(inputField) {
+            const mobile = $(inputField).val().trim();
+            if (!mobile || mobile.length < 8) return;
+            
+            const contactId = $('#contactId').val();
+            
+            $.ajax({
+                url: '/leads/contacts/check-mobile/',
+                data: { mobile: mobile, contact_id: contactId },
+                success: function(response) {
+                    if (response.exists) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Duplicate Mobile Number',
+                            html: `Mobile number <strong>${mobile}</strong> is already assigned to <strong>${response.contact_name}</strong> under lead <a href="/leads/form/${response.lead_id}/" target="_blank"><strong>${response.lead_name}</strong></a>.<br><br>Are you sure you want to proceed?`,
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes, proceed',
+                            cancelButtonText: 'No, let me change it',
+                            confirmButtonColor: '#ffc107',
+                            cancelButtonColor: '#3085d6'
+                        }).then((result) => {
+                            if (!result.isConfirmed) {
+                                $(inputField).val('').focus();
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        $('#contactMobile1, #contactMobile2').blur(function() {
+            checkMobileDuplicate(this);
+        });
+
         // Edit Contact
         $(document).on('click', '.btn-edit', function (e) {
             e.preventDefault();
@@ -747,6 +1191,169 @@
                 }
             });
         });
+    });
+</script>
+{% endif %}
+
+{% if not lead %}
+<script>
+    $(document).ready(function () {
+        const clientNameInput = $('#id_client_name');
+        const parentContainer = clientNameInput.closest('.typeahead-container');
+        if (!$('#typeahead-results').length) {
+            parentContainer.append('<div id="typeahead-results" class="typeahead-results"></div>');
+        }
+        const resultsContainer = $('#typeahead-results');
+        let debounceTimer;
+
+        // Fetch similar leads on input
+        clientNameInput.on('input', function () {
+            clearTimeout(debounceTimer);
+            const query = $(this).val().trim();
+
+            if (query.length < 3) {
+                resultsContainer.hide().empty();
+                return;
+            }
+
+            // Start searching spinner animation
+            $('.search-icon-spin').addClass('searching');
+
+            debounceTimer = setTimeout(function () {
+                $.ajax({
+                    url: '/leads/api/search/',
+                    data: { q: query },
+                    success: function (response) {
+                        $('.search-icon-spin').removeClass('searching');
+                        resultsContainer.empty();
+                        if (response.results && response.results.length > 0) {
+                            response.results.forEach(function (item) {
+                                const statusBadgeClass = getStatusBadgeClass(item.status_raw);
+                                const itemHtml = `
+                                    <div class="typeahead-item" data-url="${item.edit_url}">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong style="color: #4f46e5;">${item.client_name}</strong>
+                                            <span class="badge ${statusBadgeClass}">${item.lead_status}</span>
+                                        </div>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="fas fa-building mr-1"></i>${item.customer_type} | 
+                                            <i class="fas fa-map-marker-alt mr-1"></i>${item.address || 'No Address'}
+                                        </small>
+                                        <small class="text-muted d-block mt-0.5">
+                                            <i class="fas fa-user mr-1"></i>Created by: ${item.created_by}
+                                        </small>
+                                    </div>
+                                `;
+                                resultsContainer.append(itemHtml);
+                            });
+                            resultsContainer.show();
+                        } else {
+                            resultsContainer.hide();
+                        }
+                    },
+                    error: function () {
+                        $('.search-icon-spin').removeClass('searching');
+                        resultsContainer.hide();
+                    }
+                });
+            }, 300);
+        });
+
+        // Click on typeahead suggestion -> Hard Block redirect
+        $(document).on('click', '.typeahead-item', function () {
+            const url = $(this).data('url');
+            const name = $(this).find('strong').text();
+            resultsContainer.hide();
+            
+            Swal.fire({
+                icon: 'warning',
+                title: 'Duplicate Lead Blocked',
+                html: `A lead for <strong>${name}</strong> already exists. You cannot create a duplicate.`,
+                showCancelButton: true,
+                confirmButtonText: 'Go to Existing Lead',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        });
+
+        // Dismiss typeahead when clicking outside
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('.typeahead-container').length) {
+                resultsContainer.hide();
+            }
+        });
+
+        // Escape key dismisses typeahead
+        clientNameInput.on('keydown', function (e) {
+            if (e.key === 'Escape') {
+                resultsContainer.hide();
+            }
+        });
+
+        // Submit form hard block validation
+        $('form').on('submit', function (e) {
+            const formElement = this;
+            const clientName = clientNameInput.val().trim();
+            if (!clientName) return;
+
+            e.preventDefault();
+            
+            // Perform synchronous/fast AJAX check for exact match before allowing submission
+            $.ajax({
+                url: '/leads/api/search/',
+                data: { q: clientName },
+                success: function (response) {
+                    const exactMatch = response.results.find(
+                        item => item.client_name.toLowerCase() === clientName.toLowerCase()
+                    );
+                    
+                    if (exactMatch) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Duplicate Lead Blocked',
+                            html: `A lead for <strong>${exactMatch.client_name}</strong> already exists.<br><br>
+                                   <strong>Status:</strong> ${exactMatch.lead_status}<br>
+                                   <strong>Created By:</strong> ${exactMatch.created_by}<br><br>
+                                   Duplicates are strictly prohibited.`,
+                            showCancelButton: true,
+                            confirmButtonText: 'Go to Existing Lead',
+                            cancelButtonText: 'Cancel',
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = exactMatch.edit_url;
+                            }
+                        });
+                    } else {
+                        // Safe to submit, unbind submit handler and submit
+                        $(formElement).off('submit').submit();
+                    }
+                },
+                error: function () {
+                    // Fallback to submit if request fails (do not freeze page)
+                    $(formElement).off('submit').submit();
+                }
+            });
+        });
+
+        // Helper for status badge colors
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'New': return 'badge-info';
+                case 'In Progress': return 'badge-primary';
+                case 'Quoted': return 'badge-warning';
+                case 'Converted': return 'badge-success';
+                case 'Closed': return 'badge-secondary';
+                case 'Not Interested': return 'badge-danger';
+                default: return 'badge-secondary';
+            }
+        }
     });
 </script>
 {% endif %}

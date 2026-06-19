@@ -2,118 +2,338 @@
 {% load static %}
 {% load crispy_forms_tags %}
 
-{% block title %}
-EMPLOYEE UPLOAD
-{% endblock title %}
+{% block title %}Employee Documents{% endblock %}
+
 {% block extrastyle %}
-
-<!-- <link rel="stylesheet" href="{% static 'form_main.css' %}"> -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
-    .myinput input {
-        margin-bottom: 2px !important;
+    .document-card {
+        border-radius: 12px;
+        border: 1px solid var(--border, #E5E7EB);
+        background: #fff;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .file-icon {
+        font-size: 24px;
+        margin-right: 12px;
+    }
+    .badge-pending { background-color: #FEF3C7; color: #D97706; }
+    .badge-approved { background-color: #DCFCE7; color: #166534; }
+    .badge-rejected { background-color: #FEE2E2; color: #991B1B; }
+    
+    .status-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.1s, opacity 0.15s;
+        margin-left: 4px;
+    }
+    .status-btn:hover {
+        transform: scale(1.1);
+    }
+    .status-btn-approve { background: #DCFCE7; color: #166534; }
+    .status-btn-reject { background: #FEE2E2; color: #991B1B; }
+    
+    .action-icon-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted, #6B7280);
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 6px;
+        transition: background 0.15s, color 0.15s;
+    }
+    .action-icon-btn:hover {
+        background: #F3F4F6;
+        color: var(--text, #111827);
+    }
+    .action-icon-btn.delete:hover {
+        background: #FEF2F2;
+        color: #DC2626;
     }
 </style>
-
-<style>
-    /* Wizard step indicator styles */
-    .wizard-steps {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-    }
-
-    .step {
-        flex: 1;
-        text-align: center;
-        padding: 10px;
-        background: #eee;
-        border: 1px solid #ddd;
-    }
-
-    .step.active {
-        background: #007bff;
-        color: white;
-    }
-</style>
-<link rel="stylesheet" href="{% static 'plugins/select2/select2.min.css' %}">
-<link rel="stylesheet" href="{% static 'plugins/select2/select2-bootstrap4.css' %}">
-<link rel="stylesheet" href="{% static 'plugins/select2/select2-bootstrap4.min.css' %}">
-<link rel="stylesheet" href="{% static 'plugins/select2/_layout.scss' %}">
-<link rel="stylesheet" href="{% static 'plugins/select2/_multiple.scss' %}">
-<link rel="stylesheet" href="{% static 'plugins/select2/_single.scss' %}">
-{% endblock extrastyle %}
+{% endblock %}
 
 {% block content %}
 <div class="content-wrapper">
-    <div class="content-header">
-        <h1>Document Uploads for {{ employee.first_name }} {{ employee.last_name }}</h1>
-    </div>
-    <div class="wizard-steps">
-        <div class="step"><a href="{% url 'emp:employee_edit' employee.id %}">1. Registration</a></div>
-        <div class="step"><a href="{% url 'emp:employee_details' employee.id %}">2. Education/Experience/Family</a>
-        </div>
-        <div class="step active">3. Uploads</div>
-        <div class="step"><a href="{% url 'emp:employee_view' employee.id %}">4. Print Profile</a></div>
+    <!-- Stepper Navigation -->
+    {% include 'includes/employee_wizard_steps.html' with active_step=4 %}
 
-    </div>
-    <section class="content">
-        <div class="container-fluid">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Upload Documents</h3>
+    <section class="content" style="padding: 0 20px;">
+        <div class="container-fluid" style="max-width: 1100px; margin: 0 auto;">
+            
+            <!-- Upload Box Card -->
+            <div class="card document-card">
+                <div class="card-header" style="border-bottom: 1px solid var(--border, #E5E7EB); background: var(--surface-alt, #F8FAFC); padding: 16px 20px;">
+                    <h3 class="card-title" style="font-size: 14.5px; font-weight: 700; margin: 0; color: var(--text, #111827); display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-cloud-upload-alt text-primary"></i> Upload New Document
+                    </h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="padding: 20px;">
                     <form id="uploadForm" method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-                        {% crispy upload_form %}
-                        <button type="submit" class="btn btn-primary">Upload</button>
+                        <input type="hidden" name="action" value="add_upload">
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="font-weight-bold" style="font-size: 12px; color: var(--text-muted, #6B7280);">Document Type *</label>
+                                    <select name="document_type" id="id_document_type" class="form-control" required style="width:100%">
+                                        <option value="" disabled selected>Select type</option>
+                                        <option value="Aadhaar">Aadhaar</option>
+                                        <option value="PAN">PAN</option>
+                                        <option value="Passport">Passport</option>
+                                        <option value="Driving License">Driving License</option>
+                                        <option value="Voter ID">Voter ID</option>
+                                        <option value="Report">Report</option>
+                                        <option value="Bill">Bill</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="font-weight-bold" style="font-size: 12px; color: var(--text-muted, #6B7280);">Select File *</label>
+                                    <input type="file" name="file_path" id="id_file_path" class="form-control-file" required style="font-size: 12.5px; padding-top: 4px;">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="font-weight-bold" style="font-size: 12px; color: var(--text-muted, #6B7280);">Description / Notes</label>
+                                    <input type="text" name="description" id="id_description" class="form-control" placeholder="Optional notes about this file..." style="font-size: 13px; height: 38px;">
+                                </div>
+                            </div>
+                            {% if user.groups.all.0.name in 'admin,hr' %}
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label class="font-weight-bold" style="font-size: 12px; color: var(--text-muted, #6B7280);">Initial Status</label>
+                                    <select name="status" id="id_status" class="form-control" style="width:100%">
+                                        <option value="Pending" selected>Pending</option>
+                                        <option value="Approved">Approved</option>
+                                        <option value="Rejected">Rejected</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-right mt-2">
+                            <button type="submit" class="btn btn-primary" id="btnUploadSubmit" style="padding: 8px 22px; border-radius: 8px;">
+                                <i class="fas fa-upload mr-1"></i> Upload Document
+                            </button>
+                        </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Uploaded Documents Card -->
+            <div class="card document-card">
+                <div class="card-header" style="border-bottom: 1px solid var(--border, #E5E7EB); background: var(--surface-alt, #F8FAFC); padding: 16px 20px;">
+                    <h3 class="card-title" style="font-size: 14.5px; font-weight: 700; margin: 0; color: var(--text, #111827); display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-file-alt text-muted"></i> Uploaded Documents
+                    </h3>
+                </div>
+                <div class="card-body p-0">
                     {% if uploads %}
-                    <h4 class="mt-4">Uploaded Documents</h4>
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Document Type</th>
-                                <th>Description</th>
-                                <th>File</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for upload in uploads %}
-                            <tr>
-                                <td>{{ upload.document_type }}</td>
-                                <td>{{ upload.description|default:"-" }}</td>
-                                <td>
-                                    {% if upload.file_path %}
-                                        <a href="{{ upload.file_path.url }}" target="_blank">View</a>
-                                    {% else %}
-                                        <span class="text-muted">No file uploaded</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-valign-middle mb-0" style="font-size: 13px;">
+                            <thead style="background: #F9FAFB; border-bottom: 1px solid var(--border, #E5E7EB);">
+                                <tr>
+                                    <th style="padding: 12px 20px; font-weight: 600; width: 25%;">Document Type</th>
+                                    <th style="padding: 12px; font-weight: 600; width: 30%;">Description / Notes</th>
+                                    <th style="padding: 12px; font-weight: 600; width: 15%;">Uploaded Details</th>
+                                    <th style="padding: 12px; font-weight: 600; width: 18%; text-align: center;">Verification Status</th>
+                                    <th style="padding: 12px 20px; font-weight: 600; width: 12%; text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for upload in uploads %}
+                                <tr id="row-upload-{{ upload.id }}">
+                                    <td style="padding: 14px 20px;">
+                                        <div style="display: flex; align-items: center;">
+                                            <!-- Dynamic File Icon -->
+                                            <span class="file-icon">
+                                                {% if '.pdf' in upload.file_path.url|lower %}
+                                                    <i class="far fa-file-pdf text-danger" title="PDF File"></i>
+                                                {% elif '.png' in upload.file_path.url|lower or '.jpg' in upload.file_path.url|lower or '.jpeg' in upload.file_path.url|lower or '.webp' in upload.file_path.url|lower or '.gif' in upload.file_path.url|lower %}
+                                                    <i class="far fa-file-image text-success" title="Image File"></i>
+                                                {% elif '.doc' in upload.file_path.url|lower or '.docx' in upload.file_path.url|lower %}
+                                                    <i class="far fa-file-word text-primary" title="Word Document"></i>
+                                                {% else %}
+                                                    <i class="far fa-file text-muted" title="Document File"></i>
+                                                {% endif %}
+                                            </span>
+                                            <div>
+                                                <span class="font-weight-bold" style="color: var(--text, #111827); font-size: 13.5px;">{{ upload.document_type }}</span>
+                                                <br>
+                                                <a href="{{ upload.file_path.url }}" target="_blank" class="text-xs text-primary" style="font-size: 11px;">
+                                                    <i class="fas fa-external-link-alt mr-1"></i>View Uploaded File
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding: 14px 12px; vertical-align: middle; color: #4B5563;">
+                                        {{ upload.description|default:"-" }}
+                                    </td>
+                                    <td style="padding: 14px 12px; vertical-align: middle; font-size: 12px; color: var(--text-muted, #6B7280);">
+                                        <span style="font-weight: 500;">{{ upload.uploaded_by.username }}</span>
+                                        <br>
+                                        <span>{{ upload.uploaded_at|date:"d-b-Y H:i" }}</span>
+                                    </td>
+                                    <td style="padding: 14px 12px; vertical-align: middle; text-align: center;">
+                                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                            <span class="badge badge-pill badge-{{ upload.status|lower }} px-3 py-2" id="badge-status-{{ upload.id }}" style="font-size: 11.5px; font-weight: 600;">
+                                                {{ upload.status }}
+                                            </span>
+                                            
+                                            <!-- Quick Approval Toggle (Only Admin/HR) -->
+                                            {% if user.groups.all.0.name in 'admin,hr' %}
+                                            <div class="status-action-btns" style="display: flex;">
+                                                <button type="button" class="status-btn status-btn-approve" onclick="updateUploadStatus({{ upload.id }}, 'Approved')" title="Quick Approve">
+                                                    <i class="fas fa-check" style="font-size: 10px;"></i>
+                                                </button>
+                                                <button type="button" class="status-btn status-btn-reject" onclick="updateUploadStatus({{ upload.id }}, 'Rejected')" title="Quick Reject">
+                                                    <i class="fas fa-times" style="font-size: 10px;"></i>
+                                                </button>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td style="padding: 14px 20px; vertical-align: middle; text-align: right;">
+                                        <button class="action-icon-btn" onclick="openEditModal({{ upload.id }}, '{{ upload.document_type }}', '{{ upload.description|escapejs }}', '{{ upload.status }}')" title="Edit details">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-icon-btn delete" onclick="deleteUpload({{ upload.id }})" title="Delete document">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div style="padding: 40px; text-align: center; color: var(--text-muted, #6B7280);">
+                        <i class="fas fa-folder-open" style="font-size: 32px; opacity: 0.5; margin-bottom: 12px; display: block;"></i>
+                        <p style="margin: 0; font-size: 13.5px;">No documents uploaded yet for this employee profile.</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Footer Action wizard buttons -->
+            <div style="display: flex; justify-content: space-between; margin-top: 24px; margin-bottom: 40px;">
+                <a href="{% url 'emp:employee_details' employee.id %}" class="btn btn-outline" style="border: 1.5px solid var(--border, #E5E7EB); border-radius: 8px; font-weight: 600; color: #4B5563;">
+                    <i class="fas fa-arrow-left mr-1"></i> Back: Education & Experience
+                </a>
+                <a href="{% url 'emp:employee_view' employee.id %}" class="btn btn-primary" style="padding: 10px 24px; border-radius: 8px; font-weight: 600;">
+                    Next Step: Review Profile <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+
         </div>
     </section>
 </div>
+
+<!-- Bootstrap Edit Modal -->
+<div class="modal fade" id="editUploadModal" tabindex="-1" role="dialog" aria-labelledby="editUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 12px; border: none; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            <div class="modal-header bg-dark" style="color: #fff; padding: 16px 20px;">
+                <h5 class="modal-title" id="editUploadModalLabel" style="font-size: 15px; font-weight: 700;">
+                    <i class="fas fa-edit mr-2 text-primary"></i> Edit Document Details
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color:#fff; opacity:0.8;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="editUploadForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_upload">
+                <input type="hidden" name="id" id="edit_upload_id">
+                
+                <div class="modal-body" style="padding: 20px;">
+                    <div class="form-group">
+                        <label class="font-weight-bold" style="font-size: 12px; color: var(--text-muted, #6B7280);">Document Type *</label>
+                        <select name="document_type" id="edit_document_type" class="form-control" required style="width:100%;">
+                            <option value="Aadhaar">Aadhaar</option>
+                            <option value="PAN">PAN</option>
+                            <option value="Passport">Passport</option>
+                            <option value="Driving License">Driving License</option>
+                            <option value="Voter ID">Voter ID</option>
+                            <option value="Report">Report</option>
+                            <option value="Bill">Bill</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="font-weight-bold" style="font-size: 12px; color: var(--text-muted, #6B7280);">Replace File (Optional)</label>
+                        <input type="file" name="file_path" id="edit_file_path" class="form-control-file" style="font-size: 12.5px;">
+                        <small class="text-muted">Leave empty to keep current file.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="font-weight-bold" style="font-size: 12px; color: var(--text-muted, #6B7280);">Description / Notes</label>
+                        <textarea name="description" id="edit_description" class="form-control" rows="3" placeholder="Notes about this file..." style="font-size: 13px;"></textarea>
+                    </div>
+                    
+                    {% if user.groups.all.0.name in 'admin,hr' %}
+                    <div class="form-group">
+                        <label class="font-weight-bold" style="font-size: 12px; color: var(--text-muted, #6B7280);">Verification Status</label>
+                        <select name="status" id="edit_status" class="form-control" style="width:100%;">
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="modal-footer" style="background: var(--surface-alt, #F8FAFC); border-top: 1px solid var(--border, #E5E7EB); padding: 12px 20px;">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnEditSubmit" style="border-radius: 8px;">
+                        <i class="fas fa-save mr-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
+
 {% block extra_scripts %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-
     $(document).ready(function () {
+        // Initialize Select2 dropdowns
+        $('#id_document_type').select2({ placeholder: "Select Document Type", allowClear: true });
+        $('#id_status').select2({ minimumResultsForSearch: -1 });
+        $('#edit_document_type').select2({ dropdownParent: $('#editUploadModal') });
+        if ($('#edit_status').length) {
+            $('#edit_status').select2({ minimumResultsForSearch: -1, dropdownParent: $('#editUploadModal') });
+        }
 
-        // Initialize Select2 for document_type
-        $('#id_document_type').select2({
-            placeholder: "Select Document Type",
-            allowClear: true
-        });
+        // Add Document Form Submit
         $('#uploadForm').submit(function (e) {
             e.preventDefault();
+            
+            const fileInput = $('#id_file_path');
+            if (fileInput.length && !fileInput[0].files.length) {
+                Swal.fire({ icon: 'warning', title: 'File Required', text: 'Please select a file to upload.' });
+                return;
+            }
+
+            $('#btnUploadSubmit').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Uploading...');
+
             $.ajax({
                 url: '',
                 type: 'POST',
@@ -122,58 +342,176 @@ EMPLOYEE UPLOAD
                 contentType: false,
                 success: function (response) {
                     if (response.status === 'success') {
-                        SuccessMSG(response.message);
-                        $('#uploadForm')[0].reset();
-                        location.reload();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Uploaded!',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            location.reload();
+                        });
                     } else {
-                        console.log(response.errors)
-                        for (var field in response.responseJSON.errors) {
-                            ErrorMSG(response.responseJSON.errors[field])
-
-                        }
-                        for (var field in response.errors) {
-                            ErrorMSG(response.errors[field])
-                            $('#upload_' + field + 'Errors').text(response.errors[field]).show();
-                        }
+                        Swal.fire({ icon: 'error', title: 'Upload Failed', text: 'Error uploading file.' });
+                        $('#btnUploadSubmit').prop('disabled', false).html('<i class="fas fa-upload mr-1"></i> Upload Document');
                     }
                 },
-                error: function (response) {
-                    for (var field in response.responseJSON.errors) {
-                        ErrorMSG(response.responseJSON.errors[field])
+                error: function (xhr) {
+                    const errors = xhr.responseJSON?.errors || {};
+                    let errorMsg = '';
+                    for (let f in errors) {
+                        errorMsg += `${f}: ${errors[f]}\n`;
                     }
+                    if (!errorMsg) errorMsg = 'An unexpected server error occurred.';
+                    Swal.fire({ icon: 'error', title: 'Upload Failed', text: errorMsg });
+                    $('#btnUploadSubmit').prop('disabled', false).html('<i class="fas fa-upload mr-1"></i> Upload Document');
                 }
-
             });
         });
 
-        $('#addMore').click(function () {
-            $('#uploadForm')[0].reset();
-            $('.invalid-feedback').empty();
+        // Edit Document Form Submit
+        $('#editUploadForm').submit(function (e) {
+            e.preventDefault();
+            $('#btnEditSubmit').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Saving...');
+
+            $.ajax({
+                url: '',
+                type: 'POST',
+                data: new FormData(this),
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.status === 'success') {
+                        $('#editUploadModal').modal('hide');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Updated!',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Update Failed', text: 'Error saving changes.' });
+                        $('#btnEditSubmit').prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Save Changes');
+                    }
+                },
+                error: function (xhr) {
+                    Swal.fire({ icon: 'error', title: 'Update Failed', text: 'Error saving changes.' });
+                    $('#btnEditSubmit').prop('disabled', false).html('<i class="fas fa-save mr-1"></i> Save Changes');
+                }
+            });
         });
     });
 
-    const span_status = false;
-    function correct_span() {
-        // Find the element with the specified classes
-        const selectElements = document.querySelectorAll('.select2-selection.select2-selection--single');
-
-        selectElements.forEach(element => {
-            // console.log(element)
-            element.style.height = '40px';
-        });
-        // Find the element with the specified classes
-        const selectElements2 = document.querySelectorAll('.select2.select2-container.select2-container--default');
-
-        selectElements2.forEach(element => {
-            // console.log(element)
-            element.style.width = '100%';
-        });
-    }
-    if (span_status == false) {
-        setTimeout(correct_span, 1000);
-        if (span_status) { span_status = true }
+    // Open Edit Modal
+    function openEditModal(id, type, desc, status) {
+        $('#edit_upload_id').val(id);
+        $('#edit_document_type').val(type).trigger('change');
+        $('#edit_description').val(desc);
+        if ($('#edit_status').length) {
+            $('#edit_status').val(status).trigger('change');
+        }
+        $('#editUploadModal').modal('show');
     }
 
+    // Delete Document
+    function deleteUpload(id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This document file will be permanently deleted from the system.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#DC2626',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '',
+                    type: 'POST',
+                    data: {
+                        action: 'delete_upload',
+                        id: id,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            $(`#row-upload-${id}`).slideUp(300, function() {
+                                $(this).remove();
+                                if ($('tbody tr').length === 0) {
+                                    location.reload(); // Reload to show empty container view
+                                }
+                            });
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: response.message,
+                                showConfirmButton: false,
+                                timer: 1200
+                            });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Error', text: response.message });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to delete document.' });
+                    }
+                });
+            }
+        });
+    }
+
+    // Inline Status Update (Admin/HR only)
+    function updateUploadStatus(id, newStatus) {
+        const badge = $(`#badge-status-${id}`);
+        const originalText = badge.text().trim();
+        
+        // Optimistic UI update
+        badge.text(newStatus)
+            .removeClass('badge-pending badge-approved badge-rejected')
+            .addClass('badge-' + newStatus.toLowerCase());
+
+        $.ajax({
+            url: '',
+            type: 'POST',
+            data: {
+                action: 'update_status',
+                id: id,
+                status: newStatus,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function (response) {
+                if (response.status === 'success') {
+                    // Small toast confirmation
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'success',
+                        title: response.message
+                    });
+                } else {
+                    // Rollback
+                    badge.text(originalText)
+                        .removeClass('badge-pending badge-approved badge-rejected')
+                        .addClass('badge-' + originalText.toLowerCase());
+                    Swal.fire({ icon: 'error', title: 'Error', text: response.message });
+                }
+            },
+            error: function () {
+                // Rollback
+                badge.text(originalText)
+                    .removeClass('badge-pending badge-approved badge-rejected')
+                    .addClass('badge-' + originalText.toLowerCase());
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to update status.' });
+            }
+        });
+    }
 </script>
-
-{% endblock extra_scripts %}
+{% endblock %}

@@ -21,3 +21,6 @@ class Migration(migrations.Migration):
             new_name='event_date_remark',
         ),
     ]
+
+
+

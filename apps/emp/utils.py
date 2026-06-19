@@ -81,3 +81,36 @@ def fetch_ifsc_details(ifsc_code: str) -> dict:
     except Exception as e:
         # Catch any other unexpected errors
         return {"error": f"An unexpected error occurred: {str(e)}"}
+
+def log_employee_activity(employee, category, action, remark=None, user=None, ip=None):
+    from .models import EmployeeActivityLog
+    from config.middleware import get_current_user, get_current_ip
+
+    if user is None:
+        user = get_current_user()
+    
+    if user and not user.is_authenticated:
+        user = None
+
+    if ip is None:
+        ip = get_current_ip()
+        
+    EmployeeActivityLog.objects.create(
+        employee=employee,
+        category=category,
+        action=action,
+        remark=remark or action,
+        performed_by=user,
+        ip_address=ip
+    )
+
+def get_log_classifications() -> dict:
+    """Loads log classification config from log_classification.json."""
+    import os
+    try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        json_path = os.path.join(current_dir, 'log_classification.json')
+        with open(json_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}

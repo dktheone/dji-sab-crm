@@ -15,6 +15,7 @@ env_sab
 /logs/
 /media/Uploads/
 /venv/
+/addon-resources/
 #src
 *.sqlite*
 .env_sab

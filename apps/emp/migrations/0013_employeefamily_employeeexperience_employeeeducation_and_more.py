@@ -149,9 +149,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="employeeexperience",
-            constraint=models.CheckConstraint(
-                check=models.Q(("end_date__gte", models.F("start_date"))),
+            constraint=models.CheckConstraint(check=models.Q(("end_date__gte", models.F("start_date"))),
                 name="check_end_date_gte_start_date",
             ),
         ),
     ]
+
+
+

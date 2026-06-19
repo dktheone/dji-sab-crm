@@ -83,10 +83,13 @@ urlpatterns = [
     path('add/', emp_views.employee_form, name='employee_form'),
     path('details/<int:employee_id>', emp_views.employee_additional, name='employee_details'),
     path('upload/<int:employee_id>/', emp_views.employee_uploads, name='employee_uploads'),
+    path('<int:emp_id>/action-log/', emp_views.EmployeeActionLogView.as_view(), name='employee_action_log'),
+    path('action-log/', emp_views.employee_action_log, name='employee_action_log_all'),
     path('edit/<int:employee_id>/', emp_views.employee_form, name='employee_edit'),
     # path('employees/list/', emp_views.employee_list, name='employee_list'),
     path('view/<int:employee_id>/', emp_views.employee_view, name='employee_view'),
     path('status/<int:employee_id>/', emp_views.update_employee_status, name='update_employee_status'),
+    path('offboard/<int:employee_id>/', emp_views.offboard_employee, name='offboard_employee'),
     path('get-cities/', emp_views.get_cities, name='get_cities'),
     path('create-user/', emp_views.create_employee_user, name='create_employee_user'),
     
@@ -108,6 +111,7 @@ urlpatterns = [
     path('api/employees-json/', emp_views.get_employees_json, name='get_employees_json'),
     path('api/employees-list/', emp_views.get_employees_list, name='get_employees_list'),
     path('api/check-duplicate/', emp_views.check_duplicate, name='check_duplicate'),
+    path('api/check-employee-history/', emp_views.check_employee_history, name='check_employee_history'),
     path('employee/<int:employee_id>/profile/', emp_views.get_employee_profile, name='get_employee_profile'),
     
     # Admin Role Assignment

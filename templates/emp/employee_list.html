@@ -64,6 +64,9 @@ EMPLOYEES
                                     {% endif %}
                                     {% if user.groups.all.0.name in 'admin,hr' %}
                                         <button type="button" class="btn btn-secondary btn-sm edit-status-btn" data-employee-id="{{ employee.id }}">Edit Status</button>
+                                        {% if employee.status == 'Active' or employee.status == 'Suspended' %}
+                                            <button type="button" class="btn btn-danger btn-sm offboard-btn" data-employee-id="{{ employee.id }}" data-employee-name="{{ employee.first_name }} {{ employee.last_name }}">Offboard</button>
+                                        {% endif %}
                                     {% endif %}
                                 </td>
                             </tr>
@@ -78,6 +81,53 @@ EMPLOYEES
             </div>
         </div>
     </section>
+</div>
+
+<!-- Offboarding Modal -->
+<div class="modal fade" id="offboardModal" tabindex="-1" role="dialog" aria-labelledby="offboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="offboardModalLabel"><i class="fas fa-user-minus mr-2"></i>Offboard Employee</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to offboard <strong id="offboardEmployeeName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> This will deactivate their user account, freeze their active salary master, and update their employment history.
+                </div>
+                <form id="offboardForm">
+                    <input type="hidden" id="offboardEmployeeId" name="employee_id">
+                    
+                    <div class="form-group">
+                        <label for="offboardStatus">Final Status</label>
+                        <select class="form-control" id="offboardStatus" name="status" required>
+                            <option value="">Select final status...</option>
+                            <option value="Terminated">Terminated</option>
+                            <option value="InActive">InActive</option>
+                            <option value="Archived">Archived</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="offboardDate">Exit Date</label>
+                        <input type="date" class="form-control" id="offboardDate" name="exit_date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="offboardReason">Reason for Exit</label>
+                        <textarea class="form-control" id="offboardReason" name="reason_for_exit" rows="3" required placeholder="Provide reason for offboarding..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmOffboardBtn">Confirm Offboarding</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
@@ -99,7 +149,7 @@ $(document).ready(function() {
    console.log("Status choices available: "," {{ status_choices|safe }}");
 
     // Handle Edit Status button click
-    $('.edit-status-btn').click(function() {
+    $('#employeeTable tbody').on('click', '.edit-status-btn', function() {
         var employeeId = $(this).data('employee-id');
         console.log("Editing status for employee ID: ", employeeId);
         $('#status-label-' + employeeId).hide();
@@ -107,7 +157,7 @@ $(document).ready(function() {
     });
 
     // Handle Update Status button click
-    $('.update-status-btn').click(function() {
+    $('#employeeTable tbody').on('click', '.update-status-btn', function() {
         var employeeId = $(this).data('employee-id');
         var form = $('#status-form-' + employeeId);
         var status = form.find('select[name="status"]').val();
@@ -146,11 +196,72 @@ $(document).ready(function() {
     });
 
     // Handle Cancel button click
-    $('.cancel-status-btn').click(function() {
+    $('#employeeTable tbody').on('click', '.cancel-status-btn', function() {
         var employeeId = $(this).data('employee-id');
         console.log("Cancelling edit for employee ID: ", employeeId);
         $('#status-form-' + employeeId).hide();
         $('#status-label-' + employeeId).show();
+    });
+
+    // --- OFFBOARDING LOGIC ---
+    
+    // Set today's date as default for exit date
+    document.getElementById('offboardDate').valueAsDate = new Date();
+
+    // Handle Offboard button click
+    $('#employeeTable tbody').on('click', '.offboard-btn', function() {
+        var employeeId = $(this).data('employee-id');
+        var employeeName = $(this).data('employee-name');
+        $('#offboardEmployeeId').val(employeeId);
+        $('#offboardEmployeeName').text(employeeName);
+        $('#offboardModal').modal('show');
+    });
+
+    // Handle Confirm Offboarding
+    $('#confirmOffboardBtn').click(function() {
+        var employeeId = $('#offboardEmployeeId').val();
+        var status = $('#offboardStatus').val();
+        var exitDate = $('#offboardDate').val();
+        var reason = $('#offboardReason').val();
+
+        if (!status || !exitDate || !reason) {
+            WarningMSG('Please fill in all offboarding details.');
+            return;
+        }
+
+        var offboard_url = "{% url 'emp:offboard_employee' 0 %}".replace('0', employeeId);
+        
+        // Show loading state
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Processing...');
+
+        $.ajax({
+            url: offboard_url,
+            type: 'POST',
+            data: {
+                status: status,
+                exit_date: exitDate,
+                reason_for_exit: reason,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    $('#offboardModal').modal('hide');
+                    SuccessMSG(response.message);
+                    setTimeout(function() {
+                        location.reload(); // Reload to reflect changes safely
+                    }, 1500);
+                } else {
+                    ErrorMSG(response.message);
+                    $btn.prop('disabled', false).text('Confirm Offboarding');
+                }
+            },
+            error: function(xhr) {
+                var errorMsg = xhr.responseJSON ? xhr.responseJSON.message : 'An error occurred during offboarding.';
+                ErrorMSG(errorMsg);
+                $btn.prop('disabled', false).text('Confirm Offboarding');
+            }
+        });
     });
 });
 </script>

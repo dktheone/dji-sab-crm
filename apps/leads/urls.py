@@ -31,9 +31,11 @@ urlpatterns = [
     path('activity/', views.my_activity, name='my_activity'),  # Redirect to own activity
     path('conversion-logs/', views.conversion_logs, name='conversion_logs'),
     path('upcoming-followups/', views.upcoming_followups, name='upcoming_followups'),
+    path('api/search/', views.lead_search_api, name='lead_search_api'),
     
     # Lead Contacts CRUD
     path('contacts/all/', views.all_lead_contacts, name='all_lead_contacts'),
+    path('contacts/check-mobile/', views.lead_contact_check_mobile, name='lead_contact_check_mobile'),
     path('<int:lead_id>/contacts/', views.lead_contacts_list, name='lead_contacts_list'),
     path('<int:lead_id>/contacts/create/', views.lead_contact_create, name='lead_contact_create'),
     path('contacts/<int:contact_id>/update/', views.lead_contact_update, name='lead_contact_update'),

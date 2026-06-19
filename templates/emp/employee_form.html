@@ -1,686 +1,600 @@
 {% extends 'layouts/base.html' %}
-{% load static crispy_forms_tags %}
+{% load static %}
 
 {% block title %}{% if employee %}Edit Employee{% else %}Add Employee{% endif %}{% endblock %}
 
 {% block extrastyle %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Include jQuery Validate -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
 <style>
-    /* Modern Wizard Styles */
-    .wizard-container {
-        max-width: 1400px;
-        margin: 0 auto;
-    }
+/* CSS from the reference file */
+body{font-family:'Inter',sans-serif}
+:root{
+  --primary:#1A56DB;--primary-light:#E8F0FE;--primary-50:#EFF6FF;
+  --surface:#fff;--surface-alt:#F8FAFC;
+  --border:#E5E7EB;--border-active:#93C5FD;
+  --text:#111827;--text-muted:#6B7280;--text-xs:#9CA3AF;
+  --error:#DC2626;--error-bg:#FEF2F2;
+  --success:#16A34A;--success-bg:#F0FDF4;
+  --warn:#D97706;
+  --radius:10px;--radius-sm:7px;
+  --green:#16A34A;--purple:#7C3AED;--teal:#0F766E;
+}
+.wrap{background:var(--surface-alt);min-height:100%;padding-bottom:80px; width: 100%;}
+.step-bar{background:#111827;color:#fff;padding:18px 24px 14px;position:sticky;top:0;z-index:50}
+.step-title{font-size:15px;font-weight:600;letter-spacing:.01em;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.step-title i{font-size:17px;color:#93C5FD}
+.stepper{display:flex;align-items:center;gap:0}
+.step-item{display:flex;align-items:center;gap:6px;flex:1;position:relative}
+.step-item:last-child{flex:0 0 auto}
+.step-circle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;transition:all .2s}
+.step-done .step-circle{background:var(--green);color:#fff}
+.step-active .step-circle{background:var(--primary);color:#fff;box-shadow:0 0 0 3px rgba(26,86,219,.3)}
+.step-todo .step-circle{background:transparent;border:1.5px solid #4B5563;color:#9CA3AF}
+.step-label{font-size:11px;color:#9CA3AF;white-space:nowrap}
+.step-active .step-label{color:#93C5FD;font-weight:500}
+.step-done .step-label{color:#6EE7B7}
+.step-line{flex:1;height:1.5px;background:#374151;margin:0 4px}
+.step-line.done{background:var(--green)}
 
-    .wizard-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 10px 10px 0 0;
-        color: white;
-        margin-bottom: 2rem;
-    }
+.body{padding:20px 20px 0;max-width:1000px;margin:0 auto}
+.section-card{background:var(--surface);border-radius:14px;border:1px solid var(--border);padding:20px;margin-bottom:16px;overflow:hidden}
+.section-card.accent-blue{border-top:3px solid var(--primary)}
+.section-card.accent-green{border-top:3px solid var(--green)}
+.section-card.accent-purple{border-top:3px solid var(--purple)}
+.section-card.accent-teal{border-top:3px solid var(--teal)}
+.section-card.accent-warn{border-top:3px solid var(--warn)}
 
-    .wizard-header h1 {
-        margin: 0 0 1rem 0;
-        font-size: 1.8rem;
-        font-weight: 700;
-    }
+.sec-head{display:flex;align-items:center;gap:9px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #F3F4F6}
+.sec-head i{font-size:18px;color:var(--primary)}
+.sec-head.green i{color:var(--green)}
+.sec-head.purple i{color:var(--purple)}
+.sec-head.teal i{color:var(--teal)}
+.sec-head.warn i{color:var(--warn)}
+.sec-head h3{font-size:13.5px;font-weight:600;color:var(--text);margin:0;}
+.sec-head p{font-size:11px;color:var(--text-muted);margin-top:1px;margin-bottom:0;}
 
-    /* Progress Stepper */
-    .progress-stepper {
-        display: flex;
-        justify-content: space-between;
-        position: relative;
-        max-width: 800px;
-        margin: 0 auto;
-    }
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 16px}
+.span-2{grid-column:span 2}
+.span-3{grid-column:span 3}
+.span-full{grid-column:1/-1}
 
-    .step-item {
-        flex: 1;
-        text-align: center;
-        position: relative;
-    }
+.field label{display:block;font-size:11.5px;font-weight:500;color:var(--text-muted);margin-bottom:5px;letter-spacing:.01em}
+.field label .req{color:var(--error);margin-left:2px}
+.field input,.field select,.field textarea{
+  width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  font-size:13px;color:var(--text);background:var(--surface);
+  transition:border .15s,box-shadow .15s;outline:none;
+  font-family:inherit;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,86,219,.12)}
+.field input.mono,.field input.masked{font-family:'JetBrains Mono','Courier New',monospace;letter-spacing:.05em}
+.field input.readonly-field{background:#F9FAFB;color:var(--text-muted);cursor:default}
+.field .hint{font-size:11px;color:var(--text-xs);margin-top:4px}
+.field .err{font-size:11px;color:var(--error);margin-top:4px;display:none}
+.field .mask-wrap{position:relative}
+.field .mask-wrap input{padding-right:36px}
+.field .mask-wrap .eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-xs);cursor:pointer;font-size:16px;background:none;border:none;padding:0;line-height:1}
+.field .mask-wrap .eye:hover{color:var(--text-muted)}
 
-    .step-number {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 0.5rem;
-        font-weight: 700;
-        font-size: 1.2rem;
-        position: relative;
-        z-index: 2;
-        transition: all 0.3s ease;
-    }
+.photo-zone{border:2px dashed #BFDBFE;border-radius:12px;padding:22px 16px;text-align:center;background:#EFF6FF;cursor:pointer;transition:border-color .15s}
+.photo-zone:hover{border-color:var(--primary)}
+.photo-avatar{width:68px;height:68px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;border:3px solid #BFDBFE}
+.photo-zone p{font-size:12px;color:var(--text-muted);margin-top:6px;margin-bottom:0;}
+.photo-zone .upload-btn{display:inline-flex;align-items:center;gap:6px;background:var(--primary);color:#fff;font-size:12px;font-weight:500;padding:7px 16px;border-radius:8px;border:none;cursor:pointer;margin-top:10px;transition:background .15s}
+.photo-zone .upload-btn:hover{background:#1648c8}
 
-    .step-item.active .step-number {
-        background: white;
-        color: #667eea;
-        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.3);
-    }
+.toggle-wrap{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#F0FDF4;border-radius:8px;border:1px solid #BBF7D0;cursor:pointer;margin-bottom:14px}
+.toggle-wrap input[type=checkbox]{accent-color:var(--green);width:14px;height:14px}
+.toggle-wrap span{font-size:12.5px;color:#166534;font-weight:500}
 
-    .step-item.completed .step-number {
-        background: #10b981;
-        color: white;
-    }
+.emergency-wrap{margin-top:16px;padding-top:14px;border-top:1px dashed #E5E7EB}
+.emergency-label{font-size:11.5px;font-weight:600;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.emergency-label i{font-size:14px}
 
-    .step-title {
-        font-size: 0.85rem;
-        opacity: 0.9;
-    }
+.footer-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:11px 24px;display:flex;justify-content:space-between;align-items:center;z-index:50;box-shadow:0 -2px 12px rgba(0,0,0,.06)}
+.footer-copy{font-size:11px;color:var(--text-xs)}
+.footer-btns{display:flex;align-items:center;gap:8px}
+.btn{padding:8px 18px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-ghost{border-color:var(--border);color:var(--text-muted);background:transparent}
+.btn-ghost:hover{background:#F3F4F6}
+.btn-outline{border-color:var(--primary);color:var(--primary);background:transparent}
+.btn-outline:hover{background:var(--primary-light)}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:#1648c8}
 
-    .step-item.active .step-title {
-        font-weight: 600;
-        opacity: 1;
-    }
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.03em}
+.tag-blue{background:#DBEAFE;color:#1E40AF}
+.tag-green{background:#DCFCE7;color:#166534}
 
-    .step-line {
-        position: absolute;
-        top: 25px;
-        left: 50%;
-        right: -50%;
-        height: 3px;
-        background: rgba(255, 255, 255, 0.3);
-        z-index: 1;
-    }
+.section-badge{float:right;margin-top:2px}
 
-    .step-item:last-child .step-line {
-        display: none;
-    }
+/* To ensure Select2 inherits same styles as standard inputs */
+.select2-container .select2-selection--single {
+  height: 38px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  background-color: var(--surface) !important;
+  font-size: 13px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: normal !important;
+  padding-left: 12px !important;
+  color: var(--text) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 36px !important;
+  right: 5px !important;
+}
 
-    .step-item.completed .step-line {
-        background: #10b981;
-    }
+/* Error class for jquery validation */
+.error {
+    color: var(--error);
+    font-size: 11px;
+    margin-top: 4px;
+    display: block;
+}
+input.error, select.error, textarea.error {
+    border-color: var(--error) !important;
+}
 
-    /* Form Cards */
-    .form-section {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .section-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 1rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid #e5e7eb;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .section-icon {
-        color: #667eea;
-        font-size: 1.3rem;
-    }
-
-    /* Photo Upload */
-    .photo-upload-zone {
-        background: #f9fafb;
-        border: 2px dashed #d1d5db;
-        border-radius: 10px;
-        padding: 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-    }
-
-    .photo-upload-zone:hover {
-        border-color: #667eea;
-        background: #f3f4f6;
-    }
-
-    .photo-upload-zone.has-photo {
-        border-style: solid;
-        border-color: #10b981;
-        background: #ecfdf5;
-    }
-
-    .photo-preview {
-        width: 250px;
-        height: 250px;
-        aspect-ratio: 1 / 1;
-        border-radius: 10px;
-        object-fit: cover;
-        margin: 0 auto 1rem;
-        display: none;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .photo-preview.show {
-        display: block;
-    }
-
-    .upload-icon {
-        font-size: 3rem;
-        color: #9ca3af;
-        margin-bottom: 1rem;
-    }
-
-    .photo-upload-zone.has-photo .upload-icon {
-        display: none;
-    }
-
-    .change-photo-btn {
-        display: none;
-    }
-
-    .photo-upload-zone.has-photo .change-photo-btn {
-        display: inline-block;
-    }
-
-    /* Validation Indicators */
-    .field-valid {
-        position: relative;
-    }
-
-    .field-valid::after {
-        content: '✓';
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #10b981;
-        font-weight: bold;
-    }
-
-    .field-error {
-        border-color: #ef4444 !important;
-    }
-
-    .field-warning {
-        border-color: #f59e0b !important;
-    }
-
-    .validation-message {
-        font-size: 0.85rem;
-        margin-top: 0.25rem;
-    }
-
-    .validation-success {
-        color: #10b981;
-    }
-
-    .validation-error {
-        color: #ef4444;
-    }
-
-    .validation-warning {
-        color: #f59e0b;
-    }
-
-    /* Copy Address Checkbox */
-    .copy-address-box {
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .copy-address-box label {
-        margin: 0;
-        font-weight: 600;
-        color: #1e40af;
-        cursor: pointer;
-    }
-
-    /* Action Buttons */
-    .wizard-actions {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 2rem;
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        margin-top: 2rem;
-    }
-
-    .btn-wizard {
-        padding: 0.75rem 2rem;
-        font-weight: 600;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .btn-wizard-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-    }
-
-    .btn-wizard-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-wizard-secondary {
-        background: white;
-        color: #6b7280;
-        border: 2px solid #e5e7eb;
-    }
-
-    .btn-wizard-secondary:hover {
-        border-color: #d1d5db;
-        background: #f9fafb;
-    }
-
-    /* Loading Spinner */
-    .spinner {
-        display: inline-block;
-        width: 1rem;
-        height: 1rem;
-        border: 2px solid #f3f4f6;
-        border-top-color: #667eea;
-        border-radius: 50%;
-        animation: spin 0.6s linear infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    /* Select2 Uniformity Fix - Match height with other inputs */
-    .select2-container--default .select2-selection--single {
-        height: 38px !important;
-        padding: 6px 12px !important;
-        border: 1px solid #d1d5db !important;
-        border-radius: 0.375rem !important;
-        display: flex !important;
-        align-items: center !important;
-    }
-
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 24px !important;
-        padding-left: 0 !important;
-        padding-right: 20px !important;
-        color: #6b7280;
-    }
-
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px !important;
-        top: 1px !important;
-        right: 1px !important;
-    }
-
-    .select2-container--default .select2-selection--single .select2-selection__placeholder {
-        color: #9ca3af !important;
-    }
-
-    /* Ensure Select2 container matches parent width */
-    .select2-container {
-        width: 100% !important;
-    }
-
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .wizard-header {
-            padding: 1.5rem;
-        }
-
-        .step-number {
-            width: 40px;
-            height: 40px;
-            font-size: 1rem;
-        }
-
-        .step-title {
-            font-size: 0.75rem;
-        }
-
-        .form-section {
-            padding: 1rem;
-        }
-    }
+/* Remove default select background since we use select2 mostly, but keep for fallback */
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="content-wrapper">
     <div class="content">
-        <div class="container-fluid wizard-container">
 
-            <!-- Wizard Header -->
-            <div class="wizard-header">
-                <h1>
-                    <i class="fas fa-user-plus mr-2"></i>
-                    {% if employee %}Edit Employee Profile{% else %}Add New Employee{% endif %}
-                </h1>
+        <!-- ID Verification Step (Optional) -->
+        <div id="identity-verification-container" class="wrap" style="{% if employee %}display:none;{% endif %} padding:40px 20px;">
+            <div class="body" style="max-width: 1100px;">
+                <div class="section-card accent-blue">
+                    <div class="sec-head">
+                        <i class="fas fa-user-plus" aria-hidden="true" style="font-size: 20px;"></i>
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700;">New Employee Registration</h3>
+                            <p>Verify National ID to check for existing records and prevent duplicates.</p>
+                        </div>
+                    </div>
+                    <form id="identityCheckForm">
+                        <div class="grid-2" style="margin-bottom:14px">
+                            <div class="field">
+                                <label>Nationality <span class="req">*</span></label>
+                                <select id="idCheckNationality" required>
+                                    <option value="" disabled selected>Select nationality</option>
+                                    <option value="Indian">Indian</option>
+                                    <option value="Nepali">Nepali</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>National ID Number / Aadhaar Number <span class="req">*</span></label>
+                                <input id="idCheckNationalId" placeholder="Enter ID number" type="text" required/>
+                            </div>
+                        </div>
+                        <div style="display:flex; justify-content: flex-end;">
+                            <button id="btnVerifyIdentity" class="btn btn-primary" type="button">
+                                <span id="btnVerifyText">Verify Identity & Continue</span>
+                                <i class="fas fa-arrow-right ml-2" id="btnVerifyIcon"></i>
+                                <i class="fas fa-spinner fa-spin hidden" id="btnVerifySpinner" style="display:none;"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
-                <!-- Progress Stepper -->
-                <div class="progress-stepper">
-                    <div class="step-item active">
-                        <div class="step-number">1</div>
-                        <div class="step-title">Registration</div>
-                        <div class="step-line"></div>
+                <!-- Verification Results Card -->
+                <div id="verification-result-box" class="section-card" style="display: none; margin-top: 24px; padding: 25px;">
+                    <div class="sec-head" style="border-bottom: 1px solid var(--border); margin-bottom: 20px; padding-bottom: 12px;">
+                        <i class="fas fa-id-card-alt text-primary" style="font-size: 20px;"></i>
+                        <div>
+                            <h3 style="font-size: 15px; font-weight: 700; color: var(--text);">Employee Record Found</h3>
+                            <p>Historical profile and active status summary matching the entered National ID.</p>
+                        </div>
                     </div>
-                    <div class="step-item">
-                        <div class="step-number">2</div>
-                        <div class="step-title">Education & Experience</div>
-                        <div class="step-line"></div>
+                    
+                    <div class="grid-2" style="grid-template-columns: 1.1fr 1.9fr; gap: 24px; align-items: start;">
+                        <!-- Column 1: Profile Summary Card -->
+                        <div style="background: var(--surface-alt); border: 1px solid var(--border); border-radius: 12px; padding: 20px;">
+                            <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 18px;">
+                                <img id="result-photo" src="/static/dist/img/default-150x150.png" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--border);" alt="Employee Photo">
+                                <div>
+                                    <h4 id="result-fullname" style="font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 4px 0;">John Doe</h4>
+                                    <p id="result-empcode" style="font-size: 12.5px; color: var(--text-muted); margin: 0 0 6px 0; font-family: monospace;">SAB0012</p>
+                                    <span id="result-status-badge" style="font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">Inactive</span>
+                                </div>
+                            </div>
+                            
+                            <div style="border-top: 1px dashed var(--border); padding-top: 12px; margin-bottom: 18px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 8px;">
+                                    <span style="color: var(--text-muted);">Designation:</span>
+                                    <span id="result-designation" style="font-weight: 600; color: var(--text);">Chef</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 8px;">
+                                    <span style="color: var(--text-muted);">Department:</span>
+                                    <span id="result-department" style="font-weight: 600; color: var(--text);">Kitchen</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 8px;">
+                                    <span style="color: var(--text-muted);">Last Assigned Site:</span>
+                                    <span id="result-site" style="font-weight: 600; color: var(--text);">ABC Hospital</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 8px;">
+                                    <span style="color: var(--text-muted);">Contact:</span>
+                                    <span id="result-contact" style="font-weight: 600; color: var(--text);">+91 9876543210</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
+                                    <span style="color: var(--text-muted);">Email:</span>
+                                    <span id="result-email" style="font-weight: 600; color: var(--text);">john@example.com</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Duration details -->
+                            <div id="result-duration-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px;">
+                                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 4px;">Service Duration</div>
+                                <div id="result-active-duration" style="font-size: 13px; font-weight: 700; color: var(--green);">1 Year, 2 Months Active</div>
+                                <div id="result-inactive-duration" style="font-size: 11.5px; color: var(--text-muted); margin-top: 4px; display: none;">Inactive since 12-Jun-2025 (4 Days)</div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: History Timeline Table -->
+                        <div style="border: 1px solid var(--border); border-radius: 12px; padding: 20px; background: var(--surface);">
+                            <h4 style="font-size: 13.5px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: var(--text);">
+                                <i class="fas fa-history text-muted"></i> Past Employment History Summary
+                            </h4>
+                            <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+                                <table class="table table-striped table-valign-middle mb-0" style="font-size: 12px; min-width: 500px;">
+                                    <thead style="background: #111827; color: #fff;">
+                                        <tr>
+                                            <th style="padding: 8px 10px; font-weight: 600;">Joining Date</th>
+                                            <th style="padding: 8px 10px; font-weight: 600;">Exit Date</th>
+                                            <th style="padding: 8px 10px; font-weight: 600;">Site</th>
+                                            <th style="padding: 8px 10px; font-weight: 600;">Role</th>
+                                            <th style="padding: 8px 10px; font-weight: 600;">Exit Reason</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="result-history-rows">
+                                        <!-- Rows dynamically filled by Javascript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <div class="step-item">
-                        <div class="step-number">3</div>
-                        <div class="step-title">Documents</div>
-                        <div class="step-line"></div>
-                    </div>
-                    <div class="step-item">
-                        <div class="step-number">4</div>
-                        <div class="step-title">Review & Submit</div>
+                    
+                    <!-- Alert / Action Buttons Row -->
+                    <div id="result-actions-container" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; gap: 12px;">
+                        <!-- Buttons filled by JS -->
                     </div>
                 </div>
             </div>
-
-            <form id="employeeForm" method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-
-                <div class="row">
-                    <!-- LEFT COLUMN -->
-                    <div class="col-lg-6">
-
-                        <!-- Photo Upload Card -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="fas fa-camera section-icon"></i>
-                                Employee Photo
-                            </div>
-                            <div class="photo-upload-zone {% if employee.photo %}has-photo{% endif %}"
-                                id="photoUploadZone">
-                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                                <img id="photoPreview" class="photo-preview {% if employee.photo %}show{% endif %}"
-                                    src="{% if employee.photo %}{{ employee.photo.url }}{% else %}/static/dist/img/default-150x150.png{% endif %}"
-                                    alt="Employee Photo">
-                                <p class="mb-2"><strong>Click to upload or drag & drop</strong></p>
-                                <p class="text-muted small mb-0">JPG, JPEG, PNG, WEBP • Max 2MB</p>
-                                <input type="file" id="id_photo" name="photo" accept="image/jpeg,image/jpg,image/png,image/webp" style="display:none;">
-                                <button type="button" class="btn btn-sm btn-primary mt-2 change-photo-btn"
-                                    onclick="document.getElementById('id_photo').click()">
-                                    <i class="fas fa-sync mr-1"></i>Change Photo
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Basic Information Card -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="fas fa-user section-icon"></i>
-                                Basic Information
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    {{ employee_form.first_name|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ employee_form.middle_name|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ employee_form.last_name|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {{ employee_form.father_name|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ employee_form.mother_name|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    {{ employee_form.gender|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ employee_form.blood_group|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ employee_form.marital_status|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {{ employee_form.dob|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ employee_form.nationality|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Contact Information Card -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="fas fa-phone section-icon"></i>
-                                Contact Information
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="validation-wrapper">
-                                        {{ employee_form.contact_no|as_crispy_field }}
-                                        <div class="validation-message" id="mobileValidation"></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    {{ employee_form.email|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    {{ employee_form.emergency_person_name|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ employee_form.emergency_relation|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ employee_form.emergency_contact|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Correspondence Address Card -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="fas fa-map-marker-alt section-icon"></i>
-                                Correspondence Address
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    {{ employee_form.cor_address|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    {{ employee_form.cor_state|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ employee_form.cor_city|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ employee_form.cor_pincode|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Permanent Address Card -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="fas fa-home section-icon"></i>
-                                Permanent Address
-                            </div>
-                            <div class="copy-address-box">
-                                <label>
-                                    <input type="checkbox" id="sameAsCorrespondence">
-                                    Same as Correspondence Address
-                                </label>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    {{ employee_form.per_address|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    {{ employee_form.per_state|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ employee_form.per_city|as_crispy_field }}
-                                </div>
-                                <div class="col-md-4">
-                                    {{ employee_form.per_pincode|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <!-- RIGHT COLUMN -->
-                    <div class="col-lg-6">
-
-                        <!-- Employment Details Card -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="fas fa-briefcase section-icon"></i>
-                                Employment Details
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {{ employee_form.department|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ employee_form.designation|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {{ employee_form.site|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ employee_form.joining_date|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-12">
-                                    {{ employee_form.status|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Identity Documents Card -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="fas fa-id-card section-icon"></i>
-                                Identity Documents
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="validation-wrapper">
-                                        {{ employee_form.aadhaar_no|as_crispy_field }}
-                                        <div class="validation-message" id="aadhaarValidation"></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="validation-wrapper">
-                                        {{ employee_form.pan_card|as_crispy_field }}
-                                        <div class="validation-message" id="panValidation"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {{ employee_form.passport_no|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ employee_form.uan_no|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {{ employee_form.other_id_proof_type|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ employee_form.other_id_proof_no|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Bank Details Card -->
-                        <div class="form-section">
-                            <div class="section-title">
-                                <i class="fas fa-university section-icon"></i>
-                                Bank Details
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {{ employee_form.bank_name|as_crispy_field }}
-                                </div>
-                                <div class="col-md-6">
-                                    {{ employee_form.account_no|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="validation-wrapper">
-                                        {{ employee_form.ifsc_code|as_crispy_field }}
-                                        <div class="validation-message" id="ifscValidation"></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    {{ employee_form.upi_id|as_crispy_field }}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-12">
-                                    {{ employee_form.pf_esic_no|as_crispy_field }}
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-
-                <!-- Wizard Actions -->
-                <div class="wizard-actions">
-                    <div>
-                        <a href="{% url 'emp:employee_list' %}" class="btn btn-wizard btn-wizard-secondary">
-                            <i class="fas fa-times mr-2"></i>Cancel
-                        </a>
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-wizard btn-wizard-secondary mr-2" id="saveDraftBtn">
-                            <i class="fas fa-save mr-2"></i>Save Draft
-                        </button>
-                        <button type="submit" class="btn btn-wizard btn-wizard-primary" id="submitBtn">
-                            <span id="submitText">
-                                {% if employee %}
-                                <i class="fas fa-check mr-2"></i>Update & Continue
-                                {% else %}
-                                <i class="fas fa-arrow-right mr-2"></i>Save & Next Step
-                                {% endif %}
-                            </span>
-                            <span id="submitSpinner" style="display:none;">
-                                <span class="spinner"></span> Processing...
-                            </span>
-                        </button>
-                    </div>
-                </div>
-
-            </form>
-
         </div>
+
+        <form id="employeeForm" method="post" enctype="multipart/form-data" class="wrap" style="{% if not employee %}display:none;{% endif %}">
+            <input type="hidden" name="rehire_employee_id" id="rehire_employee_id" value="">
+            {% csrf_token %}
+
+            {% include 'includes/employee_wizard_steps.html' with active_step=2 %}
+
+            <div class="body">
+
+                <!-- SECTION 1: EMPLOYMENT DETAILS -->
+                <div class="section-card accent-blue">
+                    <div class="sec-head">
+                        <i class="ti ti-briefcase" aria-hidden="true"></i>
+                        <div><h3>Employment details <span class="tag tag-blue section-badge">Required</span></h3><p>Organisational placement and work status</p></div>
+                    </div>
+                    <div class="grid-3">
+                        <div class="field">
+                            <label>Department <span class="req">*</span></label>
+                            {{ employee_form.department }}
+                        </div>
+                        <div class="field">
+                            <label>Designation <span class="req">*</span></label>
+                            {{ employee_form.designation }}
+                        </div>
+                        <div class="field">
+                            <label>Employee ID</label>
+                            {% if employee %}
+                            <input type="text" class="mono readonly-field" value="{{ employee.emp_code }}" readonly>
+                            <div class="hint">Auto-generated — read only</div>
+                            {% else %}
+                            <input type="text" class="mono readonly-field" value="Will be auto-generated" readonly>
+                            <div class="hint">Generated upon save</div>
+                            {% endif %}
+                        </div>
+                        <div class="field">
+                            <label>Site / Location</label>
+                            {{ employee_form.site }}
+                        </div>
+                        <div class="field">
+                            <label>Joining date <span class="req">*</span></label>
+                            {{ employee_form.joining_date }}
+                        </div>
+                        <div class="field">
+                            <label>Status <span class="req">*</span></label>
+                            {{ employee_form.status }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: EMPLOYEE PHOTO -->
+                <div class="section-card">
+                    <div class="sec-head">
+                        <i class="ti ti-camera" aria-hidden="true"></i>
+                        <div><h3>Employee photo</h3><p>Profile picture for ID and system records</p></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:start">
+                        <div class="photo-zone" id="photoUploadZone">
+                            <img id="photoPreview" class="photo-avatar" src="{% if employee.photo %}{{ employee.photo.url }}{% else %}/static/dist/img/default-150x150.png{% endif %}" alt="Employee Photo">
+                            <button type="button" class="upload-btn" onclick="document.getElementById('id_photo').click()"><i class="ti ti-upload" aria-hidden="true"></i> Upload photo</button>
+                            <p>Click or drag & drop</p>
+                            <input type="file" id="id_photo" name="photo" accept="image/jpeg,image/jpg,image/png,image/webp" style="display:none;">
+                        </div>
+                        <div style="padding-top:4px">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                                <div style="background:#F0FDF4;border-radius:8px;padding:10px 12px;border:1px solid #BBF7D0">
+                                    <div style="font-size:11px;font-weight:600;color:#166534;margin-bottom:4px">Accepted formats</div>
+                                    <div style="font-size:12px;color:#15803D">JPG, JPEG, PNG, WEBP</div>
+                                </div>
+                                <div style="background:#EFF6FF;border-radius:8px;padding:10px 12px;border:1px solid #BFDBFE">
+                                    <div style="font-size:11px;font-weight:600;color:#1E40AF;margin-bottom:4px">Max file size</div>
+                                    <div style="font-size:12px;color:#1D4ED8">2 MB</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: BASIC PERSONAL INFO -->
+                <div class="section-card accent-purple">
+                    <div class="sec-head purple">
+                        <i class="ti ti-user-circle" aria-hidden="true"></i>
+                        <div><h3>Basic personal information</h3><p>Legal name and personal attributes</p></div>
+                    </div>
+                    <div class="grid-3" style="margin-bottom:14px">
+                        <div class="field">
+                            <label>First name <span class="req">*</span></label>
+                            {{ employee_form.first_name }}
+                        </div>
+                        <div class="field">
+                            <label>Middle name</label>
+                            {{ employee_form.middle_name }}
+                        </div>
+                        <div class="field">
+                            <label>Last name <span class="req">*</span></label>
+                            {{ employee_form.last_name }}
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom:14px">
+                        <div class="field">
+                            <label>Father / husband name</label>
+                            {{ employee_form.father_name }}
+                        </div>
+                        <div class="field">
+                            <label>Mother name</label>
+                            {{ employee_form.mother_name }}
+                        </div>
+                    </div>
+                    <div class="grid-3" style="margin-bottom:14px">
+                        <div class="field">
+                            <label>Gender <span class="req">*</span></label>
+                            {{ employee_form.gender }}
+                        </div>
+                        <div class="field">
+                            <label>Blood group</label>
+                            {{ employee_form.blood_group }}
+                        </div>
+                        <div class="field">
+                            <label>Marital status</label>
+                            {{ employee_form.marital_status }}
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>Date of birth <span class="req">*</span></label>
+                            {{ employee_form.dob }}
+                            <div class="hint" id="age-hint"></div>
+                        </div>
+                        <div class="field">
+                            <label>Nationality <span class="req">*</span></label>
+                            {{ employee_form.nationality }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: IDENTITY DOCUMENTS -->
+                <div class="section-card accent-warn">
+                    <div class="sec-head warn">
+                        <i class="ti ti-id-badge-2" aria-hidden="true"></i>
+                        <div><h3>Identity documents <span class="tag section-badge" style="background:#FEF3C7;color:#92400E">Sensitive</span></h3><p>Government-issued IDs</p></div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom:14px">
+                        <div class="field" id="col_aadhaar_no">
+                            <label>Aadhaar number</label>
+                            {{ employee_form.aadhaar_no }}
+                            <div class="hint">12-digit Aadhaar</div>
+                        </div>
+                        <div class="field">
+                            <label>PAN card number</label>
+                            {{ employee_form.pan_card }}
+                            <div class="hint">Format: 5 letters + 4 digits + 1 letter</div>
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom:14px">
+                        <div class="field">
+                            <label>Passport number</label>
+                            {{ employee_form.passport_no }}
+                        </div>
+                        <div class="field">
+                            <label>UAN number</label>
+                            {{ employee_form.uan_no }}
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field">
+                            <label>Other ID proof type</label>
+                            {{ employee_form.other_id_proof_type }}
+                        </div>
+                        <div class="field">
+                            <label>Other ID proof number</label>
+                            {{ employee_form.other_id_proof_no }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 5: CONTACT -->
+                <div class="section-card">
+                    <div class="sec-head">
+                        <i class="ti ti-device-mobile" aria-hidden="true"></i>
+                        <div><h3>Contact information</h3><p>Primary contacts and emergency details</p></div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom:14px">
+                        <div class="field">
+                            <label>Mobile number <span class="req">*</span></label>
+                            {{ employee_form.contact_no }}
+                            <div class="hint">10-digit Indian mobile</div>
+                        </div>
+                        <div class="field">
+                            <label>Email address</label>
+                            {{ employee_form.email }}
+                        </div>
+                    </div>
+                    <div class="emergency-wrap">
+                        <div class="emergency-label"><i class="ti ti-heartbeat" aria-hidden="true"></i> Emergency contact</div>
+                        <div class="grid-3">
+                            <div class="field">
+                                <label>Contact name</label>
+                                {{ employee_form.emergency_person_name }}
+                            </div>
+                            <div class="field">
+                                <label>Relationship</label>
+                                {{ employee_form.emergency_relation }}
+                            </div>
+                            <div class="field">
+                                <label>Contact mobile</label>
+                                {{ employee_form.emergency_contact }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 6: BANK & PAYROLL -->
+                <div class="section-card accent-green">
+                    <div class="sec-head green">
+                        <i class="ti ti-building-bank" aria-hidden="true"></i>
+                        <div><h3>Bank & payroll details <span class="tag tag-green section-badge">Financial</span></h3><p>Salary disbursement and statutory registrations</p></div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom:14px">
+                        <div class="field">
+                            <label>Bank name</label>
+                            {{ employee_form.bank_name }}
+                        </div>
+                        <div class="field">
+                            <label>Account number</label>
+                            {{ employee_form.account_no }}
+                        </div>
+                    </div>
+                    <div class="grid-2" style="margin-bottom:14px">
+                        <div class="field">
+                            <label>IFSC code</label>
+                            {{ employee_form.ifsc_code }}
+                            <div class="hint" id="ifsc-hint">Enter IFSC to auto-fetch bank name</div>
+                        </div>
+                        <div class="field">
+                            <label>UPI ID</label>
+                            {{ employee_form.upi_id }}
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field span-full">
+                            <label>PF / ESIC number</label>
+                            {{ employee_form.pf_esic_no }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 7: CORRESPONDENCE ADDRESS -->
+                <div class="section-card accent-teal">
+                    <div class="sec-head teal">
+                        <i class="ti ti-map-pin" aria-hidden="true"></i>
+                        <div><h3>Correspondence address <span class="req">*</span></h3><p>Current mailing and residence address</p></div>
+                    </div>
+                    <div class="field" style="margin-bottom:14px">
+                        <label>Full address <span class="req">*</span></label>
+                        {{ employee_form.cor_address }}
+                    </div>
+                    <div class="grid-3">
+                        <div class="field">
+                            <label>State <span class="req">*</span></label>
+                            {{ employee_form.cor_state }}
+                        </div>
+                        <div class="field">
+                            <label>City <span class="req">*</span></label>
+                            {{ employee_form.cor_city }}
+                        </div>
+                        <div class="field">
+                            <label>Pincode <span class="req">*</span></label>
+                            {{ employee_form.cor_pincode }}
+                            <div class="hint">6-digit India Post code</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 8: PERMANENT ADDRESS -->
+                <div class="section-card accent-teal">
+                    <div class="sec-head teal">
+                        <i class="ti ti-home" aria-hidden="true"></i>
+                        <div><h3>Permanent address <span class="req">*</span></h3><p>Official registered / hometown address</p></div>
+                    </div>
+                    <label class="toggle-wrap" id="same-toggle">
+                        <input type="checkbox" id="sameAsCorrespondence">
+                        <i class="ti ti-copy" style="font-size:15px;color:#16A34A" aria-hidden="true"></i>
+                        <span>Same as correspondence address</span>
+                    </label>
+                    <div id="perm-fields">
+                        <div class="field" style="margin-bottom:14px">
+                            <label>Full address <span class="req">*</span></label>
+                            {{ employee_form.per_address }}
+                        </div>
+                        <div class="grid-3">
+                            <div class="field">
+                                <label>State <span class="req">*</span></label>
+                                {{ employee_form.per_state }}
+                            </div>
+                            <div class="field">
+                                <label>City <span class="req">*</span></label>
+                                {{ employee_form.per_city }}
+                            </div>
+                            <div class="field">
+                                <label>Pincode <span class="req">*</span></label>
+                                {{ employee_form.per_pincode }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /body -->
+
+            <div class="footer-bar">
+                <div class="footer-copy">© SAB CRM · v1.1.0</div>
+                <div class="footer-btns">
+                    <a href="{% url 'emp:employee_list' %}" class="btn btn-ghost"><i class="ti ti-x" aria-hidden="true"></i> Cancel</a>
+                    <button type="button" class="btn btn-outline" id="saveDraftBtn"><i class="ti ti-device-floppy" aria-hidden="true"></i> Save draft</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span id="submitText">
+                            {% if employee %}Update & continue{% else %}Save & Next Step{% endif %}
+                        </span>
+                        <i class="ti ti-arrow-right" aria-hidden="true" id="submitIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+
     </div>
 </div>
 {% endblock %}
@@ -689,64 +603,151 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function () {
-        let employeeId = 4;
+        let employeeId = {% if employee %}{{ employee.id }}{% else %}null{% endif %};
 
-        // Initialize Select2 for specific fields
-        $('select[name="department"], select[name="designation"], select[name="site"], select[name="status"], select[name="gender"], select[name="blood_group"], select[name="marital_status"]').select2({
-            placeholder: 'Select...',
+        // Initialize Select2 globally for all selects to enable search
+        $('select').select2({
+            placeholder: 'Search or Select...',
             allowClear: true,
             width: '100%'
         });
 
-        // State/City selects will be initialized after population
+        // Initialize jQuery Validation
+        $('#employeeForm').validate({
+            rules: {
+                first_name: { required: true },
+                last_name: { required: true },
+                gender: { required: true },
+                dob: { required: true },
+                nationality: { required: true },
+                contact_no: { 
+                    required: true, 
+                    digits: true,
+                    minlength: 10,
+                    maxlength: 10
+                },
+                email: { email: true },
+                aadhaar_no: { 
+                    digits: true,
+                    minlength: 12,
+                    maxlength: 12
+                },
+                pan_card: {
+                    pattern: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/
+                },
+                cor_address: { required: true },
+                cor_state: { required: true },
+                cor_city: { required: true },
+                cor_pincode: { 
+                    required: true,
+                    digits: true,
+                    minlength: 6,
+                    maxlength: 6
+                },
+                per_address: { required: true },
+                per_state: { required: true },
+                per_city: { required: true },
+                per_pincode: { 
+                    required: true,
+                    digits: true,
+                    minlength: 6,
+                    maxlength: 6
+                },
+                department: { required: true },
+                designation: { required: true },
+                joining_date: { required: true },
+                status: { required: true }
+            },
+            messages: {
+                contact_no: {
+                    digits: "Please enter valid mobile number",
+                    minlength: "Mobile number must be 10 digits",
+                    maxlength: "Mobile number must be 10 digits"
+                },
+                aadhaar_no: {
+                    digits: "Aadhaar must contain only numbers",
+                    minlength: "Aadhaar must be exactly 12 digits",
+                    maxlength: "Aadhaar must be exactly 12 digits"
+                },
+                pan_card: {
+                    pattern: "Invalid PAN format (e.g., ABCDE1234F)"
+                },
+                cor_pincode: {
+                    digits: "Must be numeric",
+                    minlength: "Must be 6 digits",
+                    maxlength: "Must be 6 digits"
+                }
+            },
+            errorElement: 'div',
+            errorPlacement: function (error, element) {
+                error.addClass('error');
+                if (element.hasClass('select2-hidden-accessible')) {
+                    error.insertAfter(element.next('.select2-container'));
+                } else {
+                    error.insertAfter(element);
+                }
+            },
+            highlight: function (element, errorClass, validClass) {
+                $(element).addClass('error').removeClass('valid');
+                if ($(element).hasClass('select2-hidden-accessible')) {
+                    $(element).next('.select2-container').find('.select2-selection').css('border-color', 'var(--error)');
+                }
+            },
+            unhighlight: function (element, errorClass, validClass) {
+                $(element).removeClass('error').addClass('valid');
+                if ($(element).hasClass('select2-hidden-accessible')) {
+                    $(element).next('.select2-container').find('.select2-selection').css('border-color', 'var(--border)');
+                }
+            }
+        });
+        
+        // Add regex method for PAN card
+        $.validator.addMethod("pattern", function(value, element, param) {
+            if (this.optional(element)) {
+                return true;
+            }
+            if (typeof param === "string") {
+                param = new RegExp("^(?:" + param + ")$");
+            }
+            return param.test(value);
+        }, "Invalid format.");
 
         // Photo Upload Handling
         $('#photoUploadZone').on('click', function (e) {
             if (!$(e.target).is('button') && !$(e.target).closest('button').length) {
-                e.stopPropagation(); // Prevent event bubbling
-                document.getElementById('id_photo').click(); // Use native DOM method
+                e.stopPropagation();
             }
         });
 
         $('#id_photo').on('change', function () {
             const file = this.files[0];
             if (file) {
-                // Validate file
                 if (file.size > 2 * 1024 * 1024) {
-                    alert('File size must be less than 2MB');
-                    this.value = ''; // Clear the input
+                    Swal.fire({icon: 'error', title: 'File too large', text: 'File size must be less than 2MB'});
+                    this.value = '';
                     return;
                 }
-
                 if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
-                    alert('Only JPG, JPEG, PNG, and WEBP files are allowed');
-                    this.value = ''; // Clear the input
+                    Swal.fire({icon: 'error', title: 'Invalid format', text: 'Only JPG, JPEG, PNG, and WEBP files are allowed'});
+                    this.value = '';
                     return;
                 }
-
-                // Show preview
                 const reader = new FileReader();
                 reader.onload = function (e) {
-                    $('#photoPreview').attr('src', e.target.result).addClass('show');
-                    $('#photoUploadZone').addClass('has-photo');
+                    $('#photoPreview').attr('src', e.target.result);
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        // Drag & Drop
         $('#photoUploadZone').on('dragover', function (e) {
             e.preventDefault();
-            $(this).css('border-color', '#667eea');
-        });
-
-        $('#photoUploadZone').on('dragleave', function (e) {
-            $(this).css('border-color', '#d1d5db');
-        });
-
-        $('#photoUploadZone').on('drop', function (e) {
+            $(this).css('border-color', 'var(--primary)');
+        }).on('dragleave', function (e) {
+            $(this).css('border-color', '#BFDBFE');
+        }).on('drop', function (e) {
             e.preventDefault();
-            $(this).css('border-color', '#d1d5db');
+            $(this).css('border-color', '#BFDBFE');
             const files = e.originalEvent.dataTransfer.files;
             if (files.length > 0 && files[0].type.startsWith('image/')) {
                 document.getElementById('id_photo').files = files;
@@ -754,334 +755,160 @@
             }
         });
 
-        // Duplicate Checking
-        function checkDuplicate(field, value) {
-            if (!value) return;
-
-            const validationEl = document.getElementById(field + 'Validation');
-            const inputEl = $(`input[name="${field}"]`);
-
-            // Show loading
-            validationEl.innerHTML = '<span class="validation-warning"><i class="fas fa-spinner fa-spin"></i> Checking...</span>';
-            inputEl.removeClass('field-warning field-valid'); // Clear previous states
-
-            $.ajax({
-                url: '/emp/api/check-duplicate/',
-                data: {
-                    field: field, // The field name is already correct
-                    value: value,
-                    employee_id: employeeId
-                },
-                success: function (data) {
-                    if (data.exists) {
-                        validationEl.innerHTML = '<span class="validation-warning"><i class="fas fa-exclamation-triangle"></i> Already exists in system</span>';
-                        inputEl.addClass('field-warning');
-                    } else {
-                        validationEl.innerHTML = '<span class="validation-success"><i class="fas fa-check-circle"></i> Available</span>';
-                        inputEl.addClass('field-valid');
-                    }
-                },
-                error: function () {
-                    validationEl.innerHTML = '<span class="validation-error"><i class="fas fa-times-circle"></i> Error checking duplicate</span>';
-                }
-            });
-        }
-
-        // Debounce duplicate checking
-        let checkTimeout;
-        $('input[name="aadhaar_no"], input[name="pan_card"], input[name="contact_no"]').on('keyup', function () {
-            clearTimeout(checkTimeout);
-            const field = this.name;
-            const value = this.value;
-
-            checkTimeout = setTimeout(function () {
-                if (field === 'aadhaar_no' && value.length === 12) {
-                    checkDuplicate(field, value);
-                } else if (field === 'pan_card' && value.length === 10) {
-                    checkDuplicate(field, value);
-                } else if (field === 'contact_no' && value.length === 10) {
-                    checkDuplicate(field, value);
-                } else {
-                    // Clear validation message if input is not valid length
-                    $(`#${field}Validation`).empty();
-                    $(`input[name="${field}"]`).removeClass('field-warning field-valid');
-                }
-            }, 500);
-        });
-
         // IFSC Code Lookup
-        $('input[name="ifsc_code"]').on('blur', function () {
-            const ifsc = $(this).val();
+        $('#id_ifsc_code').on('blur', function () {
+            const ifsc = $(this).val().toUpperCase();
+            $(this).val(ifsc);
+            const hint = $('#ifsc-hint');
             if (ifsc && ifsc.length === 11) {
-                $('#ifscValidation').html('<span class="validation-warning"><i class="fas fa-spinner fa-spin"></i> Fetching bank details...</span>');
-
+                hint.html('<span style="color:var(--warn)"><i class="fas fa-spinner fa-spin"></i> Fetching bank details...</span>');
                 $.ajax({
                     url: '/emp/get-ifsc-data/',
                     data: { ifsc_code: ifsc },
                     success: function (data) {
                         if (data.status === 'success') {
-                            $('input[name="bank_name"]').val(data.bank + ' - ' + data.branch);
-                            $('#ifscValidation').html('<span class="validation-success"><i class="fas fa-check-circle"></i> Bank: ' + data.bank + '</span>');
+                            $('#id_bank_name').val(data.bank + ' - ' + data.branch);
+                            hint.html('<span style="color:var(--success)">✓ Bank: ' + data.bank + '</span>');
                         } else {
-                            $('#ifscValidation').html('<span class="validation-error"><i class="fas fa-times-circle"></i> Invalid IFSC code</span>');
+                            hint.html('<span style="color:var(--error)">✗ Invalid IFSC code</span>');
                         }
                     },
                     error: function () {
-                        $('#ifscValidation').html('<span class="validation-error"><i class="fas fa-times-circle"></i> Could not fetch details</span>');
+                        hint.html('<span style="color:var(--error)">✗ Could not fetch details</span>');
                     }
                 });
             } else {
-                $('#ifscValidation').empty(); // Clear message if IFSC is empty or invalid length
+                hint.html('Enter IFSC to auto-fetch bank name');
             }
         });
 
-        // Variables to store pending city selections for edit mode
+        // DOB Age calc
+        $('#id_dob').on('change', function() {
+            const d = new Date($(this).val());
+            const age = Math.floor((Date.now() - d) / (365.25 * 24 * 3600 * 1000));
+            if (age > 0 && age < 100) {
+                $('#age-hint').text('Age: ' + age + ' yrs');
+            } else {
+                $('#age-hint').empty();
+            }
+        });
+
+        // State/City Cascading functionality
         let pendingCorCity = null;
         let pendingPerCity = null;
-        
-        // Variable to store pending copied city when using "Same as Correspondence" checkbox
         let pendingCopiedCity = null;
 
-        // Initialize Select2 for state fields with placeholders
-        $('select[name="cor_state"]').select2({
-            placeholder: 'Select State',
-            allowClear: true,
-            width: '100%'
-        });
-
-        $('select[name="per_state"]').select2({
-            placeholder: 'Select State',
-            allowClear: true,
-            width: '100%'
-        });
-        
-        // Initialize city fields with placeholders (they will be re-initialized when states change)
-        $('select[name="cor_city"]').select2({
-            placeholder: 'Select City',
-            allowClear: true,
-            width: '100%'
-        });
-
-        $('select[name="per_city"]').select2({
-            placeholder: 'Select City',
-            allowClear: true,
-            width: '100%'
-        });
-
-        // State/City Cascading - Correspondence
-        $('select[name="cor_state"]').on('change', function () {
+        $('#id_cor_state').on('change', function () {
             const state = $(this).val();
-            const citySelect = $('select[name="cor_city"]');
-
-            console.log('Correspondence State changed:', state);
-
-            citySelect.empty().append('<option value="">Loading cities...</option>');
-            citySelect.select2('destroy'); // Destroy Select2 before populating
-
+            const citySelect = $('#id_cor_city');
+            citySelect.empty().append('<option value="">Loading cities...</option>').trigger('change');
             if (state) {
                 $.ajax({
                     url: '/emp/get-cities/',
                     method: 'GET',
                     data: { state: state },
                     success: function (data) {
-                        console.log('Cities received for correspondence:', data);
                         citySelect.empty().append('<option value="">Select City</option>');
-                        if (data.cities && data.cities.length > 0) {
+                        if (data.cities) {
                             data.cities.forEach(function (city) {
-                                citySelect.append($('<option></option>').val(city).text(city));
+                                citySelect.append(new Option(city, city));
                             });
                         }
-
-                        // Re-initialize Select2
-                        citySelect.select2({
-                            placeholder: 'Select City',
-                            allowClear: true,
-                            width: '100%'
-                        });
-
-                        // If there's a pending city value (from edit mode), set it now
                         if (pendingCorCity) {
-                            console.log('Setting pending correspondence city:', pendingCorCity);
                             citySelect.val(pendingCorCity).trigger('change');
-                            pendingCorCity = null; // Clear it
+                            pendingCorCity = null;
                         }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error loading cities:', error);
-                        citySelect.empty().append('<option value="">Error loading cities</option>');
-                        citySelect.select2({
-                            placeholder: 'Select City',
-                            allowClear: true,
-                            width: '100%'
-                        });
                     }
                 });
             } else {
-                citySelect.empty().append('<option value="">Select State First</option>');
-                citySelect.select2({
-                    placeholder: 'Select City',
-                    allowClear: true,
-                    width: '100%'
-                });
+                citySelect.empty().append('<option value="">Select State First</option>').trigger('change');
             }
         });
 
-        // State/City Cascading - Permanent
-        $('select[name="per_state"]').on('change', function () {
+        $('#id_per_state').on('change', function () {
             const state = $(this).val();
-            const citySelect = $('select[name="per_city"]');
-
-            console.log('Permanent State changed:', state);
-
-            citySelect.empty().append('<option value="">Loading cities...</option>');
-            citySelect.select2('destroy'); // Destroy Select2 before populating
-
+            const citySelect = $('#id_per_city');
+            citySelect.empty().append('<option value="">Loading cities...</option>').trigger('change');
             if (state) {
                 $.ajax({
                     url: '/emp/get-cities/',
                     method: 'GET',
                     data: { state: state },
                     success: function (data) {
-                        console.log('Cities received for permanent:', data);
                         citySelect.empty().append('<option value="">Select City</option>');
-                        if (data.cities && data.cities.length > 0) {
+                        if (data.cities) {
                             data.cities.forEach(function (city) {
-                                citySelect.append($('<option></option>').val(city).text(city));
+                                citySelect.append(new Option(city, city));
                             });
                         }
-
-                        // Re-initialize Select2
-                        citySelect.select2({
-                            placeholder: 'Select City',
-                            allowClear: true,
-                            width: '100%'
-                        });
-
-                        // If there's a pending city value (from edit mode), set it now
                         if (pendingPerCity) {
-                            console.log('Setting pending permanent city:', pendingPerCity);
                             citySelect.val(pendingPerCity).trigger('change');
-                            pendingPerCity = null; // Clear it
-                        }
-                        // Check if there's a pending copied city (from "Same as Correspondence")
-                        else if (pendingCopiedCity) {
-                            console.log('Setting pending copied city:', pendingCopiedCity);
+                            pendingPerCity = null;
+                        } else if (pendingCopiedCity) {
                             citySelect.val(pendingCopiedCity).trigger('change');
-                            pendingCopiedCity = null; // Clear it
+                            pendingCopiedCity = null;
                         }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error loading cities:', error);
-                        citySelect.empty().append('<option value="">Error loading cities</option>');
-                        citySelect.select2({
-                            placeholder: 'Select City',
-                            allowClear: true,
-                            width: '100%'
-                        });
                     }
                 });
             } else {
-                citySelect.empty().append('<option value="">Select State First</option>');
-                citySelect.select2({
-                    placeholder: 'Select City',
-                    allowClear: true,
-                    width: '100%'
-                });
+                citySelect.empty().append('<option value="">Select State First</option>').trigger('change');
             }
         });
 
-        // Load saved values in edit mode
         {% if employee and employee.cor_state %}
-        console.log('Edit mode: Loading correspondence address');
-        console.log('  State:', '{{ employee.cor_state }}');
-        console.log('  City:', '{{ employee.cor_city }}');
-
-        // Set the pending city value BEFORE triggering state change
-        pendingCorCity = '{{ employee.cor_city }}';
-
-        // Now trigger state change - the AJAX success callback will set the city
-        setTimeout(function () {
-            $('select[name="cor_state"]').val('{{ employee.cor_state }}').trigger('change');
-        }, 500);
+        pendingCorCity = '{{ employee.cor_city|escapejs }}';
+        setTimeout(function () { $('#id_cor_state').val('{{ employee.cor_state|escapejs }}').trigger('change'); }, 100);
         {% endif %}
 
         {% if employee and employee.per_state %}
-        console.log('Edit mode: Loading permanent address');
-        console.log('  State:', '{{ employee.per_state }}');
-        console.log('  City:', '{{ employee.per_city }}');
-
-        // Set the pending city value BEFORE triggering state change
-        pendingPerCity = '{{ employee.per_city }}';
-
-        // Now trigger state change - the AJAX success callback will set the city
-        setTimeout(function () {
-            $('select[name="per_state"]').val('{{ employee.per_state }}').trigger('change');
-        }, 500);
+        pendingPerCity = '{{ employee.per_city|escapejs }}';
+        setTimeout(function () { $('#id_per_state').val('{{ employee.per_state|escapejs }}').trigger('change'); }, 100);
         {% endif %}
 
         // Copy Correspondence to Permanent Address
         $('#sameAsCorrespondence').on('change', function () {
-            console.log('Checkbox changed:', this.checked);
             if (this.checked) {
-                // Copy address text - try both name and ID selectors
-                const corAddress = $('textarea[name="cor_address"]').val() || $('#id_cor_address').val() || '';
-                console.log('Copying address:', corAddress);
-                $('textarea[name="per_address"]').val(corAddress);
-                $('#id_per_address').val(corAddress); // Also set by ID
-
-                // Copy pincode
-                const corPincode = $('input[name="cor_pincode"]').val() || $('#id_cor_pincode').val() || '';
-                console.log('Copying pincode:', corPincode);
-                $('input[name="per_pincode"]').val(corPincode);
-                $('#id_per_pincode').val(corPincode); // Also set by ID
-
-                // Get the city value to be copied BEFORE changing state
-                const corCity = $('select[name="cor_city"]').val() || $('#id_cor_city').val();
-                console.log('Storing city to be copied:', corCity);
+                $('#id_per_address').val($('#id_cor_address').val());
+                $('#id_per_pincode').val($('#id_cor_pincode').val());
                 
-                // Store the city in pending variable
-                if (corCity) {
-                    pendingCopiedCity = corCity;
-                }
+                const corCity = $('#id_cor_city').val();
+                if (corCity) pendingCopiedCity = corCity;
 
-                // Copy state and trigger city load
-                const corState = $('select[name="cor_state"]').val() || $('#id_cor_state').val();
-                console.log('Copying state:', corState);
-
+                const corState = $('#id_cor_state').val();
                 if (corState) {
-                    // Set the state - this will trigger the change event
-                    // which will load cities and check for pendingCopiedCity
-                    $('select[name="per_state"]').val(corState).trigger('change');
                     $('#id_per_state').val(corState).trigger('change');
-                    console.log('State copied, city will be set after cities load');
                 }
-
-                console.log('Address copy completed');
+                
+                // Dim the fields to show they are mirrored
+                $('#perm-fields').css({opacity: '0.6', pointerEvents: 'none'});
             } else {
-                // Clear permanent address fields if unchecked
-                console.log('Clearing permanent address fields');
-                $('textarea[name="per_address"]').val('');
                 $('#id_per_address').val('');
-                $('select[name="per_state"]').val('').trigger('change');
-                $('select[name="per_city"]').val('').trigger('change');
-                $('input[name="per_pincode"]').val('');
+                $('#id_per_state').val('').trigger('change');
+                $('#id_per_city').val('').trigger('change');
                 $('#id_per_pincode').val('');
-                // Clear pending copied city if checkbox is unchecked
                 pendingCopiedCity = null;
+                $('#perm-fields').css({opacity: '1', pointerEvents: 'auto'});
             }
         });
 
-        // Form Submission
+        // Form Submission with SweetAlert2
         $('#employeeForm').on('submit', function (e) {
             e.preventDefault();
 
-            // Show loading
+            if (!$(this).valid()) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Form Validation',
+                    text: 'Please fix the highlighted errors before submitting.',
+                });
+                return;
+            }
+
             $('#submitBtn').prop('disabled', true);
-            $('#submitText').hide();
-            $('#submitSpinner').show();
+            $('#submitText').text('Processing...');
+            $('#submitIcon').removeClass('ti-arrow-right').addClass('ti-reload fa-spin');
 
             const formData = new FormData(this);
-
             $.ajax({
                 url: '',
                 type: 'POST',
@@ -1090,33 +917,232 @@
                 contentType: false,
                 success: function (response) {
                     if (response.status === 'success') {
-                        // Redirect to next step
-                        window.location.href = response.redirect;
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Employee saved successfully.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            window.location.href = response.redirect || '/emp/dash/';
+                        });
                     } else {
-                        alert('Error: ' + JSON.stringify(response.errors));
+                        let errorMsg = '<ul style="text-align:left; list-style-type: disc; padding-left: 20px;">';
+                        for (let field in response.errors) {
+                            errorMsg += `<li class="mb-1"><b>${field}:</b> ${response.errors[field]}</li>`;
+                        }
+                        errorMsg += '</ul>';
+                        Swal.fire({ icon: 'error', title: 'Validation Error', html: errorMsg });
                         $('#submitBtn').prop('disabled', false);
-                        $('#submitText').show();
-                        $('#submitSpinner').hide();
+                        $('#submitText').text('{% if employee %}Update & continue{% else %}Save & Next Step{% endif %}');
+                        $('#submitIcon').removeClass('ti-reload fa-spin').addClass('ti-arrow-right');
                     }
                 },
                 error: function (xhr) {
                     const errors = xhr.responseJSON?.errors || {};
-                    let errorMsg = 'Please fix the following errors:\n\n';
+                    let errorMsg = '<ul style="text-align:left; list-style-type: disc; padding-left: 20px;">';
                     for (let field in errors) {
-                        errorMsg += field + ': ' + errors[field] + '\n';
+                        errorMsg += `<li class="mb-1"><b>${field}:</b> ${errors[field]}</li>`;
                     }
-                    alert(errorMsg);
+                    errorMsg += '</ul>';
+                    if (Object.keys(errors).length === 0) errorMsg = 'An unexpected server error occurred.';
+                    
+                    Swal.fire({ icon: 'error', title: 'Please fix the following errors:', html: errorMsg });
                     $('#submitBtn').prop('disabled', false);
-                    $('#submitText').show();
-                    $('#submitSpinner').hide();
+                    $('#submitText').text('{% if employee %}Update & continue{% else %}Save & Next Step{% endif %}');
+                    $('#submitIcon').removeClass('ti-reload fa-spin').addClass('ti-arrow-right');
                 }
             });
         });
 
-        // Save Draft
-        $('#saveDraftBtn').on('click', function () {
-            // Implement auto-save functionality
-            alert('Draft saved! (Feature to be implemented)');
+        // Identity Verification Logic
+        $('#btnVerifyIdentity').on('click', function() {
+            const nationality = $('#idCheckNationality').val();
+            const nationalId = $('#idCheckNationalId').val();
+            
+            if (!nationality || !nationalId) {
+                Swal.fire({icon: 'warning', title: 'Missing Info', text: 'Please select nationality and enter ID number.'});
+                return;
+            }
+
+            $('#verification-result-box').hide();
+            $('#btnVerifyText').text('Verifying...');
+            $('#btnVerifyIcon').hide();
+            $('#btnVerifySpinner').show();
+            $('#btnVerifyIdentity').prop('disabled', true);
+
+            $.ajax({
+                url: '/emp/api/check-employee-history/',
+                data: { national_id: nationalId },
+                success: function(response) {
+                    $('#btnVerifyText').text('Verify Identity & Continue');
+                    $('#btnVerifyIcon').show();
+                    $('#btnVerifySpinner').hide();
+                    $('#btnVerifyIdentity').prop('disabled', false);
+
+                    if (response.status === 'found') {
+                        const emp = response.employee;
+                        
+                        // Populate basic details
+                        $('#result-photo').attr('src', emp.photo);
+                        const middleNameStr = emp.middle_name ? ' ' + emp.middle_name : '';
+                        $('#result-fullname').text(emp.first_name + middleNameStr + ' ' + emp.last_name);
+                        $('#result-empcode').text(emp.emp_code);
+                        $('#result-designation').text(emp.designation);
+                        $('#result-department').text(emp.department);
+                        $('#result-site').text(emp.site);
+                        $('#result-contact').text(emp.contact_no);
+                        $('#result-email').text(emp.email);
+                        
+                        // Active service duration
+                        $('#result-active-duration').text(emp.active_duration + ' Active');
+                        
+                        // Inactive duration if exists
+                        if (emp.inactive_duration) {
+                            $('#result-inactive-duration')
+                                .text(`Inactive since ${emp.inactive_since} (${emp.inactive_duration})`)
+                                .show();
+                        } else {
+                            $('#result-inactive-duration').hide();
+                        }
+                        
+                        // Populate history list
+                        $('#result-history-rows').empty();
+                        if (emp.history && emp.history.length > 0) {
+                            emp.history.forEach(function(h) {
+                                const isActiveStint = (h.exit_date === 'Present');
+                                const rowBg = isActiveStint ? 'background-color: #DCFCE7;' : '';
+                                const exitDateHtml = isActiveStint ? '<span style="color: #166534; font-weight: 600;">Present (Working Live)</span>' : h.exit_date;
+                                const reasonHtml = isActiveStint ? '' : h.reason_for_exit;
+
+                                const row = `<tr style="${rowBg}">
+                                    <td style="padding: 8px 10px;">${h.joining_date}</td>
+                                    <td style="padding: 8px 10px;">${exitDateHtml}</td>
+                                    <td style="padding: 8px 10px;">${h.site}</td>
+                                    <td style="padding: 8px 10px;">${h.designation}</td>
+                                    <td style="padding: 8px 10px;">${reasonHtml}</td>
+                                </tr>`;
+                                $('#result-history-rows').append(row);
+                            });
+                        } else {
+                            $('#result-history-rows').append(`<tr><td colspan="5" class="text-center text-muted" style="padding: 12px;">No historical stints found.</td></tr>`);
+                        }
+                        
+                        // Configure status badge colors
+                        const badge = $('#result-status-badge');
+                        badge.text(emp.status);
+                        if (emp.status === 'Active') {
+                            badge.css({background: '#DCFCE7', color: '#166534'});
+                        } else if (emp.status === 'Terminated' || emp.status === 'Suspended') {
+                            badge.css({background: '#FEE2E2', color: '#991B1B'});
+                        } else {
+                            badge.css({background: '#F3F4F6', color: '#4B5563'});
+                        }
+                        
+                        // Actions container
+                        $('#result-actions-container').empty();
+                        if (response.rehire === true) {
+                            // Rehire/registration allowed
+                            const nextBtn = $('<button type="button" class="btn btn-primary" style="padding: 10px 24px;"><span style="font-weight: 600;">Next Step: Continue with Rehire & Registration</span><i class="fas fa-arrow-right ml-2"></i></button>');
+                            nextBtn.on('click', function() {
+                                // Prefill the main registration form
+                                $('#rehire_employee_id').val(emp.id);
+                                $('#id_nationality').val(nationality).trigger('change');
+                                if (nationality === 'Indian') {
+                                    $('#id_aadhaar_no').val(nationalId);
+                                } else {
+                                    $('#id_other_id_proof_no').val(nationalId);
+                                }
+                                $('#id_first_name').val(emp.first_name);
+                                $('#id_middle_name').val(emp.middle_name);
+                                $('#id_last_name').val(emp.last_name);
+                                $('#id_contact_no').val(emp.contact_no);
+                                $('#id_email').val(emp.email);
+                                if (emp.dob) {
+                                    $('#id_dob').val(emp.dob).trigger('change');
+                                }
+                                
+                                // Prefill the newly added fields from the past profile
+                                $('#id_gender').val(emp.gender).trigger('change');
+                                $('#id_blood_group').val(emp.blood_group).trigger('change');
+                                $('#id_father_name').val(emp.father_name);
+                                $('#id_mother_name').val(emp.mother_name);
+                                $('#id_pan_card').val(emp.pan_card);
+                                $('#id_driving_license').val(emp.driving_license);
+                                $('#id_voter_id').val(emp.voter_id);
+                                $('#id_passport_no').val(emp.passport_no);
+                                $('#id_uan_no').val(emp.uan_no);
+                                $('#id_pf_esic_no').val(emp.pf_esic_no);
+                                $('#id_marital_status').val(emp.marital_status).trigger('change');
+                                
+                                // Correspondence Address prefill with dynamic loaders
+                                $('#id_cor_address').val(emp.cor_address);
+                                if (emp.cor_state) {
+                                    pendingCorCity = emp.cor_city;
+                                    $('#id_cor_state').val(emp.cor_state).trigger('change');
+                                }
+                                $('#id_cor_pincode').val(emp.cor_pincode);
+                                
+                                // Permanent Address prefill with dynamic loaders
+                                $('#id_per_address').val(emp.per_address);
+                                if (emp.per_state) {
+                                    pendingPerCity = emp.per_city;
+                                    $('#id_per_state').val(emp.per_state).trigger('change');
+                                }
+                                $('#id_per_pincode').val(emp.per_pincode);
+                                
+                                // Bank info
+                                $('#id_bank_name').val(emp.bank_name);
+                                $('#id_account_no').val(emp.account_no);
+                                $('#id_ifsc_code').val(emp.ifsc_code);
+                                $('#id_upi_id').val(emp.upi_id);
+                                
+                                // Transition view
+                                $('#identity-verification-container').hide();
+                                $('#employeeForm').show();
+                                window.scrollTo(0, 0);
+                                
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: 'Profile Pre-filled',
+                                    text: `Welcome back, ${emp.first_name}. Past details have been pre-filled. Please update if needed.`
+                                });
+                            });
+                            $('#result-actions-container').append(nextBtn);
+                        } else {
+                            // Active employee found, block duplicate registration
+                            const blockMsg = $('<div style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 8px; color: #991B1B; font-size: 13px; font-weight: 600;">' +
+                                '<i class="fas fa-exclamation-triangle" style="font-size: 18px;"></i>' +
+                                '<span>Duplicate Blocked: An active employee profile with this National ID already exists in the system. Creation of a duplicate profile is not permitted.</span>' +
+                                '</div>');
+                            $('#result-actions-container').append(blockMsg);
+                        }
+                        
+                        // Show the results container
+                        $('#verification-result-box').slideDown(300);
+                        
+                    } else {
+                        // Not found in system, direct redirect to new registration form
+                        $('#id_nationality').val(nationality).trigger('change');
+                        if (nationality === 'Indian') {
+                            $('#id_aadhaar_no').val(nationalId);
+                        } else {
+                            $('#id_other_id_proof_no').val(nationalId);
+                        }
+                        
+                        $('#identity-verification-container').hide();
+                        $('#employeeForm').show();
+                        window.scrollTo(0, 0);
+                    }
+                },
+                error: function() {
+                    Swal.fire({icon: 'error', title: 'Error', text: 'Error checking identity. Please try again.'});
+                    $('#btnVerifyText').text('Verify Identity & Continue');
+                    $('#btnVerifyIcon').show();
+                    $('#btnVerifySpinner').hide();
+                    $('#btnVerifyIdentity').prop('disabled', false);
+                }
+            });
         });
     });
 </script>

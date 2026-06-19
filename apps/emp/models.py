@@ -216,11 +216,15 @@ class Employee(models.Model):
     uan_no = models.CharField(max_length=20, blank=True, null=True)
     pf_esic_no = models.CharField(max_length=20, blank=True, null=True)
 
-    passport_no = models.CharField(max_length=24, unique=True, blank=True, null=True)
-    aadhaar_no = models.CharField(max_length=12, unique=True, blank=True, null=True)
-    pan_card = models.CharField(max_length=10, unique=True, blank=True, null=True)    
+    passport_no = models.CharField(max_length=24, blank=True, null=True)
+    aadhaar_no = models.CharField(max_length=12, blank=True, null=True)
+    has_aadhaar = models.BooleanField(default=True)
+    driving_license = models.CharField(max_length=50, blank=True, null=True)
+    voter_id = models.CharField(max_length=50, blank=True, null=True)
+    pan_card = models.CharField(max_length=10, blank=True, null=True)    
     other_id_proof_type = models.CharField(max_length=50, blank=True, null=True, choices=ID_CHOICES)
     other_id_proof_no = models.CharField(max_length=50, blank=True, null=True)
+    other_national_id = models.CharField(max_length=50, blank=True, null=True)
     
     emergency_contact = models.CharField(max_length=15, blank=True, null=True)
     emergency_person_name = models.CharField(max_length=100, blank=True, null=True)
@@ -235,6 +239,7 @@ class Employee(models.Model):
     status = models.CharField(max_length=100, choices=EmployeeStatus.choices, default=EmployeeStatus.INACTIVE)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='employee_profile')
 
     class Meta:
         db_table = 'employees'
@@ -253,6 +258,16 @@ class Employee(models.Model):
                 fields=['passport_no'],
                 condition=models.Q(passport_no__isnull=False) & ~models.Q(passport_no=''),
                 name='unique_non_empty_passport_no'
+            ),
+            models.UniqueConstraint(
+                fields=['driving_license'],
+                condition=models.Q(driving_license__isnull=False) & ~models.Q(driving_license=''),
+                name='unique_non_empty_driving_license'
+            ),
+            models.UniqueConstraint(
+                fields=['voter_id'],
+                condition=models.Q(voter_id__isnull=False) & ~models.Q(voter_id=''),
+                name='unique_non_empty_voter_id'
             )
         ]
 
@@ -260,30 +275,73 @@ class Employee(models.Model):
         return f"{self.first_name} {self.last_name}"
 
     def save(self, *args, **kwargs):
+        from django.db import transaction, IntegrityError
+        
+        if not getattr(self, 'aadhaar_no', None): self.aadhaar_no = None
+        if not getattr(self, 'pan_card', None): self.pan_card = None
+        if not getattr(self, 'driving_license', None): self.driving_license = None
+        if not getattr(self, 'voter_id', None): self.voter_id = None
+        if not getattr(self, 'other_national_id', None): self.other_national_id = None
+        
         if not self.emp_code:
-            # Generate emp_code (e.g., SAB0001)
-            last_employee = Employee.objects.order_by('-id').first()
-            if last_employee:
-                last_id = int(last_employee.emp_code.replace('SAB', ''))
-                new_id = last_id + 1
-            else:
-                new_id = 1
-            self.emp_code = f'SAB{new_id:04d}'
-        super().save(*args, **kwargs)
+            while True:
+                # Generate emp_code (e.g., SAB0001) safely resolving race-conditions
+                last_employee = Employee.objects.order_by('-id').first()
+                if last_employee:
+                    try:
+                        last_id = int(last_employee.emp_code.replace('SAB', ''))
+                    except ValueError:
+                        last_id = Employee.objects.count()
+                    new_id = last_id + 1
+                else:
+                    new_id = 1
+                
+                self.emp_code = f'SAB{new_id:04d}'
+                
+                try:
+                    with transaction.atomic():
+                        super().save(*args, **kwargs)
+                    break
+                except IntegrityError as e:
+                    if 'unique' in str(e).lower() or 'constraint' in str(e).lower():
+                        continue
+                    raise
+        else:
+            super().save(*args, **kwargs)
     
     def clean(self):
         super().clean()
-        # Nationality-based validation for aadhaar_no and pan_card
+        
+        # Nationality-based validation
         if self.nationality == 'Indian':
-            if not self.aadhaar_no:
-                raise ValidationError({'aadhaar_no': 'Aadhaar number is mandatory for Indian nationality.'})
-            # if not self.pan_card:
-            #     raise ValidationError({'pan_card': 'PAN card is mandatory for Indian nationality.'})
-        # Validate uniqueness for non-empty aadhaar_no and pan_card
+            if self.aadhaar_no:
+                self.has_aadhaar = True
+                
+            if self.has_aadhaar:
+                if not self.aadhaar_no:
+                    raise ValidationError({'aadhaar_no': 'Aadhaar number is mandatory for Indian nationality when indicated.'})
+            else:
+                self.aadhaar_no = None
+                if not getattr(self, 'driving_license', None) and not getattr(self, 'voter_id', None):
+                    raise ValidationError('Either Driving License or Voter ID is required if you do not have an Aadhaar.')
+        else:
+            self.has_aadhaar = False
+            self.aadhaar_no = None
+            if not getattr(self, 'other_national_id', None):
+                raise ValidationError({'other_national_id': 'National ID is mandatory for non-Indian nationalities.'})
+
+        # Validate uniqueness for non-empty identity fields
         if self.aadhaar_no and Employee.objects.filter(aadhaar_no=self.aadhaar_no).exclude(id=self.id).exists():
             raise ValidationError({'aadhaar_no': 'An employee with this Aadhaar number already exists.'})
         if self.pan_card and Employee.objects.filter(pan_card=self.pan_card).exclude(id=self.id).exists():
             raise ValidationError({'pan_card': 'An employee with this PAN card already exists.'})
+        if getattr(self, 'driving_license', None) and Employee.objects.filter(driving_license=self.driving_license).exclude(id=self.id).exists():
+            raise ValidationError({'driving_license': 'An employee with this Driving License already exists.'})
+        if getattr(self, 'voter_id', None) and Employee.objects.filter(voter_id=self.voter_id).exclude(id=self.id).exists():
+            raise ValidationError({'voter_id': 'An employee with this Voter ID already exists.'})
+        if getattr(self, 'passport_no', None) and Employee.objects.filter(passport_no=self.passport_no).exclude(id=self.id).exists():
+            raise ValidationError({'passport_no': 'An employee with this Passport number already exists.'})
+            
         if self.email and Employee.objects.filter(email=self.email).exclude(id=self.id).exists():
             raise ValidationError({'email': 'An employee with this email already exists.'})
         if self.account_no and Employee.objects.filter(account_no=self.account_no).exclude(id=self.id).exists():
@@ -320,8 +378,7 @@ class EmployeeExperience(models.Model):
     class Meta:
         db_table = 'employee_experience'
         constraints = [
-            models.CheckConstraint(
-                check=models.Q(end_date__gte=models.F('start_date')),
+            models.CheckConstraint(check=models.Q(end_date__gte=models.F('start_date')),
                 name='check_end_date_gte_start_date'
             )
         ]
@@ -805,6 +862,36 @@ class TrainingRecord(models.Model):
     class Meta:
         db_table = 'training_records'
 
+class EmploymentHistory(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='employment_history')
+    joining_date = models.DateField()
+    exit_date = models.DateField(blank=True, null=True)
+    department_snapshot = models.CharField(max_length=100)
+    designation_snapshot = models.CharField(max_length=100)
+    site_snapshot = models.CharField(max_length=100, blank=True, null=True)
+    reason_for_exit = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        db_table = 'employment_history'
+        ordering = ['-joining_date']
+
+class EmployeePerformanceReview(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='performance_reviews')
+    review_month = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])
+    review_year = models.IntegerField(validators=[MinValueValidator(2000)])
+    attendance_score = models.DecimalField(max_digits=5, decimal_places=2, validators=[MinValueValidator(0), MaxValueValidator(100)], help_text="Percentage")
+    performance_rating = models.DecimalField(max_digits=3, decimal_places=1, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    manager_comments = models.TextField(blank=True, null=True)
+    reviewed_by = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name='conducted_reviews')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        db_table = 'employee_performance_reviews'
+        unique_together = ('employee', 'review_month', 'review_year')
+
 class MasterLog(models.Model):
     table_name = models.CharField(max_length=100)
     record_id = models.IntegerField()
@@ -816,3 +903,47 @@ class MasterLog(models.Model):
         db_table = 'master_log'
         
     
+
+class EmployeeStatusLog(models.Model):
+    """Audit log for every employee status change (Active, InActive, Terminated, etc.)"""
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='status_logs')
+    old_status = models.CharField(max_length=30, blank=True, null=True)
+    new_status = models.CharField(max_length=30)
+    reason = models.TextField(blank=True, null=True)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'employee_status_log'
+        ordering = ['-changed_at']
+
+    def __str__(self):
+        return f"{self.employee.emp_code} | {self.old_status} → {self.new_status} ({self.changed_at.strftime('%d %b %Y')})"
+
+class EmployeeActivityLog(models.Model):
+    class ActivityCategory(models.TextChoices):
+        PROFILE = 'Profile', 'Profile'
+        STATUS = 'Status', 'Status'
+        AUTH = 'Authentication', 'Authentication'
+        ACADEMICS = 'Academics', 'Academics'
+        DOCUMENTS = 'Documents', 'Documents'
+        SALARY_MASTER = 'Salary Master', 'Salary Master'
+        PAYROLL = 'Payroll', 'Payroll'
+        ADJUSTMENTS = 'Adjustments', 'Adjustments'
+        HR = 'HR Operations', 'HR Operations'
+
+    employee = models.ForeignKey('Employee', on_delete=models.CASCADE, related_name='activity_logs')
+    category = models.CharField(max_length=50, choices=ActivityCategory.choices)
+    action = models.CharField(max_length=255)
+    remark = models.TextField(blank=True, null=True)
+    
+    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    performed_at = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    
+    class Meta:
+        db_table = 'employee_activity_logs'
+        ordering = ['-performed_at']
+        
+    def __str__(self):
+        return f"[{self.category}] {self.employee.emp_code} - {self.action}"

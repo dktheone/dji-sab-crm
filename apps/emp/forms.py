@@ -219,8 +219,10 @@ class EmployeeForm(forms.ModelForm):
         label='Emergency Contact'
     )
     
+    has_aadhaar = forms.BooleanField(required=False, initial=True, label="Do you have an Aadhaar Card?")
     aadhaar_no = forms.CharField(
         max_length=12,
+        required=False,
         validators=[aadhaar_validator],
         widget=forms.TextInput(attrs={'placeholder': '12-digit Aadhaar number'}),
         label='Aadhaar Number'
@@ -245,7 +247,8 @@ class EmployeeForm(forms.ModelForm):
         model = Employee
         fields = [
             'first_name', 'middle_name', 'last_name', 'email', 'designation', 'gender', 'department', 'site',
-            'dob', 'contact_no', 'photo', 'joining_date', 'aadhaar_no', 'pan_card',
+            'dob', 'contact_no', 'photo', 'joining_date', 'has_aadhaar', 'aadhaar_no', 'pan_card',
+            'driving_license', 'voter_id', 'other_national_id',
             'other_id_proof_type', 'other_id_proof_no', 'emergency_contact',
             'bank_name', 'account_no', 'ifsc_code', 'upi_id', 'status',
             # New ones
@@ -387,9 +390,15 @@ class EmployeeForm(forms.ModelForm):
             HTML("<h4 class='mt-3 mb-2'>🆔 Identity Proofs</h4><hr>"),
             Row(
                 Column(Field('nationality'), css_class="col-md-3"),
-                Column(Field('aadhaar_no'), css_class="col-md-3"),
                 Column(Field('pan_card'), css_class="col-md-3"),
-                Column(Field('passport_no'), css_class="col-md-3")
+                Column(Field('passport_no'), css_class="col-md-3"),
+                Column(Field('other_national_id'), css_class="col-md-3", css_id="col_other_national_id")
+            ),
+            Row(
+                Column(Field('has_aadhaar'), css_class="col-md-3", css_id="col_has_aadhaar"),
+                Column(Field('aadhaar_no'), css_class="col-md-3", css_id="col_aadhaar_no"),
+                Column(Field('driving_license'), css_class="col-md-3", css_id="col_driving_license"),
+                Column(Field('voter_id'), css_class="col-md-3", css_id="col_voter_id")
             ),
             Row(
                 Column(Field('other_id_proof_type'), css_class="col-md-3"),
@@ -548,10 +557,9 @@ class EmployeeFamilyForm(forms.ModelForm):
         )
 
 class EmployeeUploadForm(forms.ModelForm):
-    file = forms.FileField(required=False)  # For file upload
     class Meta:
         model = EmployeeUpload
-        fields = ['document_type', 'file', 'description', 'status']
+        fields = ['document_type', 'file_path', 'description', 'status']
         widgets = {
             'document_type': Select2Widget(attrs={'class': 'form-control form-select custom_select'}),
             'status': Select2Widget(attrs={'class': 'form-control form-select custom_select'}),
@@ -564,7 +572,7 @@ class EmployeeUploadForm(forms.ModelForm):
         self.helper.layout = Layout(
             Row(
                 Column(Field('document_type'), css_class='form-group myinput col-md-2 mb-0'),
-                Column(Field('file'), css_class='form-group myinput col-md-4 mb-0'),
+                Column(Field('file_path'), css_class='form-group myinput col-md-4 mb-0'),
                 Column(Field('description'), css_class='form-group myinput col-md-4 mb-0'),
                 Column(Field('status'), css_class='form-group myinput col-md-2 mb-0')
             ),

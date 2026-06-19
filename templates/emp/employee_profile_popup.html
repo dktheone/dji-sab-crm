@@ -12,7 +12,7 @@
             <img src="{{ employee.photo.url|default:'/static/img/nopic.jpg' }}"
                 class="rounded-circle mr-4 border shadow-sm" style="width: 80px; height: 80px; object-fit: cover;">
             <div class="flex-grow-1">
-                <h4 class="font-weight-bold mb-1">{{ employee.first_name }} {{ employee.last_name }}</h4>
+                <h4 class="font-weight-bold mb-1">{{ employee.first_name }}{% if employee.middle_name %} {{ employee.middle_name }}{% endif %} {{ employee.last_name }}</h4>
                 <div class="text-muted mb-2">{{ employee.designation.designation_name }} • {{ employee.department.department_name }}</div>
                 <div>
                     <span class="badge badge-light border mr-2"><i class="fas fa-briefcase text-primary mr-1"></i> {{ employee.emp_code }}</span>
@@ -43,6 +43,9 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link font-weight-bold" id="adjustments-tab" data-toggle="tab" href="#adjustments" role="tab">Adjustments</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link font-weight-bold" id="history-tab" data-toggle="tab" href="#history" role="tab">History</a>
             </li>
         </ul>
     </div>
@@ -197,6 +200,45 @@
                     </nav>
                 </div>
                 {% endif %}
+            </div>
+        </div>
+
+        <!-- Tab 4: Employment History -->
+        <div class="tab-pane fade" id="history" role="tabpanel">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white font-weight-bold text-primary">
+                    <i class="fas fa-history mr-1"></i> Employment History
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-striped mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Stint</th>
+                                <th>Joining</th>
+                                <th>Exit</th>
+                                <th>Dept</th>
+                                <th>Designation</th>
+                                <th>Site</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hist in emp_history %}
+                            <tr{% if not hist.exit_date %} class="table-success"{% endif %}>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ hist.joining_date|date:"d/m/Y"|default:"-" }}</td>
+                                <td>{% if hist.exit_date %}{{ hist.exit_date|date:"d/m/Y" }}{% else %}<span class="badge badge-success">Active</span>{% endif %}</td>
+                                <td>{{ hist.department_snapshot|default:"-" }}</td>
+                                <td>{{ hist.designation_snapshot|default:"-" }}</td>
+                                <td>{{ hist.site_snapshot|default:"-" }}</td>
+                                <td>{{ hist.reason_for_exit|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="7" class="text-muted">No employment history recorded.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

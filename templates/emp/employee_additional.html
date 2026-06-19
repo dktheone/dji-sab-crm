@@ -10,41 +10,11 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<style>
-    /* Wizard step indicator styles */
-    .wizard-steps {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-    }
-
-    .step {
-        flex: 1;
-        text-align: center;
-        padding: 10px;
-        background: #eee;
-        border: 1px solid #ddd;
-    }
-
-    .step.active {
-        background: #007bff;
-        color: white;
-    }
-</style>
 {% endblock %}
 
 {% block content %}
 <div class="content-wrapper">
-    <div class="content-header">
-        <h1>Additional Details for {{ employee.first_name }} {{ employee.last_name }}</h1>
-    </div>
-    <!-- Wizard Step Indicator -->
-    <div class="wizard-steps">
-        <div class="step"><a href="{% url 'emp:employee_edit' employee.id %}">1. Registration</a></div>
-        <div class="step active">2. Education/Experience/Family</div>
-        <div class="step"><a href="{% url 'emp:employee_uploads' employee.id %}">3. Uploads</a></div>
-        <div class="step"><a href="{% url 'emp:employee_view' employee.id %}">4. Print Profile</a></div>
-    </div>
+    {% include 'includes/employee_wizard_steps.html' with active_step=3 %}
     <section class="content">
         <div class="container-fluid">
             <div class="card">

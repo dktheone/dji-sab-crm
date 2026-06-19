@@ -1,69 +1,160 @@
-<!-- templates/leads/lead_list.html (full updated template) -->
+<!-- templates/leads/lead_list.html -->
 {% extends 'layouts/base.html' %}
 {% load crispy_forms_tags %}
 
 {% block content %}
 <div class="content-wrapper">
-    <section class="content-header">
+    <!-- Content Header -->
+    <section class="content-header py-2">
         <div class="container-fluid">
-            <div class="row mb-2">
+            <div class="row align-items-center">
                 <div class="col-sm-6">
-                    <h1>Potential Site Leads <small>Follow-up Tracking</small></h1>
+                    <h1 class="m-0"><i class="fas fa-bullseye text-primary text-sm mr-1"></i> Potential Site Leads <small class="text-muted text-sm">Follow-up Tracking</small></h1>
+                </div>
+                <div class="col-sm-6 text-right">
+                    <a href="{% url 'leads:lead_form_add' %}" class="btn btn-success shadow-sm">
+                        <i class="fas fa-plus mr-1"></i> New Lead
+                    </a>
                 </div>
             </div>
         </div>
     </section>
+
+    <!-- Main Content -->
     <section class="content">
         <div class="container-fluid">
+            <!-- Messages -->
+            {% if messages %}
+                <div class="row">
+                    <div class="col-12">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                                {{ message }}
+                                <button type="button" class="close text-white" data-dismiss="alert" aria-hidden="true">&times;</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Pipeline Stat Cards -->
+            <div class="row">
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-info shadow-sm">
+                        <div class="inner">
+                            <h3>{{ total_count }}</h3>
+                            <p class="font-weight-bold">Total Leads</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-warning shadow-sm">
+                        <div class="inner">
+                            <h3>{{ active_count }}</h3>
+                            <p class="font-weight-bold">Active Leads</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-running text-white"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-teal shadow-sm text-white">
+                        <div class="inner">
+                            <h3>{{ quoted_count }}</h3>
+                            <p class="font-weight-bold">Quoted Leads</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-file-invoice-dollar text-white-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-6">
+                    <div class="small-box bg-success shadow-sm">
+                        <div class="inner">
+                            <h3>{{ converted_count }}</h3>
+                            <p class="font-weight-bold">Converted Leads</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Lead List Card -->
             <div class="row">
                 <div class="col-12">
                     <div class="card card-outline card-primary shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h3 class="card-title"><i class="fas fa-list mr-2"></i> Leads Overview</h3>
+                        <div class="card-header bg-primary text-white py-2">
+                            <h3 class="card-title font-weight-bold"><i class="fas fa-list mr-1"></i> Leads Overview</h3>
                             <div class="card-tools">
-                                <span class="badge badge-light text-primary">{{ leads.count }}</span> Total Leads
+                                <span class="badge badge-light text-primary px-2.5 py-1 text-xs">{{ leads.count }}</span> Active Selection
                             </div>
                         </div>
                         <div class="card-body">
                             {% if upcoming_count > 0 %}
-                            <div class="alert alert-info alert-dismissible">
-                                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                                <strong>Upcoming Follow-ups:</strong> {{ upcoming_count }} leads need attention in the
-                                next 7 days.
+                            <div class="alert alert-info alert-dismissible shadow-sm">
+                                <button type="button" class="close text-white" data-dismiss="alert">&times;</button>
+                                <i class="fas fa-info-circle mr-1"></i> <strong>Upcoming Follow-ups:</strong> {{ upcoming_count }} lead{{ upcoming_count|pluralize }} need attention in the next 7 days.
                             </div>
                             {% endif %}
                             
-                            <!-- Search/Filter Form (Bootstrap v4) -->
+                            <!-- Search/Filter Form -->
                             <div class="bg-light p-3 rounded mb-4 border border-light shadow-sm">
                                 <form method="get" class="mb-0">
                                     <div class="row align-items-end">
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <label class="text-muted small mb-1"><i class="fas fa-search mr-1"></i> Search</label>
                                             <input type="text" name="q" value="{{ query }}" class="form-control"
-                                                placeholder="Search by client/contact name...">
+                                                placeholder="Search client/contact...">
                                         </div>
-                                        <div class="col-md-3 mt-2 mt-md-0">
+                                        <div class="col-md-2 mt-2 mt-md-0">
                                             <label class="text-muted small mb-1"><i class="fas fa-tags mr-1"></i> Status</label>
                                             <select name="status" class="form-control custom-select">
                                                 <option value="">All Statuses</option>
-                                                {% for value, label in LeadStatus.choices %}
-                                                <option value="{{ value }}">{{ label }}</option>
+                                                <option value="New" {% if status == 'New' %}selected{% endif %}>New</option>
+                                                <option value="In Progress" {% if status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                                <option value="Quoted" {% if status == 'Quoted' %}selected{% endif %}>Quoted</option>
+                                                <option value="Converted" {% if status == 'Converted' %}selected{% endif %}>Converted</option>
+                                                <option value="Not Interested" {% if status == 'Not Interested' %}selected{% endif %}>Not Interested</option>
+                                                <option value="Closed" {% if status == 'Closed' %}selected{% endif %}>Closed</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2 mt-2 mt-md-0">
+                                            <label class="text-muted small mb-1"><i class="fas fa-hospital mr-1"></i> Customer Type</label>
+                                            <select name="customer_type" class="form-control custom-select">
+                                                <option value="">All Types</option>
+                                                {% for value, label in customer_types %}
+                                                <option value="{{ value }}" {% if customer_type == value %}selected{% endif %}>{{ label }}</option>
                                                 {% endfor %}
                                             </select>
                                         </div>
+                                        {% if can_view_all %}
                                         <div class="col-md-3 mt-2 mt-md-0">
                                             <label class="text-muted small mb-1"><i class="fas fa-user-circle mr-1"></i> Assigned To</label>
-                                            <select name="employee" class="form-control custom-select">
+                                            <select name="employee" class="form-control custom-select select2">
                                                 <option value="">All Employees</option>
-                                                <option value="">Unassigned</option>
                                                 {% for emp in employees %}
-                                                <option value="{{ emp.id }}">{{ emp.first_name }} {{ emp.last_name }}
+                                                <option value="{{ emp.id }}" {% if employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                                                    {{ emp.first_name }} {{ emp.last_name }} ({{ emp.emp_code }})
                                                 </option>
                                                 {% endfor %}
                                             </select>
                                         </div>
-                                        <div class="col-md-2 mt-3 mt-md-0">
-                                            <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-filter mr-1"></i> Filter</button>
+                                        {% endif %}
+                                        <div class="col-md-2 mt-3 mt-md-0 {% if not can_view_all %}offset-md-3{% endif %}">
+                                            <div class="row">
+                                                <div class="col-6 pr-1">
+                                                    <button type="submit" class="btn btn-primary btn-block" title="Apply Filter"><i class="fas fa-filter"></i></button>
+                                                </div>
+                                                <div class="col-6 pl-1">
+                                                    <a href="{% url 'leads:lead_list' %}" class="btn btn-secondary btn-block" title="Clear Filters"><i class="fas fa-sync-alt"></i></a>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </form>
@@ -75,11 +166,12 @@
                                     <thead class="bg-primary text-white">
                                         <tr>
                                             <th style="width: 5%" class="text-center">S.No.</th>
-                                            <th style="width: 30%">Client Name</th>
+                                            <th style="width: 25%">Client Name</th>
+                                            <th style="width: 10%">Type</th>
                                             <th style="width: 10%" class="text-center">Status</th>
-                                            <th style="width: 15%">Next Follow-up</th>
-                                            <th style="width: 20%">Created By</th>
-                                            <th style="width: 20%" class="text-center">Actions</th>
+                                            <th style="width: 18%">Next Follow-up</th>
+                                            <th style="width: 17%">Created By</th>
+                                            <th style="width: 15%" class="text-center">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -87,19 +179,24 @@
                                         <tr>
                                             <td class="text-center font-weight-bold">{{ forloop.counter }}</td>
                                             <td>
-                                                <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}" class="font-weight-bold text-dark" title="View Follow-ups">
+                                                <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}" class="font-weight-bold text-indigo" title="View Follow-ups">
                                                     {{ lead.client_name|truncatechars:40 }}
                                                 </a>
                                             </td>
+                                            <td>{{ lead.get_customer_type_display }}</td>
                                             <td class="text-center">
-                                                <span
-                                                    class="badge badge-{% if lead.lead_status == 'New' %}info{% elif lead.lead_status == 'Converted' %}success{% else %}warning{% endif %} px-2 py-1">
+                                                <span class="badge {% if lead.lead_status == 'New' %}badge-info{% elif lead.lead_status == 'In Progress' %}badge-primary{% elif lead.lead_status == 'Quoted' %}badge-warning{% elif lead.lead_status == 'Converted' %}badge-success{% elif lead.lead_status == 'Closed' %}badge-secondary{% else %}badge-danger{% endif %} px-2 py-1">
                                                     {{ lead.get_lead_status_display }}
                                                 </span>
                                             </td>
                                             <td>
                                                 {% if lead.next_follow_up %}
-                                                    <span class="text-muted"><i class="far fa-calendar-alt mr-1"></i> {{ lead.next_follow_up|date:"M d, Y" }}</span>
+                                                    <span class="{% if lead.is_followup_overdue %}text-danger font-weight-bold{% else %}text-muted{% endif %}">
+                                                        <i class="far fa-calendar-alt mr-1"></i> {{ lead.next_follow_up|date:"M d, Y" }}
+                                                        {% if lead.is_followup_overdue %}
+                                                            <span class="badge badge-danger text-2xs px-1.5 py-0.5 ml-1 animate-pulse"><i class="fas fa-exclamation-triangle"></i> Overdue</span>
+                                                        {% endif %}
+                                                    </span>
                                                 {% else %}
                                                     <span class="text-muted">-</span>
                                                 {% endif %}
@@ -109,28 +206,28 @@
                                                     <div class="bg-light rounded-circle text-secondary d-flex justify-content-center align-items-center mr-2" style="width: 28px; height: 28px;">
                                                         <i class="fas fa-user fa-xs"></i>
                                                     </div>
-                                                    <span class="text-truncate">{{ lead.created_by.first_name|default:"Unassigned" }} {{lead.created_by.last_name|default:""}}</span>
+                                                    <span class="text-truncate">{{ lead.created_by.first_name|default:"Unassigned" }} {{ lead.created_by.last_name|default:"" }}</span>
                                                 </div>
                                             </td>
                                             <td class="text-center">
                                                 <div class="d-flex justify-content-center gap-2">
                                                     {% if lead.pk %}
                                                     <a href="{% url 'leads:lead_form' lead.lead_id %}"
-                                                        class="btn btn-sm btn-outline-info mx-1" data-toggle="tooltip" title="Edit Lead">
+                                                        class="btn btn-xs btn-outline-info mx-1" data-toggle="tooltip" title="Edit Lead">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                     <a href="{% url 'leads:lead_follow_ups' lead.lead_id %}"
-                                                        class="btn btn-sm btn-outline-secondary mx-1" data-toggle="tooltip" title="Follow-up History">
+                                                        class="btn btn-xs btn-outline-secondary mx-1" data-toggle="tooltip" title="Follow-up History">
                                                         <i class="fas fa-history"></i>
                                                     </a>
                                                     {% if lead.lead_status != 'Converted' %}
                                                     <a href="{% url 'leads:convert_to_site' lead.lead_id %}"
-                                                        class="btn btn-sm btn-outline-success mx-1" data-toggle="tooltip" title="Convert to Site">
+                                                        class="btn btn-xs btn-outline-success mx-1" data-toggle="tooltip" title="Convert to Site">
                                                         <i class="fas fa-check-circle"></i>
                                                     </a>
                                                     {% endif %}
                                                     <a href="{% url 'leads:employee_activity' lead.created_by_id %}"
-                                                        class="btn btn-sm btn-outline-dark mx-1" data-toggle="tooltip" title="Employee Activity">
+                                                        class="btn btn-xs btn-outline-dark mx-1" data-toggle="tooltip" title="Employee Activity">
                                                         <i class="fas fa-chart-line"></i>
                                                     </a>
                                                     {% else %}
@@ -141,23 +238,14 @@
                                         </tr>
                                         {% empty %}
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted py-4">
-                                                No leads found. <a href="">Add your first
-                                                    lead</a>!
+                                            <td colspan="7" class="text-center text-muted py-4">
+                                                No leads found. <a href="{% url 'leads:lead_form_add' %}">Add your first lead</a>!
                                             </td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
-                            {% if leads.has_other_pages %}
-                            <!-- Pagination (add if using Django paginator in view) -->
-                            <nav aria-label="Lead pagination">
-                                <ul class="pagination justify-content-center">
-                                    <!-- Paginator logic here if added -->
-                                </ul>
-                            </nav>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -165,7 +253,6 @@
         </div>
     </section>
 </div>
-
 {% endblock %}
 
 {% block extra_scripts %}
@@ -180,16 +267,15 @@
             "lengthChange": true, 
             "autoWidth": false,
             "pageLength": 25,
-            "order": [[ 0, "desc" ]], // Order by S.No (ID) descending
+            "order": [[ 0, "asc" ]], // Order by Counter ascending
             "language": {
                 "search": "_INPUT_",
                 "searchPlaceholder": "Search within table..."
             },
             "columnDefs": [
-                { "orderable": false, "targets": 5 }, // specific columns like actions not sortable
-                { "className": "align-middle", "targets": "_all" } // Vertically center all cells
+                { "orderable": false, "targets": 6 }, // Actions column not sortable
+                { "className": "align-middle", "targets": "_all" }
             ],
-            // Add custom DOM structure to position components nicely
             "dom": "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
                    "<'row'<'col-sm-12'tr>>" +
                    "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",

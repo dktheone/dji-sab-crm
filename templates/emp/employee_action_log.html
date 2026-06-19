@@ -1,0 +1,116 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block title %}{% if employee %}Employee Action Log - {{ employee.first_name }} {{ employee.last_name }}{% else %}Global Audit Log{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>{% if employee %}Action Log: {{ employee.first_name }} {{ employee.last_name }} ({{ employee.emp_code }}){% else %}Global Audit Log{% endif %}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'emp:employee_list' %}">Employees</a></li>
+                        {% if employee %}
+                            <li class="breadcrumb-item"><a href="{% url 'emp:employee_view' employee.id %}">{{ employee.first_name }}</a></li>
+                        {% endif %}
+                        <li class="breadcrumb-item active">Action Log</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- The time line -->
+                    <div class="timeline">
+                        {% for log in logs %}
+                            {% ifchanged log.performed_at.date %}
+                                <!-- timeline time label -->
+                                <div class="time-label">
+                                    <span class="bg-primary">{{ log.performed_at|date:"d M. Y" }}</span>
+                                </div>
+                                <!-- /.timeline-label -->
+                            {% endifchanged %}
+                            
+                            <!-- timeline item -->
+                            <div>
+                                <i class="{{ log.icon }} {{ log.bg_class }}" style="background-color: {{ log.color }} !important; color: #fff; cursor: help;" data-toggle="tooltip" data-placement="top" title="{{ log.tooltip }}"></i>
+                                
+                                <div class="timeline-item">
+                                    <span class="time"><i class="fas fa-clock"></i> {{ log.performed_at|date:"H:i" }}</span>
+                                    <h3 class="timeline-header">
+                                        <span class="text-primary font-weight-bold">{{ log.action }}</span> 
+                                        {% if not employee and log.employee %}
+                                            for <strong><a href="{% url 'emp:employee_view' log.employee.id %}">{{ log.employee.first_name }} {{ log.employee.last_name }}</a></strong>
+                                        {% endif %}
+                                        {% if log.performed_by %}by {{ log.performed_by.username }}{% endif %}
+                                    </h3>
+
+                                    <div class="timeline-body">
+                                        {{ log.remark }}
+                                    </div>
+                                    {% if log.ip_address %}
+                                    <div class="timeline-footer">
+                                        <small class="text-muted">IP: {{ log.ip_address }}</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- END timeline item -->
+                        {% empty %}
+                            <div>
+                                <i class="fas fa-info bg-gray"></i>
+                                <div class="timeline-item">
+                                    <div class="timeline-body">No activity logged for this employee yet.</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <div>
+                            <i class="fas fa-clock bg-gray"></i>
+                        </div>
+                    </div>
+                    
+                    {% if is_paginated %}
+                    <div class="card-footer clearfix">
+                        <ul class="pagination pagination-sm m-0 float-right">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                            {% else %}
+                                <li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>
+                            {% endif %}
+                            
+                            <li class="page-item active"><a class="page-link" href="#">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</a></li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                            {% else %}
+                                <li class="page-item disabled"><a class="page-link" href="#">&raquo;</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                <!-- /.col -->
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+{% endblock %}

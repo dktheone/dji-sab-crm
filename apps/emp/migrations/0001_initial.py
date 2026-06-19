@@ -710,8 +710,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="leave",
-            constraint=models.CheckConstraint(
-                check=models.Q(("to_date__gte", models.F("from_date"))),
+            constraint=models.CheckConstraint(check=models.Q(("to_date__gte", models.F("from_date"))),
                 name="check_to_date_gte_from_date",
             ),
         ),
@@ -720,3 +719,6 @@ class Migration(migrations.Migration):
             unique_together={("employee", "attendance_date")},
         ),
     ]
+
+
+

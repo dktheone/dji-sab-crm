@@ -1,0 +1,56 @@
+{
+  "Profile": {
+    "icon": "fas fa-user-edit",
+    "color": "#0ea5e9",
+    "bg_class": "bg-info",
+    "tooltip": "Changes to employee personal, contact, or general profile information."
+  },
+  "Status": {
+    "icon": "fas fa-toggle-on",
+    "color": "#f59e0b",
+    "bg_class": "bg-warning",
+    "tooltip": "Employee employment status changes (e.g. onboarded, offboarded, status changes)."
+  },
+  "Authentication": {
+    "icon": "fas fa-key",
+    "color": "#6366f1",
+    "bg_class": "bg-indigo",
+    "tooltip": "Authentication and credential operations (e.g. login credentials created)."
+  },
+  "Academics": {
+    "icon": "fas fa-graduation-cap",
+    "color": "#10b981",
+    "bg_class": "bg-success",
+    "tooltip": "Educational profile details, academic records, and family background additions."
+  },
+  "Documents": {
+    "icon": "fas fa-file-pdf",
+    "color": "#8b5cf6",
+    "bg_class": "bg-purple",
+    "tooltip": "Document uploads, updates, or status changes."
+  },
+  "Salary Master": {
+    "icon": "fas fa-hand-holding-usd",
+    "color": "#3b82f6",
+    "bg_class": "bg-primary",
+    "tooltip": "Base salary master configurations and structure updates."
+  },
+  "Payroll": {
+    "icon": "fas fa-money-check-alt",
+    "color": "#20c997",
+    "bg_class": "bg-teal",
+    "tooltip": "Monthly salary processing, preparation, and disbursements."
+  },
+  "Adjustments": {
+    "icon": "fas fa-balance-scale",
+    "color": "#ec4899",
+    "bg_class": "bg-maroon",
+    "tooltip": "Additions, deductions, loans, and other financial adjustments."
+  },
+  "HR Operations": {
+    "icon": "fas fa-user-shield",
+    "color": "#ef4444",
+    "bg_class": "bg-danger",
+    "tooltip": "HR administrative operations (e.g. leaves, disciplinary actions, performance reviews, trainings)."
+  }
+}

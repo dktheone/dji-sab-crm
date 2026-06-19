@@ -7,7 +7,7 @@
 {% block content %}
 <div class="content-wrapper">
     <div class="content-header">
-        <h1>Profile for {{ employee.first_name }} {{ employee.last_name }}</h1>
+        <h1>Profile for {{ employee.first_name }}{% if employee.middle_name %} {{ employee.middle_name }}{% endif %} {{ employee.last_name }}</h1>
     </div>
     <!-- Wizard Step Indicator -->
     <div class="wizard-steps">
@@ -22,7 +22,7 @@
             <div class="card">
                 <div class="card-body">
                     <h3>Basic Information</h3>
-                    <p>Name: {{ employee.first_name }} {{ employee.middle_name }} {{ employee.last_name }}</p>
+                    <p>Name: {{ employee.first_name }}{% if employee.middle_name %} {{ employee.middle_name }}{% endif %} {{ employee.last_name }}</p>
                     <!-- Add all fields... -->
                 </div>
             </div>

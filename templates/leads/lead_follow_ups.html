@@ -67,14 +67,30 @@
                                 <div class="col-md-4 mb-3 border-left border-right">
                                     <div class="pl-md-2">
                                         <h6 class="text-muted text-uppercase mb-3"><i class="fas fa-address-card mr-1"></i> Primary Contact</h6>
-                                        <div class="mb-3">
-                                            <p class="font-weight-bold mx-0 mb-0">{{ lead.contact_person }}</p>
-                                            <p class="text-muted small mb-1">{{ lead.designation }}</p>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="mb-0 text-muted small"><i class="fas fa-phone mr-1"></i> Mobile</label>
-                                            <p class="mb-0"><a href="tel:{{ lead.mobile_no }}">{{ lead.mobile_no }}</a></p>
-                                        </div>
+                                        {% with primary_contact=lead.contacts.first %}
+                                            {% if primary_contact %}
+                                                <div class="mb-3">
+                                                    <p class="font-weight-bold mx-0 mb-0">{{ primary_contact.name }}</p>
+                                                    <p class="text-muted small mb-1">{{ primary_contact.designation }}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="mb-0 text-muted small"><i class="fas fa-phone mr-1"></i> Mobile</label>
+                                                    <p class="mb-0"><a href="tel:{{ primary_contact.mobile1 }}">{{ primary_contact.mobile1 }}</a></p>
+                                                    {% if primary_contact.mobile2 %}
+                                                        <p class="mb-0 text-xs text-muted"><a href="tel:{{ primary_contact.mobile2 }}">{{ primary_contact.mobile2 }}</a></p>
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                <div class="mb-3">
+                                                    <p class="font-weight-bold mx-0 mb-0">{{ lead.contact_person }}</p>
+                                                    <p class="text-muted small mb-1">{{ lead.designation }}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="mb-0 text-muted small"><i class="fas fa-phone mr-1"></i> Mobile</label>
+                                                    <p class="mb-0"><a href="tel:{{ lead.mobile_no }}">{{ lead.mobile_no }}</a></p>
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
                                     </div>
                                 </div>
 

@@ -106,16 +106,32 @@ class Vendor(models.Model):
         return f"{self.vendor_code} - {self.vendor_name}"
 
     def save(self, *args, **kwargs):
+        from django.db import transaction, IntegrityError
         if not self.vendor_code:
-            # Generate vendor_code (e.g., VEN0001)
-            last_vendor = Vendor.objects.order_by('-vendor_id').first()
-            if last_vendor:
-                last_id = int(last_vendor.vendor_code.replace('VEN', ''))
-                new_id = last_id + 1
-            else:
-                new_id = 1
-            self.vendor_code = f'VEN{new_id:04d}'
-        super().save(*args, **kwargs)
+            while True:
+                # Generate vendor_code (e.g., VEN0001) safely resolving race-conditions
+                last_vendor = Vendor.objects.order_by('-vendor_id').first()
+                if last_vendor:
+                    try:
+                        last_id = int(last_vendor.vendor_code.replace('VEN', ''))
+                    except ValueError:
+                        last_id = Vendor.objects.count()
+                    new_id = last_id + 1
+                else:
+                    new_id = 1
+                
+                self.vendor_code = f'VEN{new_id:04d}'
+                
+                try:
+                    with transaction.atomic():
+                        super().save(*args, **kwargs)
+                    break
+                except IntegrityError as e:
+                    if 'unique' in str(e).lower() or 'constraint' in str(e).lower():
+                        continue
+                    raise
+        else:
+            super().save(*args, **kwargs)
 
     def clean(self):
         super().clean()

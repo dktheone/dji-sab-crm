@@ -1,52 +1,61 @@
 {% load static %}
-<ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+<ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="true">
 
     {% if user.groups.all.0.name in 'admin,hr' %}
 
     <!-- ADMIN & HR: FULL ACCESS -->
 
-    <!-- MASTER DATA SECTION -->
-    <li class="nav-header"><i class="fas fa-database"></i> MASTER DATA</li>
-
-    {% if user.groups.all.0.name == 'admin' %}
-    <li class="nav-item">
-        <a href="{% url 'emp:admin_role_assignment' %}"
-            class="nav-link {% if view_name == 'emp:admin_role_assignment' %}active{% endif %}">
-            <i class="nav-icon fas fa-user-tag"></i>
-            <p>Role Assignment</p>
+    <!-- MASTER DATA COLLAPSIBLE MODULE -->
+    <li class="nav-item has-treeview {% if 'admin_role_assignment' in view_name or 'department' in view_name or 'designation' in view_name or 'site' in view_name %}menu-open{% endif %}">
+        <a href="#" class="nav-link {% if 'admin_role_assignment' in view_name or 'department' in view_name or 'designation' in view_name or 'site' in view_name %}active{% endif %}">
+            <i class="nav-icon fas fa-database"></i>
+            <p>
+                MASTER DATA
+                <i class="right fas fa-angle-left"></i>
+            </p>
         </a>
-    </li>
-    {% endif %}
+        <ul class="nav nav-treeview">
+            {% if user.groups.all.0.name == 'admin' %}
+            <li class="nav-item">
+                <a href="{% url 'emp:admin_role_assignment' %}"
+                    class="nav-link {% if view_name == 'emp:admin_role_assignment' %}active{% endif %}">
+                    <i class="nav-icon fas fa-user-tag"></i>
+                    <p>Role Assignment</p>
+                </a>
+            </li>
+            {% endif %}
 
-    <li class="nav-item">
-        <a href="{% url 'emp:department_crud' %}"
-            class="nav-link {% if view_name == 'emp:department_crud' %}active{% endif %}">
-            <i class="nav-icon fas fa-building"></i>
-            <p>Departments</p>
-        </a>
-    </li>
+            <li class="nav-item">
+                <a href="{% url 'emp:department_crud' %}"
+                    class="nav-link {% if view_name == 'emp:department_crud' %}active{% endif %}">
+                    <i class="nav-icon fas fa-building"></i>
+                    <p>Departments</p>
+                </a>
+            </li>
 
-    <li class="nav-item">
-        <a href="{% url 'emp:designation_crud' %}"
-            class="nav-link {% if view_name == 'emp:designation_crud' %}active{% endif %}">
-            <i class="nav-icon fas fa-id-badge"></i>
-            <p>Designations</p>
-        </a>
-    </li>
+            <li class="nav-item">
+                <a href="{% url 'emp:designation_crud' %}"
+                    class="nav-link {% if view_name == 'emp:designation_crud' %}active{% endif %}">
+                    <i class="nav-icon fas fa-id-badge"></i>
+                    <p>Designations</p>
+                </a>
+            </li>
 
-    <li class="nav-item">
-        <a href="{% url 'emp:site_crud' %}" class="nav-link {% if view_name == 'emp:site_crud' %}active{% endif %}">
-            <i class="nav-icon fas fa-map-marker-alt"></i>
-            <p>Sites / Locations</p>
-        </a>
+            <li class="nav-item">
+                <a href="{% url 'emp:site_crud' %}" class="nav-link {% if view_name == 'emp:site_crud' %}active{% endif %}">
+                    <i class="nav-icon fas fa-map-marker-alt"></i>
+                    <p>Sites / Locations</p>
+                </a>
+            </li>
+        </ul>
     </li>
 
     <!-- MAIN MODULES -->
     <li class="nav-header"><i class="fas fa-th-large"></i> MODULES</li>
 
     <!-- HRMS MODULE -->
-    <li class="nav-item has-treeview {% if 'emp' in view_name %}menu-open{% endif %}">
-        <a href="#" class="nav-link {% if 'emp' in view_name %}active{% endif %}">
+    <li class="nav-item has-treeview {% if 'employee' in view_name or 'salary' in view_name %}menu-open{% endif %}">
+        <a href="#" class="nav-link {% if 'employee' in view_name or 'salary' in view_name %}active{% endif %}">
             <i class="nav-icon fas fa-users"></i>
             <p>
                 HRMS
@@ -61,7 +70,7 @@
             <li class="nav-item">
                 <a href="{% url 'emp:employee_dash' %}"
                     class="nav-link {% if view_name == 'emp:employee_dash' %}active{% endif %}">
-                    <i class="far fa-circle nav-icon"></i>
+                    <i class="fas fa-th-large nav-icon"></i>
                     <p>Employee Dashboard</p>
                 </a>
             </li>
@@ -87,6 +96,17 @@
                     class="nav-link {% if view_name == 'emp:create_employee_user' %}active{% endif %}">
                     <i class="fas fa-user-shield nav-icon"></i>
                     <p>Create User Login</p>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a href="{% url 'emp:employee_action_log_all' %}"
+                    class="nav-link {% if view_name == 'emp:employee_action_log_all' %}active{% endif %}">
+                    <i class="fas fa-history nav-icon"></i>
+                    <p>
+                        Action Log
+                        <span class="badge badge-danger right">Audit</span>
+                    </p>
                 </a>
             </li>
 
@@ -128,7 +148,7 @@
             <li class="nav-item">
                 <a href="{% url 'leads:lead_list' %}"
                     class="nav-link {% if view_name == 'leads:lead_list' %}active{% endif %}">
-                    <i class="far fa-circle nav-icon"></i>
+                    <i class="fas fa-list-ul nav-icon"></i>
                     <p>Leads List</p>
                 </a>
             </li>
@@ -177,7 +197,7 @@
             <li class="nav-item">
                 <a href="{% url 'vendors:vendor_list' %}"
                     class="nav-link {% if view_name == 'vendors:vendor_list' %}active{% endif %}">
-                    <i class="far fa-circle nav-icon"></i>
+                    <i class="fas fa-store nav-icon"></i>
                     <p>Vendors List</p>
                 </a>
             </li>
@@ -219,7 +239,7 @@
             <li class="nav-item">
                 <a href="{% url 'leads:lead_list' %}"
                     class="nav-link {% if view_name == 'leads:lead_list' %}active{% endif %}">
-                    <i class="far fa-circle nav-icon"></i>
+                    <i class="fas fa-list-ul nav-icon"></i>
                     <p>My Leads</p>
                 </a>
             </li>
