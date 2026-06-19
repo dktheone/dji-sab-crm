@@ -1,0 +1,176 @@
+<!-- Unified Wizard Stepper Navigation -->
+<style>
+.step-bar {
+    background: #111827;
+    color: #fff;
+    padding: 18px 24px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 20px;
+}
+.step-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.step-title i {
+    font-size: 17px;
+    color: #93C5FD;
+}
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+.step-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    position: relative;
+}
+.step-item:last-child {
+    flex: 0 0 auto;
+}
+.step-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+    transition: all .2s;
+}
+.step-done .step-circle {
+    background: var(--green, #16A34A);
+    color: #fff;
+}
+.step-active .step-circle {
+    background: var(--primary, #1A56DB);
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(26,86,219,.3);
+}
+.step-todo .step-circle {
+    background: transparent;
+    border: 1.5px solid #4B5563;
+    color: #9CA3AF;
+}
+.step-label {
+    font-size: 11px;
+    color: #9CA3AF;
+    white-space: nowrap;
+}
+.step-active .step-label {
+    color: #93C5FD;
+    font-weight: 500;
+}
+.step-done .step-label {
+    color: #6EE7B7;
+}
+.step-line {
+    flex: 1;
+    height: 1.5px;
+    background: #374151;
+    margin: 0 4px;
+}
+.step-line.done {
+    background: var(--green, #16A34A);
+}
+.step-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: inherit;
+    text-decoration: none !important;
+    transition: opacity 0.2s;
+}
+.step-link:hover {
+    opacity: 0.85;
+}
+.step-link:hover .step-label {
+    text-decoration: underline;
+}
+</style>
+
+<div class="step-bar">
+    <div class="step-title">
+        <i class="fas fa-user-edit" aria-hidden="true"></i> 
+        {% if employee %}
+            Manage Profile: {{ employee.first_name }}{% if employee.middle_name %} {{ employee.middle_name }}{% endif %} {{ employee.last_name }} ({{ employee.emp_code }})
+        {% else %}
+            New Employee Registration
+        {% endif %}
+    </div>
+    <div class="stepper">
+        <!-- Step 1: ID Check -->
+        <div class="step-item step-done">
+            <div class="step-circle"><i class="fas fa-check" style="font-size:11px" aria-hidden="true"></i></div>
+            <div><div class="step-label">ID Check</div></div>
+        </div>
+        <div class="step-line done"></div>
+
+        <!-- Step 2: Registration -->
+        <div class="step-item {% if active_step == 2 %}step-active{% elif employee %}step-done{% else %}step-todo{% endif %}">
+            {% if employee and active_step != 2 %}
+                <a href="{% url 'emp:employee_edit' employee.id %}" class="step-link">
+                    <div class="step-circle">{% if active_step > 2 %}<i class="fas fa-check" style="font-size:11px" aria-hidden="true"></i>{% else %}2{% endif %}</div>
+                    <div><div class="step-label">Registration</div></div>
+                </a>
+            {% else %}
+                <div class="step-circle">2</div>
+                <div><div class="step-label">Registration</div></div>
+            {% endif %}
+        </div>
+        <div class="step-line {% if active_step >= 3 %}done{% endif %}"></div>
+
+        <!-- Step 3: Education & Exp -->
+        <div class="step-item {% if active_step == 3 %}step-active{% elif active_step > 3 %}step-done{% else %}step-todo{% endif %}">
+            {% if employee and active_step != 3 %}
+                <a href="{% url 'emp:employee_details' employee.id %}" class="step-link">
+                    <div class="step-circle">{% if active_step > 3 %}<i class="fas fa-check" style="font-size:11px" aria-hidden="true"></i>{% else %}3{% endif %}</div>
+                    <div><div class="step-label">Education & Exp</div></div>
+                </a>
+            {% else %}
+                <div class="step-circle">3</div>
+                <div><div class="step-label">Education & Exp</div></div>
+            {% endif %}
+        </div>
+        <div class="step-line {% if active_step >= 4 %}done{% endif %}"></div>
+
+        <!-- Step 4: Documents -->
+        <div class="step-item {% if active_step == 4 %}step-active{% elif active_step > 4 %}step-done{% else %}step-todo{% endif %}">
+            {% if employee and active_step != 4 %}
+                <a href="{% url 'emp:employee_uploads' employee.id %}" class="step-link">
+                    <div class="step-circle">{% if active_step > 4 %}<i class="fas fa-check" style="font-size:11px" aria-hidden="true"></i>{% else %}4{% endif %}</div>
+                    <div><div class="step-label">Documents</div></div>
+                </a>
+            {% else %}
+                <div class="step-circle">4</div>
+                <div><div class="step-label">Documents</div></div>
+            {% endif %}
+        </div>
+        <div class="step-line {% if active_step >= 5 %}done{% endif %}"></div>
+
+        <!-- Step 5: Review & Print -->
+        <div class="step-item {% if active_step == 5 %}step-active{% else %}step-todo{% endif %}">
+            {% if employee and active_step != 5 %}
+                <a href="{% url 'emp:employee_view' employee.id %}" class="step-link">
+                    <div class="step-circle">5</div>
+                    <div><div class="step-label">Review & Print</div></div>
+                </a>
+            {% else %}
+                <div class="step-circle">5</div>
+                <div><div class="step-label">Review & Print</div></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
