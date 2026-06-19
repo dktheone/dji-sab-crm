@@ -1,81 +1,518 @@
-<!-- emp/salary_master_list.html -->
 {% extends 'layouts/base.html' %}
+{% load static %}
 {% block title %}Salary Master List{% endblock %}
+
+{% block extrastyle %}
+<!-- DataTables & SweetAlert2 -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+    .salary-badge-active {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: inline-block;
+    }
+    .salary-badge-pending {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: inline-block;
+    }
+    .table-valign-middle td, .table-valign-middle th {
+        vertical-align: middle !important;
+    }
+    .btn-action {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+    /* Mobile responsive optimizations */
+    @media (max-width: 576px) {
+        .btn-action {
+            display: block;
+            width: 100%;
+            margin-bottom: 0.25rem;
+            text-align: center;
+        }
+    }
+    .filter-card {
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid #e3e6f0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="content-wrapper">
-    <div class="content-header">
-        <h1>Salary Master</h1>
-    </div>
-    <section class="content">
-        <!-- Priority Group: No Salary -->
-        <div class="card card-danger">
-            <div class="card-header">
-                <h3 class="card-title">Employees Without Salary (Action Required)</h3>
-            </div>
-            <div class="card-body">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Department</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for emp in no_salary_employees %}
-                        <tr>
-                            <td>{{ emp.first_name }} {{ emp.last_name }}</td>
-                            <td>{{ emp.department.department_name }}</td>
-                            <td><a href="{% url 'apps.emp:salary_master_detail' emp.id %}" class="btn btn-primary">Manage Salary</a></td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="3">No employees without salary.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- Content Header -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1><i class="fas fa-hand-holding-usd text-primary mr-2"></i>Salary Master List</h1>
+                </div>
+                <div class="col-sm-6 text-sm-right">
+                    <span class="badge badge-info p-2"><i class="fas fa-users mr-1"></i> Active Employees: {{ employees|length }}</span>
+                </div>
             </div>
         </div>
+    </section>
 
-        <!-- Main Group: With Salary -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Employees with Active Salary</h3>
-            </div>
-            <div class="card-body">
-                <table id="salaryTable" class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Latest Salary</th>
-                            <th>Effective From</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for emp in with_salary_employees %}
-                        <tr>
-                            <td>{{ emp.first_name }} {{ emp.last_name }}</td>
-                            <td>{{ emp.salary_masters.first.salary_amount }}</td>
-                            <td>{{ emp.salary_masters.first.effective_from }}</td>
-                            <td><a href="{% url 'apps.emp:salary_master_detail' emp.id %}" class="btn btn-primary">Manage Salary</a></td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4">No employees with salary.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card filter-card">
+                <div class="card-header bg-white">
+                    <h3 class="card-title font-weight-bold text-muted"><i class="fas fa-filter mr-1"></i>Filter & Quick Management</h3>
+                </div>
+                <!-- Filters Panel -->
+                <div class="card-body bg-light border-bottom py-3">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <label class="font-weight-bold small text-secondary" for="salaryFilterSelect">Salary Status</label>
+                            <select id="salaryFilterSelect" class="form-control form-control-sm">
+                                <option value="all">All Statuses</option>
+                                <option value="configured">Salary Configured</option>
+                                <option value="pending">Salary Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <label class="font-weight-bold small text-secondary" for="deptFilterSelect">Department</label>
+                            <select id="deptFilterSelect" class="form-control form-control-sm">
+                                <option value="all">All Departments</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.department_name }}">{{ dept.department_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <label class="font-weight-bold small text-secondary" for="desigFilterSelect">Designation</label>
+                            <select id="desigFilterSelect" class="form-control form-control-sm">
+                                <option value="all">All Designations</option>
+                                {% for desig in designations %}
+                                <option value="{{ desig.designation_name }}">{{ desig.designation_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <label class="font-weight-bold small text-secondary" for="siteFilterSelect">Site</label>
+                            <select id="siteFilterSelect" class="form-control form-control-sm">
+                                <option value="all">All Sites</option>
+                                {% for site in sites %}
+                                <option value="{{ site.site_name }}">{{ site.site_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12 text-right">
+                            <button id="clearFiltersBtn" class="btn btn-secondary btn-sm font-weight-bold">
+                                <i class="fas fa-undo mr-1"></i>Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <table id="salaryMasterTable" class="table table-sm table-bordered table-hover table-valign-middle responsive nowrap" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;" class="text-center">#</th>
+                                <th data-priority="1">Employee Name</th>
+                                <th>Department / Designation</th>
+                                <th>Site</th>
+                                <th data-priority="2">Latest Salary</th>
+                                <th>Effective From</th>
+                                <th data-priority="3" class="text-center" style="width: 250px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in employees %}
+                            <tr>
+                                <td class="text-center font-weight-bold text-muted"></td>
+                                <td>
+                                    <strong>{{ emp.first_name }} {{ emp.last_name }}</strong>
+                                    <br><small class="text-muted"><i class="fas fa-id-badge mr-1"></i>{{ emp.emp_code }}</small>
+                                </td>
+                                <td>
+                                    {{ emp.department.department_name }}
+                                    <br><small class="text-muted">{{ emp.designation.designation_name }}</small>
+                                </td>
+                                <td>
+                                    {% if emp.site %}
+                                        <i class="fas fa-map-marker-alt text-muted mr-1"></i>{{ emp.site.site_name }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if emp.active_salary_amount %}
+                                        <span class="salary-badge-active">
+                                            <i class="fas fa-rupee-sign mr-1"></i>{{ emp.active_salary_amount|floatformat:0 }} /month
+                                        </span>
+                                    {% else %}
+                                        <span class="salary-badge-pending">
+                                            <i class="fas fa-exclamation-circle mr-1"></i>Pending
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if emp.active_salary_effective %}
+                                        <i class="far fa-calendar-alt text-muted mr-1"></i>{{ emp.active_salary_effective|date:"d M, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-primary btn-action btn-action-manage mr-1"
+                                            data-employee-id="{{ emp.id }}"
+                                            data-employee-name="{{ emp.first_name }} {{ emp.last_name }} ({{ emp.emp_code }})"
+                                            data-current-salary="{{ emp.active_salary_amount|default:'' }}"
+                                            data-current-effective="{{ emp.active_salary_effective|date:'Y-m-d' }}"
+                                            data-current-remarks="{{ emp.active_salary_remarks|default:'' }}"
+                                            data-current-status="Active">
+                                        <i class="fas fa-edit mr-1"></i>Quick Manage
+                                    </button>
+                                    <a href="{% url 'apps.emp:salary_master_detail' emp.id %}" class="btn btn-secondary btn-action">
+                                        <i class="fas fa-history mr-1"></i>Full History
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </section>
 </div>
+
+<!-- Quick Manage Modal -->
+<div class="modal fade" id="quickManageModal" tabindex="-1" role="dialog" aria-labelledby="quickManageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title font-weight-bold" id="quickManageModalLabel">
+                    <i class="fas fa-hand-holding-usd mr-2"></i>Quick Manage Salary
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="quickManageForm" method="post">
+                {% csrf_token %}
+                <!-- Hidden parameter to toggle overwrite vs revision -->
+                <input type="hidden" id="modal_edit_input">
+
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <h5 class="font-weight-bold text-secondary" id="modalEmployeeName">Employee Name</h5>
+                    </div>
+
+                    <!-- Revision vs Overwrite Mode Choice Card -->
+                    <div id="salaryActionContainer" class="mb-3" style="display:none;">
+                        <div class="card card-outline card-info p-3 mb-0" style="font-size: 0.85rem; background-color: #f8f9fc; border: 1px solid #d1d3e2; border-radius: 6px;">
+                            <div class="font-weight-bold text-primary mb-2">
+                                <i class="fas fa-info-circle mr-1"></i>Salary Configuration Option:
+                            </div>
+                            <div class="custom-control custom-radio mb-2">
+                                <input type="radio" id="action_new_revision" name="salary_action" class="custom-control-input" value="new" checked>
+                                <label class="custom-control-label font-weight-bold text-secondary" for="action_new_revision" style="cursor: pointer;">
+                                    Create New Revision (Recommended)
+                                </label>
+                                <div class="text-muted small pl-1 mt-0">
+                                    Adds a new salary record effective from the selected date and deactivates the previous one, preserving salary history.
+                                </div>
+                            </div>
+                            <div class="custom-control custom-radio">
+                                <input type="radio" id="action_edit_existing" name="salary_action" class="custom-control-input" value="edit">
+                                <label class="custom-control-label font-weight-bold text-secondary" for="action_edit_existing" style="cursor: pointer;">
+                                    Correct Current Active Record
+                                </label>
+                                <div class="text-muted small pl-1 mt-0">
+                                    Overwrites the amount/details of the current active salary record directly. No new history entry will be created.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modal_salary_amount" class="font-weight-bold">Salary Amount (₹) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-rupee-sign"></i></span>
+                            </div>
+                            <input type="number" name="salary_amount" id="modal_salary_amount" class="form-control" placeholder="e.g. 35000" step="0.01" required>
+                        </div>
+                        <small class="form-text text-muted">Enter the gross monthly salary amount</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_effective_from" class="font-weight-bold">Effective From Date <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                            </div>
+                            <input type="date" name="effective_from" id="modal_effective_from" class="form-control" required>
+                        </div>
+                        <small class="form-text text-muted">Date from which this salary will be effective</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_status" class="font-weight-bold">Status <span class="text-danger">*</span></label>
+                        <select name="status" id="modal_status" class="form-control">
+                            <option value="Active" selected>Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                        <small class="form-text text-muted">Active salaries will be used for payroll calculations</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal_remarks" class="font-weight-bold">Remarks / Notes</label>
+                        <textarea name="remarks" id="modal_remarks" class="form-control" rows="3" placeholder="Optional: add any notes about this revision..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save mr-1"></i>Save Record
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
-{% block extra_js %}
+{% block extra_scripts %}
+<!-- DataTables & SweetAlert2 JS -->
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    $(function () {
-        $("#salaryTable").DataTable({
-            "responsive": true, "lengthChange": false, "autoWidth": false,
+    $(document).ready(function () {
+        // Initialize DataTables with responsive behaviour
+        var table = $('#salaryMasterTable').DataTable({
+            "paging": true,
+            "lengthChange": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "responsive": true,
+            "pageLength": 25,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "columnDefs": [ {
+                "searchable": false,
+                "orderable": false,
+                "targets": 0
+            } ],
+            "order": [[ 1, 'asc' ]]
+        });
+
+        // Restore filter values from sessionStorage
+        var savedStatus = sessionStorage.getItem('salary_master_filter_status');
+        var savedDept = sessionStorage.getItem('salary_master_filter_dept');
+        var savedDesig = sessionStorage.getItem('salary_master_filter_desig');
+        var savedSite = sessionStorage.getItem('salary_master_filter_site');
+
+        if (savedStatus) $('#salaryFilterSelect').val(savedStatus);
+        if (savedDept) $('#deptFilterSelect').val(savedDept);
+        if (savedDesig) $('#desigFilterSelect').val(savedDesig);
+        if (savedSite) $('#siteFilterSelect').val(savedSite);
+
+        // Dynamic sequential `#` index column
+        table.on('order.dt search.dt', function () {
+            table.column(0, {search:'applied', order:'applied'}).nodes().each(function (cell, i) {
+                cell.innerHTML = i + 1;
+            });
+        }).draw();
+
+        // Custom search filtering function for status, department, designation, and site
+        $.fn.dataTable.ext.search.push(
+            function(settings, data, dataIndex) {
+                // 1. Salary status filter (column index 4)
+                var statusFilterVal = $('#salaryFilterSelect').val();
+                var salaryCellContent = data[4] || "";
+                var isPending = salaryCellContent.indexOf("Pending") !== -1;
+                
+                if (statusFilterVal === 'configured' && isPending) return false;
+                if (statusFilterVal === 'pending' && !isPending) return false;
+
+                // 2. Department filter (column index 2 contains Dept / Desig)
+                var deptFilterVal = $('#deptFilterSelect').val();
+                var deptCellContent = data[2] || "";
+                if (deptFilterVal !== 'all' && deptCellContent.indexOf(deptFilterVal) === -1) {
+                    return false;
+                }
+
+                // 3. Designation filter (column index 2 contains Dept / Desig)
+                var desigFilterVal = $('#desigFilterSelect').val();
+                if (desigFilterVal !== 'all' && deptCellContent.indexOf(desigFilterVal) === -1) {
+                    return false;
+                }
+
+                // 4. Site filter (column index 3)
+                var siteFilterVal = $('#siteFilterSelect').val();
+                var siteCellContent = data[3] || "";
+                if (siteFilterVal !== 'all' && siteCellContent.indexOf(siteFilterVal) === -1) {
+                    return false;
+                }
+
+                return true;
+            }
+        );
+
+        // Apply saved filters initial draw
+        table.draw();
+
+        // Bind filter select dropdown change events and save to sessionStorage
+        $('#salaryFilterSelect').change(function() {
+            sessionStorage.setItem('salary_master_filter_status', $(this).val());
+            table.draw();
+        });
+        $('#deptFilterSelect').change(function() {
+            sessionStorage.setItem('salary_master_filter_dept', $(this).val());
+            table.draw();
+        });
+        $('#desigFilterSelect').change(function() {
+            sessionStorage.setItem('salary_master_filter_desig', $(this).val());
+            table.draw();
+        });
+        $('#siteFilterSelect').change(function() {
+            sessionStorage.setItem('salary_master_filter_site', $(this).val());
+            table.draw();
+        });
+
+        // Clear Filters click handler
+        $('#clearFiltersBtn').click(function () {
+            $('#salaryFilterSelect, #deptFilterSelect, #desigFilterSelect, #siteFilterSelect').val('all');
+            sessionStorage.removeItem('salary_master_filter_status');
+            sessionStorage.removeItem('salary_master_filter_dept');
+            sessionStorage.removeItem('salary_master_filter_desig');
+            sessionStorage.removeItem('salary_master_filter_site');
+            table.draw();
+        });
+
+        // Modal triggers on clicking "Quick Manage"
+        $('#salaryMasterTable').on('click', '.btn-action-manage', function () {
+            var btn = $(this);
+            var empId = btn.data('employee-id');
+            var empName = btn.data('employee-name');
+            var salary = btn.data('current-salary');
+            var effective = btn.data('current-effective');
+            var remarks = btn.data('current-remarks');
+            var status = btn.data('current-status') || 'Active';
+
+            // Set modal properties
+            $('#modalEmployeeName').text(empName);
+            $('#quickManageForm').attr('action', `/emp/salary-master-detail/${empId}/`);
+
+            // Prefill or set defaults
+            $('#modal_salary_amount').val(salary);
+            $('#modal_remarks').val(remarks);
+            $('#modal_status').val(status);
+
+            // Display salary configuration alert if salary exists
+            if (salary) {
+                $('#salaryActionContainer').show();
+                // Set default radio selection to "new" revision
+                $('#action_new_revision').prop('checked', true);
+                $('#modal_edit_input').removeAttr('name'); 
+            } else {
+                $('#salaryActionContainer').hide();
+                $('#modal_edit_input').removeAttr('name');
+            }
+
+            if (effective) {
+                $('#modal_effective_from').val(effective);
+            } else {
+                // Today's date in YYYY-MM-DD
+                var today = new Date().toISOString().split('T')[0];
+                $('#modal_effective_from').val(today);
+            }
+
+            $('#quickManageModal').modal('show');
+        });
+
+        // Bind radio selection change to hidden input
+        $('input[name="salary_action"]').change(function() {
+            if ($(this).val() === 'edit') {
+                $('#modal_edit_input').attr('name', 'edit').val('true');
+            } else {
+                $('#modal_edit_input').removeAttr('name');
+            }
+        });
+
+        // AJAX Form Submission
+        $('#quickManageForm').submit(function (e) {
+            e.preventDefault();
+            var form = $(this);
+            var actionUrl = form.attr('action');
+
+            Swal.fire({
+                title: 'Saving Salary...',
+                html: 'Please wait while we record this salary update.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: actionUrl,
+                type: 'POST',
+                data: form.serialize(),
+                success: function (response) {
+                    Swal.close();
+                    if (response.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Saved!',
+                            text: response.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(function () {
+                            $('#quickManageModal').modal('hide');
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message || 'An error occurred while saving.'
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    Swal.close();
+                    var errorMsg = 'Failed to save salary details. Please check the inputs.';
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        errorMsg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        html: errorMsg
+                    });
+                }
+            });
         });
     });
 </script>

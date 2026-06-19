@@ -12,14 +12,14 @@ from django.views.decorators.http import require_POST
 from django.db.models import Sum, Q, F, Value, DecimalField, Max
 from django.db.models import OuterRef, Subquery, Value, CharField
 from django.db.models.functions import Coalesce
-from django.db import models
+from django.db import models, transaction
 from decimal import Decimal
 from datetime import datetime, timedelta, date
 import calendar
 
 from apps.emp.forms import DepartmentForm, DesignationForm, SitesForm, CustomLoginForm, CustomPasswordResetForm, Contacts, ContactForm
 from apps.emp.models import Department, Designation, Site
-from apps.emp.models import Employee, EmployeeUpload, EmployeeStatus, EmployeeEducation, EmployeeExperience, EmployeeFamily, EmployeeSalaryMaster, EmployeeAdjustment, EmployeeSalaryTransaction, EmployeeAdjustmentMaster
+from apps.emp.models import Employee, EmployeeUpload, EmployeeStatus, EmployeeEducation, EmployeeExperience, EmployeeFamily, EmployeeSalaryMaster, EmployeeAdjustment, EmployeeSalaryTransaction, EmployeeAdjustmentMaster, EmploymentHistory, EmployeeStatusLog
 from apps.emp.forms import EmployeeForm, EmployeeUploadForm, EmployeeUserForm, EmployeeEducationForm, EmployeeExperienceForm, EmployeeFamilyForm, EmployeeSalaryMasterForm, EmployeeAdjustmentForm, SalaryPreparationForm
 from apps.emp.utils import role_required, fetch_ifsc_details
 from country_state_city import City
@@ -112,7 +112,7 @@ def dashboard(request):
                 lead_status__in=[LeadStatus.NEW, LeadStatus.IN_PROGRESS, LeadStatus.QUOTED]
             ).select_related('created_by').order_by('next_follow_up')
 
-            recent_followups = FollowUp.objects.all().select_related('lead', 'created_by').order_by('-follow_up_date', '-created_at')[:15]
+            recent_followups = FollowUp.objects.all().select_related('lead', 'created_by').order_by('-follow_up_date', '-created_at')[:50]
             
             # For admin/hr visuals, we still want to separate overdue
             overdue_leads = Lead.objects.filter(
@@ -128,7 +128,7 @@ def dashboard(request):
                     lead_status__in=[LeadStatus.NEW, LeadStatus.IN_PROGRESS, LeadStatus.QUOTED]
                 ).select_related('created_by').order_by('next_follow_up')
                 
-                recent_followups = FollowUp.objects.filter(created_by=employee).select_related('lead', 'created_by').order_by('-follow_up_date', '-created_at')[:15]
+                recent_followups = FollowUp.objects.filter(created_by=employee).select_related('lead', 'created_by').order_by('-follow_up_date', '-created_at')[:50]
                 
                 overdue_leads = Lead.objects.filter(
                     created_by=employee,
@@ -155,6 +155,33 @@ def dashboard(request):
                 status='Active'
             ).order_by('-date_issued')
 
+        # --- Clients/Hospitals summaries from new to old ---
+        site_summaries = []
+        for s in Site.objects.all().order_by('-id'):
+            site_employees = Employee.objects.filter(site=s, status='Active')
+            total_employees = site_employees.count()
+            
+            # Group active employees by department and designation
+            group_counts = site_employees.values(
+                'department__department_name', 
+                'designation__designation_name'
+            ).annotate(count=Count('id')).order_by('-count')
+            
+            tooltip_lines = []
+            for gc in group_counts:
+                d_name = gc['department__department_name'] or 'N/A'
+                ds_name = gc['designation__designation_name'] or 'N/A'
+                tooltip_lines.append(f"• {d_name} / {ds_name}: {gc['count']}")
+            
+            tooltip_text = "<br>".join(tooltip_lines) if tooltip_lines else "No active employees assigned"
+            
+            site_summaries.append({
+                'name': s.site_name,
+                'address': f"{s.address or ''}, {s.city or ''}".strip(', '),
+                'employee_count': total_employees,
+                'tooltip': tooltip_text
+            })
+
         context = {
             'employee': employee,
             'is_admin': is_admin,
@@ -167,6 +194,7 @@ def dashboard(request):
             'total_my_tasks': overdue_leads.count() + upcoming_leads.count(),
             'current_salary': current_salary,
             'active_adjustments': active_adjustments,
+            'site_summaries': site_summaries,
         }
 
         # --- Admin/HR Context: Overall Statistics ---
@@ -534,21 +562,56 @@ def delete_site(request, site_id):
 
 @role_required('admin', 'hr', 'employee')
 def employee_form(request, employee_id=None):
-    employee = get_object_or_404(Employee, id=employee_id) if employee_id else None
     if request.method == 'POST':
+        rehire_id = request.POST.get('rehire_employee_id')
+        if rehire_id and not employee_id:
+            employee = get_object_or_404(Employee, id=rehire_id)
+        else:
+            employee = get_object_or_404(Employee, id=employee_id) if employee_id else None
+            
         form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
+            is_rehire = bool(rehire_id and not employee_id)
+            is_new = (employee is None)
+            
             employee = form.save(commit=False)
+            
+            if is_rehire:
+                from apps.emp.models import EmployeeStatus
+                employee.status = EmployeeStatus.ACTIVE
+                # Reactivate user account if exists
+                try:
+                    from django.contrib.auth.models import User
+                    user = User.objects.get(username=employee.emp_code)
+                    user.is_active = True
+                    user.save()
+                except User.DoesNotExist:
+                    pass
+                
             employee.created_by = request.user
             employee.save()
+            
+            if is_new or is_rehire:
+                from apps.emp.models import EmploymentHistory, EmployeeStatus
+                if employee.status in [EmployeeStatus.ACTIVE, EmployeeStatus.ONBOARDING, EmployeeStatus.PROBATION]:
+                    EmploymentHistory.objects.create(
+                        employee=employee,
+                        joining_date=employee.joining_date,
+                        department_snapshot=employee.department.department_name if employee.department else '',
+                        designation_snapshot=employee.designation.designation_name if employee.designation else '',
+                        site_snapshot=employee.site.site_name if employee.site else '',
+                        created_by=request.user
+                    )
+
             return JsonResponse({
                 'status': 'success',
                 'message': 'Employee saved successfully',
                 'redirect': f'/emp/details/{employee.id}'
             })
         else:
-            return JsonResponse({'status': 'error', 'errors': form.errors, 'test': '7275'}, status=400)
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
     else:
+        employee = get_object_or_404(Employee, id=employee_id) if employee_id else None
         employee_form = EmployeeForm(instance=employee)
         initial_city = employee.cor_city if employee else None
         initial_state = employee.cor_state if employee else None
@@ -644,16 +707,64 @@ def employee_uploads(request, employee_id):
     #     return redirect('emp:employee_list')
     
     if request.method == 'POST':
-        upload_form = EmployeeUploadForm(request.POST, request.FILES)
-        if upload_form.is_valid():
-            upload = upload_form.save(commit=False)
-            upload.employee = employee
-            upload.uploaded_by = request.user
-            upload.created_by = request.user
-            upload.save()
-            return JsonResponse({'status': 'success', 'message': 'Document uploaded successfully'})
+        action = request.POST.get('action')
+        
+        if action == 'edit_upload':
+            upload_id = request.POST.get('id')
+            upload = get_object_or_404(EmployeeUpload, id=upload_id)
+            
+            upload_form = EmployeeUploadForm(request.POST, request.FILES, instance=upload)
+            if upload_form.is_valid():
+                obj = upload_form.save(commit=False)
+                # Secure status: only admin/hr can edit status
+                if not request.user.groups.filter(name__in=['admin', 'hr']).exists():
+                    obj.status = upload.status  # Keep original status
+                obj.save()
+                return JsonResponse({'status': 'success', 'message': 'Document updated successfully'})
+            else:
+                return JsonResponse({'status': 'error', 'errors': upload_form.errors}, status=400)
+                
+        elif action == 'delete_upload':
+            upload_id = request.POST.get('id')
+            upload = get_object_or_404(EmployeeUpload, id=upload_id)
+            
+            # Delete physical file from storage
+            if upload.file_path:
+                upload.file_path.delete(save=False)
+                
+            upload.delete()
+            return JsonResponse({'status': 'success', 'message': 'Document deleted successfully'})
+            
+        elif action == 'update_status':
+            if not request.user.groups.filter(name__in=['admin', 'hr']).exists():
+                return JsonResponse({'status': 'error', 'message': 'Permission denied.'}, status=403)
+                
+            upload_id = request.POST.get('id')
+            new_status = request.POST.get('status')
+            
+            upload = get_object_or_404(EmployeeUpload, id=upload_id)
+            if new_status in ['Pending', 'Approved', 'Rejected']:
+                upload.status = new_status
+                upload.save()
+                return JsonResponse({'status': 'success', 'message': f'Status updated to {new_status}'})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Invalid status value.'}, status=400)
+                
         else:
-            return JsonResponse({'status': 'error', 'errors': upload_form.errors}, status=400)
+            # Default action: add new upload
+            upload_form = EmployeeUploadForm(request.POST, request.FILES)
+            if upload_form.is_valid():
+                upload = upload_form.save(commit=False)
+                upload.employee = employee
+                upload.uploaded_by = request.user
+                upload.created_by = request.user
+                # Secure status: non-admin/hr always default to Pending
+                if not request.user.groups.filter(name__in=['admin', 'hr']).exists():
+                    upload.status = 'Pending'
+                upload.save()
+                return JsonResponse({'status': 'success', 'message': 'Document uploaded successfully'})
+            else:
+                return JsonResponse({'status': 'error', 'errors': upload_form.errors}, status=400)
     else:
         upload_form = EmployeeUploadForm()
         uploads = EmployeeUpload.objects.filter(employee=employee)
@@ -662,7 +773,7 @@ def employee_uploads(request, employee_id):
             'employee': employee,
             'uploads': uploads,
             'view_name': request.resolver_match.view_name,
-            'step': 3  # For wizard indicator
+            'step': 4  # Matches wizard step 4
         })
 
 
@@ -680,10 +791,10 @@ def get_ifsc_data(request):
 
 @role_required('admin', 'hr')
 def employee_list(request):
-    employees = Employee.objects.all()
+    from apps.emp.models import Employee, EmployeeStatus
+    employees = Employee.objects.all().order_by('emp_code')
     return render(request, 'emp/employee_list.html', {
         'employees': employees,
-        'view_name': request.resolver_match.view_name,
         'status_choices': EmployeeStatus.choices
     })
     
@@ -704,6 +815,8 @@ def employee_view(request, employee_id):
     experiences = EmployeeExperience.objects.filter(employee=employee)
     families = EmployeeFamily.objects.filter(employee=employee)
     uploads = EmployeeUpload.objects.filter(employee=employee)
+    from apps.emp.models import EmploymentHistory
+    emp_history = EmploymentHistory.objects.filter(employee=employee).order_by('joining_date')
     
     return render(request, 'emp/employee_view.html', {
         'employee': employee,
@@ -711,6 +824,7 @@ def employee_view(request, employee_id):
         'experiences': experiences,
         'families': families,
         'uploads': uploads,
+        'emp_history': emp_history,
         'view_name': request.resolver_match.view_name,
         'step': 4  # For wizard indicator
     })
@@ -736,12 +850,126 @@ def update_employee_status(request, employee_id):
         #     print(len(choice[0]), len(status), (len(status) == len(choice[0])))
         
         if status in [choice[0] for choice in EmployeeStatus.choices]:
-            print('status', status)
+            old_status = employee.status
             employee.status = status
             employee.save()
+            # Write status change audit log
+            EmployeeStatusLog.objects.create(
+                employee=employee,
+                old_status=old_status,
+                new_status=status,
+                reason='Manual status update via Employee List',
+                changed_by=request.user
+            )
             return JsonResponse({'status': 'success', 'message': 'Status updated successfully'})
         return JsonResponse({'status': 'error', 'message': 'Invalid status'}, status=400)
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+
+@role_required('admin', 'hr')
+def offboard_employee(request, employee_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
+        
+    employee = get_object_or_404(Employee, id=employee_id)
+    
+    status = request.POST.get('status')
+    exit_date = request.POST.get('exit_date')
+    reason_for_exit = request.POST.get('reason_for_exit')
+    
+    if not status or status not in [EmployeeStatus.INACTIVE, EmployeeStatus.TERMINATED, EmployeeStatus.ARCHIVED]:
+        return JsonResponse({'status': 'error', 'message': 'Invalid offboarding status'}, status=400)
+    
+    if not exit_date:
+        return JsonResponse({'status': 'error', 'message': 'Exit date is required'}, status=400)
+        
+    try:
+        with transaction.atomic():
+            old_status = employee.status
+            
+            # 1. Update Employee status
+            employee.status = status
+            employee.save()
+            
+            # 2. Deactivate User Account
+            user = User.objects.filter(username=employee.emp_code).first()
+            if user:
+                user.is_active = False
+                user.save()
+                
+            # 3. Deactivate active Salary Master records
+            EmployeeSalaryMaster.objects.filter(
+                employee=employee, 
+                status='Active'
+            ).update(status='Inactive')
+            
+            # 4. Update EmploymentHistory
+            history = EmploymentHistory.objects.filter(employee=employee, exit_date__isnull=True).order_by('-joining_date').first()
+            if history:
+                history.exit_date = exit_date
+                history.reason_for_exit = reason_for_exit
+                history.save()
+            else:
+                # If no active history exists (legacy data), create one
+                EmploymentHistory.objects.create(
+                    employee=employee,
+                    joining_date=employee.joining_date or exit_date,
+                    exit_date=exit_date,
+                    reason_for_exit=reason_for_exit,
+                    department_snapshot=employee.department.department_name if employee.department else 'N/A',
+                    designation_snapshot=employee.designation.designation_name if employee.designation else 'N/A',
+                    site_snapshot=employee.site.site_name if hasattr(employee, 'site') and employee.site else 'N/A',
+                    created_by=request.user
+                )
+            
+            # 5. Write audit log
+            EmployeeStatusLog.objects.create(
+                employee=employee,
+                old_status=old_status,
+                new_status=status,
+                reason=f"Offboarding — Exit Date: {exit_date}. Reason: {reason_for_exit}",
+                changed_by=request.user
+            )
+                
+        return JsonResponse({'status': 'success', 'message': f'Employee safely offboarded as {status}'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+@role_required('admin', 'hr')
+def employee_action_log(request):
+    """Admin-only view showing full EmployeeActivityLog audit trail."""
+    from apps.emp.models import EmployeeActivityLog
+    from django.core.paginator import Paginator
+    
+    logs = EmployeeActivityLog.objects.select_related('employee', 'performed_by').order_by('-performed_at')
+    
+    # Optional filter by employee
+    emp_filter = request.GET.get('employee_id')
+    if emp_filter:
+        logs = logs.filter(employee_id=emp_filter)
+        
+    paginator = Paginator(logs, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    from apps.emp.utils import get_log_classifications
+    classifications = get_log_classifications()
+    for log in page_obj:
+        cls = classifications.get(log.category, {})
+        log.icon = cls.get('icon', 'fas fa-info-circle')
+        log.color = cls.get('color', '#6c757d')
+        log.bg_class = cls.get('bg_class', 'bg-secondary')
+        log.tooltip = cls.get('tooltip', log.category)
+        
+    context = {
+        'logs': page_obj,
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'view_name': request.resolver_match.view_name,
+        'all_employees': Employee.objects.all().order_by('first_name'),
+        'selected_employee': emp_filter,
+    }
+    return render(request, 'emp/employee_action_log.html', context)
 
 
 
@@ -843,7 +1071,6 @@ class EmployeeDashboardView(ListView):
     model = Employee
     template_name = 'emp/employee_dashboard.html'
     context_object_name = 'employees'
-    paginate_by = 25
 
     def get_queryset(self):
         from dateutil.relativedelta import relativedelta
@@ -1178,15 +1405,31 @@ def make_salary(request, employee_id):
 # region SALARY
 @role_required('admin', 'hr')
 def salary_master_list(request):
-    # Employees without any salary
-    no_salary_employees = Employee.objects.filter(salary_masters__isnull=True, status='Active')
-    # Employees with latest active salary
-    with_salary_employees = Employee.objects.filter(status='Active').annotate(
-        latest_salary=Max('salary_masters__effective_from')
-    ).filter(salary_masters__effective_from=F('latest_salary'), salary_masters__status='Active').prefetch_related('salary_masters').distinct()
+    from django.db.models import Subquery, OuterRef
+    from apps.emp.models import Employee, EmployeeSalaryMaster, Department, Designation, Site
+
+    # Subquery to fetch the latest active salary record
+    active_salary_subquery = EmployeeSalaryMaster.objects.filter(
+        employee=OuterRef('pk'),
+        status='Active'
+    ).order_by('-effective_from')
+
+    employees = Employee.objects.filter(status='Active').annotate(
+        active_salary_amount=Subquery(active_salary_subquery.values('salary_amount')[:1]),
+        active_salary_effective=Subquery(active_salary_subquery.values('effective_from')[:1]),
+        active_salary_id=Subquery(active_salary_subquery.values('id')[:1]),
+        active_salary_remarks=Subquery(active_salary_subquery.values('remarks')[:1]),
+    ).select_related('department', 'designation', 'site').order_by('first_name')
+
+    departments = Department.objects.filter(status='Active').order_by('department_name')
+    designations = Designation.objects.filter(status='Active').order_by('designation_name')
+    sites = Site.objects.filter(status='Active').order_by('site_name')
+
     return render(request, 'emp/salary_master_list.html', {
-        'no_salary_employees': no_salary_employees,
-        'with_salary_employees': with_salary_employees,
+        'employees': employees,
+        'departments': departments,
+        'designations': designations,
+        'sites': sites,
         'view_name': request.resolver_match.view_name
     })
 
@@ -2039,6 +2282,9 @@ def employee_profile_popup(request, employee_id):
     else:
         duration_str = "N/A"
 
+    from apps.emp.models import EmploymentHistory
+    emp_history = EmploymentHistory.objects.filter(employee=employee).order_by('joining_date')
+
     # Salaries History (Paginated)
     salaries_list = EmployeeSalaryTransaction.objects.filter(employee=employee).order_by('-year', '-month')
     paginator_sal = Paginator(salaries_list, 5)
@@ -2059,6 +2305,7 @@ def employee_profile_popup(request, employee_id):
         'salaries': salaries,
         'adjustments': adjustments,
         'duration_str': duration_str,
+        'emp_history': emp_history,
     }
     return render(request, 'emp/employee_profile_popup.html', context)
 
@@ -2126,3 +2373,185 @@ def admin_role_assignment(request):
         'all_roles': ['admin', 'hr', 'manager', 'employee']
     }
     return render(request, 'emp/admin_role_assignment.html', context)
+
+@role_required('admin', 'hr')
+def check_employee_history(request):
+    """API endpoint to check if an employee exists by National ID and if they can be rehired."""
+    from apps.emp.models import EmployeeStatus, EmploymentHistory
+    import datetime
+    
+    national_id = request.GET.get('national_id', '').strip()
+    if not national_id:
+        return JsonResponse({'status': 'error', 'message': 'National ID is required.'}, status=400)
+    
+    try:
+        # Check by aadhaar or other national ID
+        employee = Employee.objects.filter(Q(aadhaar_no=national_id) | Q(other_national_id=national_id)).first()
+        if employee:
+            # Calculate active days
+            history_qs = EmploymentHistory.objects.filter(employee=employee).order_by('-joining_date')
+            history_list = []
+            total_days_active = 0
+            
+            # Map history items for response
+            for h in history_qs:
+                start = h.joining_date
+                end = h.exit_date
+                
+                # If exit_date is null but employee is active, calculate up to today
+                if not end and employee.status == EmployeeStatus.ACTIVE:
+                    end = datetime.date.today()
+                
+                stint_days = 0
+                if start and end:
+                    stint_days = (end - start).days
+                    if stint_days > 0:
+                        total_days_active += stint_days
+                
+                history_list.append({
+                    'joining_date': h.joining_date.strftime('%d-%b-%Y') if h.joining_date else 'N/A',
+                    'exit_date': h.exit_date.strftime('%d-%b-%Y') if h.exit_date else ('Present' if employee.status == EmployeeStatus.ACTIVE else 'N/A'),
+                    'department': h.department_snapshot or 'N/A',
+                    'designation': h.designation_snapshot or 'N/A',
+                    'site': h.site_snapshot or 'N/A',
+                    'reason_for_exit': '' if (not h.exit_date and employee.status == EmployeeStatus.ACTIVE) else (h.reason_for_exit or 'N/A'),
+                    'duration_days': stint_days
+                })
+            
+            # If no history but has joining_date
+            if not history_list and employee.joining_date:
+                start = employee.joining_date
+                end = datetime.date.today() if employee.status == EmployeeStatus.ACTIVE else (employee.updated_at.date() if employee.updated_at else datetime.date.today())
+                total_days_active = (end - start).days
+                if total_days_active < 0:
+                    total_days_active = 0
+                history_list.append({
+                    'joining_date': employee.joining_date.strftime('%d-%b-%Y'),
+                    'exit_date': 'Present' if employee.status == EmployeeStatus.ACTIVE else (employee.updated_at.strftime('%d-%b-%Y') if employee.updated_at else 'N/A'),
+                    'department': employee.department.department_name if employee.department else 'N/A',
+                    'designation': employee.designation.designation_name if employee.designation else 'N/A',
+                    'site': employee.site.site_name if employee.site else 'N/A',
+                    'reason_for_exit': '' if employee.status == EmployeeStatus.ACTIVE else 'Legacy initial record',
+                    'duration_days': total_days_active
+                })
+            
+            # Convert active days to years, months, days
+            years_active = total_days_active // 365
+            rem_days = total_days_active % 365
+            months_active = rem_days // 30
+            days_active = rem_days % 30
+            
+            active_duration_str = f"{years_active} Years, {months_active} Months, {days_active} Days"
+            if years_active == 0 and months_active == 0:
+                active_duration_str = f"{days_active} Days"
+            elif years_active == 0:
+                active_duration_str = f"{months_active} Months, {days_active} Days"
+                
+            # If inactive, calculate inactive duration
+            inactive_duration_str = None
+            last_exit_date = None
+            if employee.status != EmployeeStatus.ACTIVE:
+                # Find latest exit date
+                latest_stint = history_qs.filter(exit_date__isnull=False).first()
+                if latest_stint:
+                    last_exit_date = latest_stint.exit_date
+                else:
+                    last_exit_date = employee.updated_at.date() if employee.updated_at else None
+                
+                if last_exit_date:
+                    days_inactive = (datetime.date.today() - last_exit_date).days
+                    if days_inactive < 0:
+                        days_inactive = 0
+                    years_inactive = days_inactive // 365
+                    rem_days_in = days_inactive % 365
+                    months_inactive = rem_days_in // 30
+                    days_inactive_rem = rem_days_in % 30
+                    
+                    inactive_duration_str = f"{years_inactive} Years, {months_inactive} Months, {days_inactive_rem} Days"
+                    if years_inactive == 0 and months_inactive == 0:
+                        inactive_duration_str = f"{days_inactive_rem} Days"
+                    elif years_inactive == 0:
+                        inactive_duration_str = f"{months_inactive} Months, {days_inactive_rem} Days"
+            
+            rehire_eligible = employee.status in [EmployeeStatus.INACTIVE, EmployeeStatus.TERMINATED, EmployeeStatus.SUSPENDED]
+            
+            employee_data = {
+                'id': employee.id,
+                'emp_code': employee.emp_code,
+                'first_name': employee.first_name,
+                'middle_name': employee.middle_name or '',
+                'last_name': employee.last_name,
+                'dob': employee.dob.strftime('%Y-%m-%d') if employee.dob else None,
+                'contact_no': employee.contact_no or 'N/A',
+                'email': employee.email or 'N/A',
+                'status': employee.status,
+                'department': employee.department.department_name if employee.department else 'N/A',
+                'designation': employee.designation.designation_name if employee.designation else 'N/A',
+                'site': employee.site.site_name if employee.site else 'N/A',
+                'photo': employee.photo.url if employee.photo else '/static/dist/img/default-150x150.png',
+                'active_duration': active_duration_str,
+                'inactive_duration': inactive_duration_str,
+                'inactive_since': last_exit_date.strftime('%d-%b-%Y') if last_exit_date else None,
+                'history': history_list,
+                'gender': employee.gender or '',
+                'blood_group': employee.blood_group or '',
+                'father_name': employee.father_name or '',
+                'mother_name': employee.mother_name or '',
+                'pan_card': employee.pan_card or '',
+                'driving_license': employee.driving_license or '',
+                'voter_id': employee.voter_id or '',
+                'passport_no': employee.passport_no or '',
+                'uan_no': employee.uan_no or '',
+                'pf_esic_no': employee.pf_esic_no or '',
+                'marital_status': employee.marital_status or '',
+                'per_address': employee.per_address or '',
+                'per_city': employee.per_city or '',
+                'per_state': employee.per_state or '',
+                'per_pincode': employee.per_pincode or '',
+                'cor_address': employee.cor_address or '',
+                'cor_city': employee.cor_city or '',
+                'cor_state': employee.cor_state or '',
+                'cor_pincode': employee.cor_pincode or '',
+                'bank_name': employee.bank_name or '',
+                'account_no': employee.account_no or '',
+                'ifsc_code': employee.ifsc_code or '',
+                'upi_id': employee.upi_id or '',
+            }
+            
+            return JsonResponse({
+                'status': 'found',
+                'rehire': rehire_eligible,
+                'employee': employee_data
+            })
+        else:
+            return JsonResponse({'status': 'not_found'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+from django.views.generic import ListView
+from django.shortcuts import get_object_or_404
+from .models import Employee, EmployeeActivityLog
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class EmployeeActionLogView(LoginRequiredMixin, ListView):
+    model = EmployeeActivityLog
+    template_name = 'emp/employee_action_log.html'
+    context_object_name = 'logs'
+    paginate_by = 50
+
+    def get_queryset(self):
+        self.employee = get_object_or_404(Employee, id=self.kwargs['emp_id'])
+        return EmployeeActivityLog.objects.filter(employee=self.employee).order_by('-performed_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from apps.emp.utils import get_log_classifications
+        classifications = get_log_classifications()
+        for log in context['logs']:
+            cls = classifications.get(log.category, {})
+            log.icon = cls.get('icon', 'fas fa-info-circle')
+            log.color = cls.get('color', '#6c757d')
+            log.bg_class = cls.get('bg_class', 'bg-secondary')
+            log.tooltip = cls.get('tooltip', log.category)
+        context['employee'] = self.employee
+        return context
